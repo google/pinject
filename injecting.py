@@ -96,17 +96,17 @@ class _Injector(object):
     def __init__(self, arg_name_class_mapping):
         self._arg_name_class_mapping = arg_name_class_mapping
 
-    # def wrap(self, fn):
-    #     # will wrap fn such that any specified params (positional or keyword)
-    #     # are passed through, and any unspecified params are injected.
-    #     pass
-
     def provide(self, thing):
         if isinstance(thing, type):
             return self._provide_class(thing)
         else:
             raise errors.UnknownProvideIdentifierError(
                 'cannot provide thing identified by {0}'.format(thing))
+
+    def _provide_arg(self, arg_name):
+        # TODO(kurts): make a reasonable error message if the mapping raises.
+        arg_class = self._arg_name_class_mapping.get(arg_name)
+        return self._provide_class(arg_class)
 
     def _provide_class(self, cls):
         init_kwargs = {}
@@ -116,10 +116,22 @@ class _Injector(object):
                 init_kwargs[arg_name] = self._provide_arg(arg_name)
         return cls(**init_kwargs)
 
-    def _provide_arg(self, arg_name, scope_name=None):
-        # TODO(kurts): make a reasonable error message if the mapping raises.
-        arg_class = self._arg_name_class_mapping.get(arg_name)
-        return self._provide_class(arg_class)
+    def wrap(self, fn):
+        # TODO(kurts): use http://micheles.googlecode.com/hg/decorator/documentation.html
+        arg_names, unused_varargs, unused_keywords, defaults = inspect.getargspec(fn)
+        if defaults is None:
+            defaults = []
+        injectable_arg_names = arg_names[:(len(arg_names) - len(defaults))]
+        def WrappedFn(*pargs, **kwargs):
+            injected_arg_names = [
+                arg_name for index, arg_name in enumerate(injectable_arg_names)
+                if index >= len(pargs) and arg_name not in kwargs]
+            if injected_arg_names:
+                kwargs = dict(kwargs)
+                for arg_name in injected_arg_names:
+                    kwargs[arg_name] = self._provide_arg(arg_name)
+            return fn(*pargs, **kwargs)
+        return WrappedFn
 
 
 def _ArgNamesWithoutSelf(args):

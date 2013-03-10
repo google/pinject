@@ -70,7 +70,7 @@ class NewArgNameToClassMappingTest(unittest.TestCase):
         self.assertEqual(SomeClass, arg_name_class_mapping.get('some_arg_name'))
 
 
-class InjectorTest(unittest.TestCase):
+class InjectorProvideTest(unittest.TestCase):
 
     def test_can_provide_trivial_class(self):
         class ExampleClassWithInit(object):
@@ -127,3 +127,54 @@ class InjectorTest(unittest.TestCase):
         injector = injecting.NewInjector(classes=[UnknownParamClass])
         self.assertRaises(errors.NothingInjectableForArgNameError,
                           injector.provide, UnknownParamClass)
+
+
+class InjectorWrapTest(unittest.TestCase):
+
+    def test_can_inject_nothing_into_fn_with_zero_params(self):
+        def ReturnSomething():
+            return 'something'
+        wrapped = injecting.NewInjector(classes=[]).wrap(ReturnSomething)
+        self.assertEqual('something', wrapped())
+
+    def test_can_inject_nothing_into_fn_with_positional_passed_params(self):
+        def Add(a, b):
+            return a + b
+        wrapped = injecting.NewInjector(classes=[]).wrap(Add)
+        self.assertEqual(5, wrapped(2, 3))
+
+    def test_can_inject_nothing_into_fn_with_keyword_passed_params(self):
+        def Add(a, b):
+            return a + b
+        wrapped = injecting.NewInjector(classes=[]).wrap(Add)
+        self.assertEqual(5, wrapped(a=2, b=3))
+
+    def test_can_inject_nothing_into_fn_with_defaults(self):
+        def Add(a=2, b=3):
+            return a + b
+        wrapped = injecting.NewInjector(classes=[]).wrap(Add)
+        self.assertEqual(5, wrapped())
+
+    def test_can_inject_nothing_into_fn_with_pargs_and_kwargs(self):
+        def Add(*pargs, **kwargs):
+            return pargs[0] + kwargs['b']
+        wrapped = injecting.NewInjector(classes=[]).wrap(Add)
+        self.assertEqual(5, wrapped(2, b=3))
+
+    def test_can_inject_something_into_first_positional_param(self):
+        class Foo(object):
+            def __init__(self):
+                self.a = 2
+        def Add(foo, b):
+            return foo.a + b
+        wrapped = injecting.NewInjector(classes=[Foo]).wrap(Add)
+        self.assertEqual(5, wrapped(b=3))
+
+    def test_can_inject_something_into_non_first_positional_param(self):
+        class Foo(object):
+            def __init__(self):
+                self.b = 3
+        def Add(a, foo):
+            return a + foo.b
+        wrapped = injecting.NewInjector(classes=[Foo]).wrap(Add)
+        self.assertEqual(5, wrapped(2))
