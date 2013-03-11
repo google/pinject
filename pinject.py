@@ -61,15 +61,17 @@ NewInjector = injecting.NewInjector
 
 
 # TODO:
-# - annotations
+# - move human-readable error strings into Error subclasses
+# - allow explicit declared bindings
+# - provider functions
+# - instance bindings
+# - allow declared bindings at initializer sites
+# - only inject if a class is marked as injectable
 # - safe vs. unsafe mode
+# - annotations
 # - automatically instantiate the concrete subclass of an interface?
 #     (it is possible to determine that something is abstract?)
 # - find modules on PYTHONPATH instead of having to import them
-# - only inject if a class is marked as injectable
-# - allow injecting naked functions
-# - allow explicit declared bindings
-# - allow declared bindings at initializer sites
 # - allow named bindings
 # - scopes
 #   - when providing (highest priority)
@@ -78,8 +80,6 @@ NewInjector = injecting.NewInjector
 #   - annotated on class (lowest priority)
 #   - eager singletons
 #   - error-checking for deps from one scope to another
-# - provider functions
-# - instance bindings
 # - untargetted bindings?  http://code.google.com/p/google-guice/wiki/UntargettedBindings
 # - @ImplementedBy, @ProvidedBy  http://code.google.com/p/google-guice/wiki/JustInTimeBindings
 # - other stuff: http://code.google.com/p/google-guice/wiki/Motivation

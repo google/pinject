@@ -12,5 +12,9 @@ class NothingInjectableForArgNameError(Error):
     pass
 
 
-class UnknownProvideIdentifierError(Error):
+class UnknownProvideIdentifierError(Error):  # TODO(kurts): delete?
+    pass
+
+
+class ConflictingBindingsError(Error):
     pass
