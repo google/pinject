@@ -61,7 +61,6 @@ NewInjector = injecting.NewInjector
 
 
 # TODO:
-# - move human-readable error strings into Error subclasses
 # - allow explicit declared bindings
 # - provider functions
 # - instance bindings

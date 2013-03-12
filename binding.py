@@ -60,8 +60,7 @@ def new_binding_mapping(explicit_bindings, implicit_bindings):
         binding_key = binding.binding_key
         cls = binding.cls
         if binding_key in explicit_binding_key_to_class:
-            raise errors.ConflictingBindingsError(
-                'multiple conflicting bindings for {0}'.format(binding_key))
+            raise errors.ConflictingBindingsError(binding_key)
         explicit_binding_key_to_class[binding_key] = cls
 
     implicit_binding_key_to_class = {}
@@ -101,12 +100,10 @@ class _BindingMapping(object):
             return self._binding_key_to_class[binding_key]
         elif binding_key in self._collided_binding_key_to_class_names:
             raise errors.AmbiguousArgNameError(
-                '{0} ambiguously refers to any of the classes {1}'.format(
-                    binding_key,
-                    self._collided_binding_key_to_class_names[binding_key]))
+                binding_key,
+                self._collided_binding_key_to_class_names[binding_key])
         else:
-            raise errors.NothingInjectableForArgNameError(
-                'there is no injectable class for {0}'.format(binding_key))
+            raise errors.NothingInjectableForArgNameError(binding_key)
 
 
 # class Binder(object):
