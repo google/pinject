@@ -68,6 +68,7 @@ NewInjector = injecting.NewInjector
 # - allow explicit declared bindings
 # - provider functions
 # - instance bindings
+# - detect cycles in binding
 # - allow declared bindings at initializer sites
 # - only inject if a class is marked as injectable
 # - safe vs. unsafe mode

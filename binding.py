@@ -50,67 +50,62 @@ class BindingKeyWithoutAnnotation(BindingKey):
 
 class Binding(object):
 
-    def __init__(self, binding_key, cls):
+    def __init__(self, binding_key, provider_fn):
         self.binding_key = binding_key
-        self.cls = cls
-
-    def __eq__(self, other):
-        return (isinstance(other, Binding) and
-                self.binding_key == other.binding_key and
-                self.cls == other.cls)
-
-    def __hash__(self):
-        return hash(self.binding_key) ^ hash(self.cls)
+        self.provider_fn = provider_fn
 
 
 def new_binding_mapping(explicit_bindings, implicit_bindings):
-    explicit_binding_key_to_class = {}
+    explicit_binding_key_to_provider_fn = {}
     for binding in explicit_bindings:
         binding_key = binding.binding_key
-        cls = binding.cls
-        if binding_key in explicit_binding_key_to_class:
+        provider_fn = binding.provider_fn
+        if binding_key in explicit_binding_key_to_provider_fn:
             raise errors.ConflictingBindingsError(binding_key)
-        explicit_binding_key_to_class[binding_key] = cls
+        explicit_binding_key_to_provider_fn[binding_key] = provider_fn
 
-    implicit_binding_key_to_class = {}
-    collided_binding_key_to_class_names = {}
+    implicit_binding_key_to_provider_fn = {}
+    collided_binding_key_to_provider_fns = {}
     for binding in implicit_bindings:
         binding_key = binding.binding_key
-        cls = binding.cls
-        if binding_key in explicit_binding_key_to_class:
+        provider_fn = binding.provider_fn
+        if binding_key in explicit_binding_key_to_provider_fn:
             continue
-        if binding_key in implicit_binding_key_to_class:
-            existing_class = implicit_binding_key_to_class[binding_key]
-            del implicit_binding_key_to_class[binding_key]
-            classes = collided_binding_key_to_class_names.setdefault(
+        if binding_key in implicit_binding_key_to_provider_fn:
+            existing_provider_fn = implicit_binding_key_to_provider_fn[binding_key]
+            del implicit_binding_key_to_provider_fn[binding_key]
+            provider_fns = collided_binding_key_to_provider_fns.setdefault(
                 binding_key, set())
-            classes.add('{0}.{1}'.format(existing_class.__module__,
-                                         existing_class.__name__))
-        if binding_key in collided_binding_key_to_class_names:
-            classes = collided_binding_key_to_class_names[binding_key]
-            classes.add('{0}.{1}'.format(cls.__module__, cls.__name__))
+            provider_fns.add('{0}.{1}'.format(existing_provider_fn.__module__,
+                                              existing_provider_fn.__name__))
+        if binding_key in collided_binding_key_to_provider_fns:
+            provider_fnes = collided_binding_key_to_provider_fns[binding_key]
+            provider_fnes.add('{0}.{1}'.format(provider_fn.__module__,
+                                               provider_fn.__name__))
         else:
-            implicit_binding_key_to_class[binding_key] = binding.cls
+            implicit_binding_key_to_provider_fn[binding_key] = binding.provider_fn
 
-    binding_key_to_class = explicit_binding_key_to_class
-    binding_key_to_class.update(implicit_binding_key_to_class)
+    binding_key_to_provider_fn = explicit_binding_key_to_provider_fn
+    binding_key_to_provider_fn.update(implicit_binding_key_to_provider_fn)
     return _BindingMapping(
-        binding_key_to_class,  collided_binding_key_to_class_names)
+        binding_key_to_provider_fn,  collided_binding_key_to_provider_fns)
 
 
 class _BindingMapping(object):
 
-    def __init__(self, binding_key_to_class, collided_binding_key_to_class_names):
-        self._binding_key_to_class = binding_key_to_class
-        self._collided_binding_key_to_class_names = collided_binding_key_to_class_names
+    def __init__(self, binding_key_to_provider_fn,
+                 collided_binding_key_to_provider_fns):
+        self._binding_key_to_provider_fn = binding_key_to_provider_fn
+        self._collided_binding_key_to_provider_fns = (
+            collided_binding_key_to_provider_fns)
 
-    def get_class(self, binding_key):
-        if binding_key in self._binding_key_to_class:
-            return self._binding_key_to_class[binding_key]
-        elif binding_key in self._collided_binding_key_to_class_names:
+    def get_instance(self, binding_key):
+        if binding_key in self._binding_key_to_provider_fn:
+            return self._binding_key_to_provider_fn[binding_key]()
+        elif binding_key in self._collided_binding_key_to_provider_fns:
             raise errors.AmbiguousArgNameError(
                 binding_key,
-                self._collided_binding_key_to_class_names[binding_key])
+                self._collided_binding_key_to_provider_fns[binding_key])
         else:
             raise errors.NothingInjectableForArgNameError(binding_key)
 
@@ -142,7 +137,8 @@ def default_get_arg_names_from_class_name(class_name):
 
 
 def get_implicit_bindings(
-    classes, get_arg_names_from_class_name=default_get_arg_names_from_class_name):
+    classes, future_injector,
+    get_arg_names_from_class_name=default_get_arg_names_from_class_name):
     """Creates a mapping from arg names to classes.
 
     Args:
@@ -158,7 +154,9 @@ def get_implicit_bindings(
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
-            implicit_bindings.append(Binding(binding_key, cls))
+            def ProvideCls(cls=cls):
+                return future_injector.provide(cls)
+            implicit_bindings.append(Binding(binding_key, ProvideCls))
     return implicit_bindings
 
 

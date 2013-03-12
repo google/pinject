@@ -6,10 +6,10 @@ class Error(Exception):
 
 class AmbiguousArgNameError(Error):
 
-    def __init__(self, binding_key, class_names):
+    def __init__(self, binding_key, provider_fns):
         Error.__init__(
-            self, '{0} ambiguously refers to any of the classes {1}'.format(
-                binding_key, class_names))
+            self, '{0} ambiguously refers to any of {1}'.format(
+                binding_key, provider_fns))
 
 
 class ConflictingBindingsError(Error):
@@ -17,6 +17,10 @@ class ConflictingBindingsError(Error):
     def __init__(self, binding_key):
         Error.__init__(
             self, 'multiple conflicting bindings for {0}'.format(binding_key))
+
+
+class InjectorNotYetInstantiatedError(Error):
+    pass
 
 
 class InvalidBindingTargetError(Error):

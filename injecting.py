@@ -13,10 +13,13 @@ def NewInjector(modules=None, classes=None,
                 # binding_modules=None
                 ):
     classes = finding.FindClasses(modules, classes)
+    future_injector = _FutureInjector()
     implicit_bindings = binding.get_implicit_bindings(
-        classes, get_arg_names_from_class_name)
+        classes, future_injector, get_arg_names_from_class_name)
     binding_mapping = binding.new_binding_mapping([], implicit_bindings)
-    return _Injector(binding_mapping)
+    injector = _Injector(binding_mapping)
+    future_injector.set_injector(injector)
+    return injector
 
 
 class _Injector(object):
@@ -30,8 +33,7 @@ class _Injector(object):
     def _provide_arg(self, arg_name):
         binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
         # TODO(kurts): make a reasonable error message if the mapping raises.
-        arg_class = self._binding_mapping.get_class(binding_key)
-        return self._provide_class(arg_class)
+        return self._binding_mapping.get_instance(binding_key)
 
     def _provide_class(self, cls):
         init_kwargs = {}
@@ -63,23 +65,23 @@ def _ArgNamesWithoutSelf(args):
     return args[1:]
 
 
-# class InjectorNotYetInstantiated(object):
+class _InjectorNotYetInstantiated(object):
 
-#     def __getattribute__(self, unused_name):
-#         def RaiseError(*pargs, **kwargs):
-#             raise InjectorNotYetInstantiatedError()
-#         return RaiseError
+    def __getattribute__(self, unused_name):
+        def RaiseError(*pargs, **kwargs):
+            raise errors.InjectorNotYetInstantiatedError()
+        return RaiseError
 
 
-# class FutureInjector(object):
+class _FutureInjector(object):
 
-#     def __init__(self):
-#         self._injector = InjectorNotYetInstantiated()
+    def __init__(self):
+        self._injector = _InjectorNotYetInstantiated()
 
-#     def __getattribute__(self, name):
-#         return getattr(self._injector, name)
+    def __getattr__(self, name):
+        return getattr(self._injector, name)
 
-#     def set_injector(self, injector):
-#         if isinstance(self._injector, InjectorNotYetInstantiated):
-#             raise ProgrammerError('set_injector() should not be called twice')
-#         self._injector = injector
+    def set_injector(self, injector):
+        if not isinstance(self._injector, _InjectorNotYetInstantiated):
+            raise ProgrammerError('set_injector() should not be called twice')
+        self._injector = injector
