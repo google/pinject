@@ -9,10 +9,14 @@
 #     - it is just the java crap with checked exceptions?
 
 import errors
+# TODO(kurts): copy over Error hierarchy without having to list them explicitly.
 Error = errors.Error
 AmbiguousArgNameError = errors.AmbiguousArgNameError
-NothingInjectableForArgNameError = errors.NothingInjectableForArgNameError
 ConflictingBindingsError = errors.ConflictingBindingsError
+InvalidBindingTargetError = errors.InvalidBindingTargetError
+MultipleBindingTargetsError = errors.MultipleBindingTargetsError
+NoBindingTargetError = errors.NoBindingTargetError
+NothingInjectableForArgNameError = errors.NothingInjectableForArgNameError
 
 import injecting
 NewInjector = injecting.NewInjector

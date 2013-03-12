@@ -24,8 +24,8 @@ class _Injector(object):
     def __init__(self, binding_mapping):
         self._binding_mapping = binding_mapping
 
-    def provide(self, thing):
-        return self._provide_class(thing)
+    def provide(self, cls):
+        return self._provide_class(cls)
 
     def _provide_arg(self, arg_name):
         binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
