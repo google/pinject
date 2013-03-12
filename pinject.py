@@ -12,7 +12,7 @@ import errors
 Error = errors.Error
 AmbiguousArgNameError = errors.AmbiguousArgNameError
 NothingInjectableForArgNameError = errors.NothingInjectableForArgNameError
-UnknownProvideIdentifierError = errors.UnknownProvideIdentifierError
+ConflictingBindingsError = errors.ConflictingBindingsError
 
 import injecting
 NewInjector = injecting.NewInjector

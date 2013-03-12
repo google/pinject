@@ -25,11 +25,7 @@ class _Injector(object):
         self._binding_mapping = binding_mapping
 
     def provide(self, thing):
-        if isinstance(thing, type):
-            return self._provide_class(thing)
-        else:
-            raise errors.UnknownProvideIdentifierError(
-                'cannot provide thing identified by {0}'.format(thing))
+        return self._provide_class(thing)
 
     def _provide_arg(self, arg_name):
         binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
