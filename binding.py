@@ -53,6 +53,14 @@ class Binding(object):
         self.binding_key = binding_key
         self.cls = cls
 
+    def __eq__(self, other):
+        return (isinstance(other, Binding) and
+                self.binding_key == other.binding_key and
+                self.cls == other.cls)
+
+    def __hash__(self):
+        return hash(self.binding_key) ^ hash(self.cls)
+
 
 def new_binding_mapping(explicit_bindings, implicit_bindings):
     explicit_binding_key_to_class = {}

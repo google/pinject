@@ -7,34 +7,34 @@ import errors
 
 class BindingKeyWithoutAnnotationTest(unittest.TestCase):
 
-    def testEqualIfSameArgName(self):
+    def test_equal_if_same_arg_name(self):
         binding_key_one = binding.BindingKeyWithoutAnnotation('an-arg-name')
         binding_key_two = binding.BindingKeyWithoutAnnotation('an-arg-name')
         self.assertEqual(binding_key_one, binding_key_two)
         self.assertEqual(hash(binding_key_one), hash(binding_key_two))
         self.assertEqual(str(binding_key_one), str(binding_key_two))
 
-    def testUnequalIfNotSameArgName(self):
+    def test_unequal_if_not_same_arg_name(self):
         binding_key_one = binding.BindingKeyWithoutAnnotation('arg-name-one')
         binding_key_two = binding.BindingKeyWithoutAnnotation('arg-name-two')
         self.assertNotEqual(binding_key_one, binding_key_two)
         self.assertNotEqual(hash(binding_key_one), hash(binding_key_two))
         self.assertNotEqual(str(binding_key_one), str(binding_key_two))
 
-    def testStr(self):
+    def test_str(self):
         binding_key = binding.BindingKeyWithoutAnnotation('an-arg-name')
         self.assertEqual('the arg name an-arg-name', str(binding_key))
 
 
 class NewBindingMappingTest(unittest.TestCase):
 
-    def testNoInputBindingsReturnsEmptyMapping(self):
+    def test_no_input_bindings_returns_empty_mapping(self):
         binding_mapping = binding.new_binding_mapping([], [])
         self.assertRaises(errors.NothingInjectableForArgNameError,
                           binding_mapping.get_class,
                           binding.BindingKeyWithoutAnnotation('anything'))
 
-    def testUnknownBindingRaisesError(self):
+    def test_unknown_binding_raises_error(self):
         class SomeClass(object):
             pass
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
@@ -45,7 +45,7 @@ class NewBindingMappingTest(unittest.TestCase):
         self.assertRaises(errors.NothingInjectableForArgNameError,
                           binding_mapping.get_class, unknown_binding_key)
 
-    def testSingleImplicitClassGetsMapped(self):
+    def test_single_implicit_class_gets_mapped(self):
         class SomeClass(object):
             pass
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
@@ -53,7 +53,7 @@ class NewBindingMappingTest(unittest.TestCase):
             [], [binding.Binding(binding_key, SomeClass)])
         self.assertEqual(SomeClass, binding_mapping.get_class(binding_key))
 
-    def testMultipleNoncollidingImplicitClassesGetMapped(self):
+    def test_multiple_noncolliding_implicit_classes_get_mapped(self):
         class ClassOne(object):
             pass
         class ClassTwo(object):
@@ -66,7 +66,7 @@ class NewBindingMappingTest(unittest.TestCase):
         self.assertEqual(ClassOne, binding_mapping.get_class(binding_key_one))
         self.assertEqual(ClassTwo, binding_mapping.get_class(binding_key_two))
 
-    def testMultipleCollidingClassesRaisesError(self):
+    def test_multiple_colliding_classes_raises_error(self):
         class SomeClass(object):
             pass
         class _SomeClass(object):
@@ -96,12 +96,21 @@ class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
 
 class GetImplicitBindingsTest(unittest.TestCase):
 
-    # TODO(kurts): test this
-    pass
+    def test_returns_no_bindings_for_no_input(self):
+        self.assertEqual([], binding.get_implicit_bindings([]))
 
-    # def testUsesProvidedFunctionToMapClassNamesToArgNames(self):
-    #     class SomeClass(object):
-    #         pass
-    #     binding_mapping = binding.new_binding_mapping(
-    #         [SomeClass], lambda unused: ['some_arg_name'])
-    #     self.assertEqual(SomeClass, binding_mapping.get_class('some_arg_name'))
+    def test_returns_binding_for_input_class(self):
+        class SomeClass(object):
+            pass
+        binding_key = binding.BindingKeyWithoutAnnotation('some_class')
+        self.assertEqual([binding.Binding(binding_key, SomeClass)],
+                         binding.get_implicit_bindings([SomeClass]))
+
+    def test_uses_provided_fn_to_map_class_names_to_arg_names(self):
+        class SomeClass(object):
+            pass
+        binding_key = binding.BindingKeyWithoutAnnotation('foo')
+        self.assertEqual(
+            [binding.Binding(binding_key, SomeClass)],
+            binding.get_implicit_bindings(
+                [SomeClass], get_arg_names_from_class_name=lambda _: ['foo']))
