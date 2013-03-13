@@ -19,7 +19,7 @@ NoBindingTargetError = errors.NoBindingTargetError
 NothingInjectableForArgNameError = errors.NothingInjectableForArgNameError
 
 import injecting
-NewInjector = injecting.NewInjector
+new_injector = injecting.new_injector
 
 
 # class Scope(object):

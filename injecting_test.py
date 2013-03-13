@@ -8,14 +8,14 @@ import injecting
 class NewInjectorTest(unittest.TestCase):
 
     def test_creates_injector_using_given_modules(self):
-        injector = injecting.NewInjector(modules=[injecting])
+        injector = injecting.new_injector(modules=[injecting])
         self.assertIsInstance(injector.provide(injecting._FutureInjector),
                               injecting._FutureInjector)
 
     def test_creates_injector_using_given_classes(self):
         class SomeClass(object):
             pass
-        injector = injecting.NewInjector(classes=[SomeClass])
+        injector = injecting.new_injector(classes=[SomeClass])
         self.assertIsInstance(injector.provide(SomeClass), SomeClass)
 
     def test_creates_injector_using_given_binding_fns(self):
@@ -26,8 +26,8 @@ class NewInjectorTest(unittest.TestCase):
             pass
         def binding_fn(binder):
             binder.bind('foo', to_class=SomeClass)
-        injector = injecting.NewInjector(classes=[ClassWithFooInjected],
-                                         binding_fns=[binding_fn])
+        injector = injecting.new_injector(classes=[ClassWithFooInjected],
+                                          binding_fns=[binding_fn])
         self.assertIsInstance(injector.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
 
@@ -38,14 +38,14 @@ class InjectorProvideTest(unittest.TestCase):
         class ExampleClassWithInit(object):
             def __init__(self):
                 pass
-        injector = injecting.NewInjector(classes=[ExampleClassWithInit])
+        injector = injecting.new_injector(classes=[ExampleClassWithInit])
         self.assertTrue(isinstance(injector.provide(ExampleClassWithInit),
                                    ExampleClassWithInit))
 
     def test_can_provide_class_without_own_init(self):
         class ExampleClassWithoutInit(object):
             pass
-        injector = injecting.NewInjector(classes=[ExampleClassWithoutInit])
+        injector = injecting.new_injector(classes=[ExampleClassWithoutInit])
         self.assertIsInstance(injector.provide(ExampleClassWithoutInit),
                               ExampleClassWithoutInit)
 
@@ -54,7 +54,7 @@ class InjectorProvideTest(unittest.TestCase):
             pass
         class CollidingExampleClass(object):
             pass
-        injector = injecting.NewInjector(
+        injector = injecting.new_injector(
             classes=[_CollidingExampleClass, CollidingExampleClass])
         self.assertIsInstance(injector.provide(CollidingExampleClass),
                               CollidingExampleClass)
@@ -65,7 +65,7 @@ class InjectorProvideTest(unittest.TestCase):
                 pass
         class ClassTwo(object):
             pass
-        injector = injecting.NewInjector(classes=[ClassOne, ClassTwo])
+        injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
         self.assertIsInstance(injector.provide(ClassOne), ClassOne)
 
     def test_raises_error_if_arg_is_ambiguously_injectable(self):
@@ -76,7 +76,7 @@ class InjectorProvideTest(unittest.TestCase):
         class AmbiguousParamClass(object):
             def __init__(self, colliding_example_class):
                 pass
-        injector = injecting.NewInjector(
+        injector = injecting.new_injector(
             classes=[_CollidingExampleClass, CollidingExampleClass,
                      AmbiguousParamClass])
         self.assertRaises(errors.AmbiguousArgNameError,
@@ -86,7 +86,7 @@ class InjectorProvideTest(unittest.TestCase):
         class UnknownParamClass(object):
             def __init__(self, unknown_class):
                 pass
-        injector = injecting.NewInjector(classes=[UnknownParamClass])
+        injector = injecting.new_injector(classes=[UnknownParamClass])
         self.assertRaises(errors.NothingInjectableForArgNameError,
                           injector.provide, UnknownParamClass)
 
@@ -96,31 +96,31 @@ class InjectorWrapTest(unittest.TestCase):
     def test_can_inject_nothing_into_fn_with_zero_params(self):
         def return_something():
             return 'something'
-        wrapped = injecting.NewInjector(classes=[]).wrap(return_something)
+        wrapped = injecting.new_injector(classes=[]).wrap(return_something)
         self.assertEqual('something', wrapped())
 
     def test_can_inject_nothing_into_fn_with_positional_passed_params(self):
         def add(a, b):
             return a + b
-        wrapped = injecting.NewInjector(classes=[]).wrap(add)
+        wrapped = injecting.new_injector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped(2, 3))
 
     def test_can_inject_nothing_into_fn_with_keyword_passed_params(self):
         def add(a, b):
             return a + b
-        wrapped = injecting.NewInjector(classes=[]).wrap(add)
+        wrapped = injecting.new_injector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped(a=2, b=3))
 
     def test_can_inject_nothing_into_fn_with_defaults(self):
         def add(a=2, b=3):
             return a + b
-        wrapped = injecting.NewInjector(classes=[]).wrap(add)
+        wrapped = injecting.new_injector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped())
 
     def test_can_inject_nothing_into_fn_with_pargs_and_kwargs(self):
         def add(*pargs, **kwargs):
             return pargs[0] + kwargs['b']
-        wrapped = injecting.NewInjector(classes=[]).wrap(add)
+        wrapped = injecting.new_injector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped(2, b=3))
 
     def test_can_inject_something_into_first_positional_param(self):
@@ -129,7 +129,7 @@ class InjectorWrapTest(unittest.TestCase):
                 self.a = 2
         def add(foo, b):
             return foo.a + b
-        wrapped = injecting.NewInjector(classes=[Foo]).wrap(add)
+        wrapped = injecting.new_injector(classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(b=3))
 
     def test_can_inject_something_into_non_first_positional_param(self):
@@ -138,7 +138,7 @@ class InjectorWrapTest(unittest.TestCase):
                 self.b = 3
         def add(a, foo):
             return a + foo.b
-        wrapped = injecting.NewInjector(classes=[Foo]).wrap(add)
+        wrapped = injecting.new_injector(classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(2))
 
 
@@ -161,5 +161,5 @@ class FutureInjectorTest(unittest.TestCase):
         future_injector = injecting._FutureInjector()
         class SomeClass(object):
             pass
-        future_injector.set_injector(injecting.NewInjector(classes=[SomeClass]))
+        future_injector.set_injector(injecting.new_injector(classes=[SomeClass]))
         self.assertIsInstance(future_injector.provide(SomeClass), SomeClass)

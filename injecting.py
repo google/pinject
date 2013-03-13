@@ -7,12 +7,11 @@ import errors
 import finding
 
 
-# TODO(kurts): rename to new_injector().
-def NewInjector(modules=None, classes=None,
-                get_arg_names_from_class_name=binding.default_get_arg_names_from_class_name,
-                binding_fns=None,
-                # binding_modules=None
-                ):
+def new_injector(modules=None, classes=None,
+                 get_arg_names_from_class_name=binding.default_get_arg_names_from_class_name,
+                 binding_fns=None,
+                 # binding_modules=None
+                 ):
     future_injector = _FutureInjector()
 
     explicit_bindings = []
