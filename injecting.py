@@ -9,16 +9,14 @@ import finding
 
 def new_injector(modules=None, classes=None,
                  get_arg_names_from_class_name=binding.default_get_arg_names_from_class_name,
-                 binding_fns=None,
-                 # binding_modules=None
-                 ):
+                 binding_fns=None):
     future_injector = _FutureInjector()
 
     explicit_bindings = []
     binder = binding.Binder(future_injector, explicit_bindings)
     if binding_fns is not None:
         for binding_fn in binding_fns:
-            binding_fn(binder)
+            binding_fn(bind=binder.bind)
 
     classes = finding.FindClasses(modules, classes)
     implicit_bindings = binding.get_implicit_bindings(

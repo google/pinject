@@ -24,8 +24,8 @@ class NewInjectorTest(unittest.TestCase):
                 pass
         class SomeClass(object):
             pass
-        def binding_fn(binder):
-            binder.bind('foo', to_class=SomeClass)
+        def binding_fn(bind, **unused_kwargs):
+            bind('foo', to_class=SomeClass)
         injector = injecting.new_injector(classes=[ClassWithFooInjected],
                                           binding_fns=[binding_fn])
         self.assertIsInstance(injector.provide(ClassWithFooInjected),

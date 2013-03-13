@@ -65,7 +65,6 @@ new_injector = injecting.new_injector
 
 
 # TODO:
-# - binding modules
 # - detect cycles in binding
 # - allow declared bindings at initializer sites
 # - only inject if a class is marked as injectable
