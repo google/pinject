@@ -19,8 +19,8 @@ class InjectorProvideTest(unittest.TestCase):
         class ExampleClassWithoutInit(object):
             pass
         injector = injecting.NewInjector(classes=[ExampleClassWithoutInit])
-        self.assertTrue(isinstance(injector.provide(ExampleClassWithoutInit),
-                                   ExampleClassWithoutInit))
+        self.assertIsInstance(injector.provide(ExampleClassWithoutInit),
+                              ExampleClassWithoutInit)
 
     def test_can_directly_provide_class_with_colliding_arg_name(self):
         class _CollidingExampleClass(object):
@@ -29,8 +29,8 @@ class InjectorProvideTest(unittest.TestCase):
             pass
         injector = injecting.NewInjector(
             classes=[_CollidingExampleClass, CollidingExampleClass])
-        self.assertTrue(isinstance(injector.provide(CollidingExampleClass),
-                                   CollidingExampleClass))
+        self.assertIsInstance(injector.provide(CollidingExampleClass),
+                              CollidingExampleClass)
 
     def test_can_provide_class_that_itself_requires_injection(self):
         class ClassOne(object):
@@ -39,7 +39,7 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassTwo(object):
             pass
         injector = injecting.NewInjector(classes=[ClassOne, ClassTwo])
-        self.assertTrue(isinstance(injector.provide(ClassOne), ClassOne))
+        self.assertIsInstance(injector.provide(ClassOne), ClassOne)
 
     def test_raises_error_if_arg_is_ambiguously_injectable(self):
         class _CollidingExampleClass(object):
@@ -113,3 +113,26 @@ class InjectorWrapTest(unittest.TestCase):
             return a + foo.b
         wrapped = injecting.NewInjector(classes=[Foo]).wrap(Add)
         self.assertEqual(5, wrapped(2))
+
+
+class InjectorNotYetInstantiatedTest(unittest.TestCase):
+
+    def test_calling_method_raises_error(self):
+        injector = injecting._InjectorNotYetInstantiated()
+        self.assertRaises(errors.InjectorNotYetInstantiatedError,
+                          injector.provide, 'unused-class')
+
+
+class FutureInjectorTest(unittest.TestCase):
+
+    def test_calling_method_when_injector_not_yet_set_raises_error(self):
+        future_injector = injecting._FutureInjector()
+        self.assertRaises(errors.InjectorNotYetInstantiatedError,
+                          future_injector.provide, 'unused-class')
+
+    def test_calling_method_calls_method_on_contained_injector(self):
+        future_injector = injecting._FutureInjector()
+        class SomeClass(object):
+            pass
+        future_injector.set_injector(injecting.NewInjector(classes=[SomeClass]))
+        self.assertIsInstance(future_injector.provide(SomeClass), SomeClass)

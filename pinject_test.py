@@ -11,4 +11,4 @@ class CopiedClassesTest(unittest.TestCase):
         class SomeClass(object):
                 pass
         injector = pinject.NewInjector(classes=[SomeClass])
-        self.assertTrue(isinstance(injector.provide(SomeClass), SomeClass))
+        self.assertIsInstance(injector.provide(SomeClass), SomeClass)

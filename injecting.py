@@ -39,7 +39,7 @@ class _Injector(object):
         init_kwargs = {}
         if cls.__init__ is not object.__init__:
             arg_names, unused_varargs, unused_keywords, unused_defaults = inspect.getargspec(cls.__init__)
-            for arg_name in _ArgNamesWithoutSelf(arg_names):
+            for arg_name in _arg_names_without_self(arg_names):
                 init_kwargs[arg_name] = self._provide_arg(arg_name)
         return cls(**init_kwargs)
 
@@ -61,7 +61,7 @@ class _Injector(object):
         return WrappedFn
 
 
-def _ArgNamesWithoutSelf(args):
+def _arg_names_without_self(args):
     return args[1:]
 
 
