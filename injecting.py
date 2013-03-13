@@ -7,16 +7,26 @@ import errors
 import finding
 
 
+# TODO(kurts): rename to new_injector().
 def NewInjector(modules=None, classes=None,
                 get_arg_names_from_class_name=binding.default_get_arg_names_from_class_name,
-                # binding_fns=None,
+                binding_fns=None,
                 # binding_modules=None
                 ):
-    classes = finding.FindClasses(modules, classes)
     future_injector = _FutureInjector()
+
+    explicit_bindings = []
+    binder = binding.Binder(future_injector, explicit_bindings)
+    if binding_fns is not None:
+        for binding_fn in binding_fns:
+            binding_fn(binder)
+
+    classes = finding.FindClasses(modules, classes)
     implicit_bindings = binding.get_implicit_bindings(
         classes, future_injector, get_arg_names_from_class_name)
-    binding_mapping = binding.new_binding_mapping([], implicit_bindings)
+    binding_mapping = binding.new_binding_mapping(
+        explicit_bindings, implicit_bindings)
+
     injector = _Injector(binding_mapping)
     future_injector.set_injector(injector)
     return injector

@@ -5,6 +5,33 @@ import errors
 import injecting
 
 
+class NewInjectorTest(unittest.TestCase):
+
+    def test_creates_injector_using_given_modules(self):
+        injector = injecting.NewInjector(modules=[injecting])
+        self.assertIsInstance(injector.provide(injecting._FutureInjector),
+                              injecting._FutureInjector)
+
+    def test_creates_injector_using_given_classes(self):
+        class SomeClass(object):
+            pass
+        injector = injecting.NewInjector(classes=[SomeClass])
+        self.assertIsInstance(injector.provide(SomeClass), SomeClass)
+
+    def test_creates_injector_using_given_binding_fns(self):
+        class ClassWithFooInjected(object):
+            def __init__(self, foo):
+                pass
+        class SomeClass(object):
+            pass
+        def binding_fn(binder):
+            binder.bind('foo', to_class=SomeClass)
+        injector = injecting.NewInjector(classes=[ClassWithFooInjected],
+                                         binding_fns=[binding_fn])
+        self.assertIsInstance(injector.provide(ClassWithFooInjected),
+                              ClassWithFooInjected)
+
+
 class InjectorProvideTest(unittest.TestCase):
 
     def test_can_provide_trivial_class(self):
@@ -67,51 +94,51 @@ class InjectorProvideTest(unittest.TestCase):
 class InjectorWrapTest(unittest.TestCase):
 
     def test_can_inject_nothing_into_fn_with_zero_params(self):
-        def ReturnSomething():
+        def return_something():
             return 'something'
-        wrapped = injecting.NewInjector(classes=[]).wrap(ReturnSomething)
+        wrapped = injecting.NewInjector(classes=[]).wrap(return_something)
         self.assertEqual('something', wrapped())
 
     def test_can_inject_nothing_into_fn_with_positional_passed_params(self):
-        def Add(a, b):
+        def add(a, b):
             return a + b
-        wrapped = injecting.NewInjector(classes=[]).wrap(Add)
+        wrapped = injecting.NewInjector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped(2, 3))
 
     def test_can_inject_nothing_into_fn_with_keyword_passed_params(self):
-        def Add(a, b):
+        def add(a, b):
             return a + b
-        wrapped = injecting.NewInjector(classes=[]).wrap(Add)
+        wrapped = injecting.NewInjector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped(a=2, b=3))
 
     def test_can_inject_nothing_into_fn_with_defaults(self):
-        def Add(a=2, b=3):
+        def add(a=2, b=3):
             return a + b
-        wrapped = injecting.NewInjector(classes=[]).wrap(Add)
+        wrapped = injecting.NewInjector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped())
 
     def test_can_inject_nothing_into_fn_with_pargs_and_kwargs(self):
-        def Add(*pargs, **kwargs):
+        def add(*pargs, **kwargs):
             return pargs[0] + kwargs['b']
-        wrapped = injecting.NewInjector(classes=[]).wrap(Add)
+        wrapped = injecting.NewInjector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped(2, b=3))
 
     def test_can_inject_something_into_first_positional_param(self):
         class Foo(object):
             def __init__(self):
                 self.a = 2
-        def Add(foo, b):
+        def add(foo, b):
             return foo.a + b
-        wrapped = injecting.NewInjector(classes=[Foo]).wrap(Add)
+        wrapped = injecting.NewInjector(classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(b=3))
 
     def test_can_inject_something_into_non_first_positional_param(self):
         class Foo(object):
             def __init__(self):
                 self.b = 3
-        def Add(a, foo):
+        def add(a, foo):
             return a + foo.b
-        wrapped = injecting.NewInjector(classes=[Foo]).wrap(Add)
+        wrapped = injecting.NewInjector(classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(2))
 
 

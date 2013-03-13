@@ -160,39 +160,39 @@ def get_implicit_bindings(
     return implicit_bindings
 
 
-# class Binder(object):
+class Binder(object):
 
-#     def __init__(self, future_injector, collected_bindings):
-#         self._future_injector = future_injector
-#         self._collected_bindings = collected_bindings
-#         self._lock = threading.Lock()
+    def __init__(self, future_injector, collected_bindings):
+        self._future_injector = future_injector
+        self._collected_bindings = collected_bindings
+        self._lock = threading.Lock()
 
-#     def bind(self, arg_name,  # annotated_with=None, in_scope=None
-#              to_class=None, to_instance=None, to_provider=None):
-#         binding_key = BindingKeyWithoutAnnotation(arg_name)
+    def bind(self, arg_name,  # annotated_with=None, in_scope=None
+             to_class=None, to_instance=None, to_provider=None):
+        binding_key = BindingKeyWithoutAnnotation(arg_name)
 
-#         specified_to_params = ['to_class' if to_class is not None else None,
-#                                'to_provider' if to_provider is not None else None,
-#                                'to_instance' if to_instance is not None else None]
-#         specified_to_params = [x for x in specified_to_params if x is not None]
-#         if not specified_to_params:
-#             raise errors.NoBindingTargetError(binding_key)
-#         elif len(specified_to_params) > 1:
-#             raise errors.MultipleBindingTargetsError(
-#                 binding_key, specified_to_params)
+        specified_to_params = ['to_class' if to_class is not None else None,
+                               'to_instance' if to_instance is not None else None,
+                               'to_provider' if to_provider is not None else None]
+        specified_to_params = [x for x in specified_to_params if x is not None]
+        if not specified_to_params:
+            raise errors.NoBindingTargetError(binding_key)
+        elif len(specified_to_params) > 1:
+            raise errors.MultipleBindingTargetsError(
+                binding_key, specified_to_params)
 
-#         if to_class is not None:
-#             if not isinstance(to_class, type):
-#                 raise errors.InvalidBindingTargetError(
-#                     binding_key, to_class, 'class')
-#             provider_fn = lambda: self._future_injector.provide(to_class)
-#         elif to_instance is not None:
-#             provider_fn = lambda: to_instance
-#         else:  # to_provider is not None
-#             if not callable(to_provider):
-#                 raise errors.InvalidBindingTargetError(
-#                     binding_key, to_provider, 'callable')
-#             provider_fn = to_provider
+        if to_class is not None:
+            if not isinstance(to_class, type):
+                raise errors.InvalidBindingTargetError(
+                    binding_key, to_class, 'class')
+            provider_fn = lambda: self._future_injector.provide(to_class)
+        elif to_instance is not None:
+            provider_fn = lambda: to_instance
+        else:  # to_provider is not None
+            if not callable(to_provider):
+                raise errors.InvalidBindingTargetError(
+                    binding_key, to_provider, 'callable')
+            provider_fn = to_provider
 
-#         with self._lock:
-#             self._collected_bindings.append(Binding(binding_key, provider_fn))
+        with self._lock:
+            self._collected_bindings.append(Binding(binding_key, provider_fn))

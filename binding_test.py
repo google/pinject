@@ -3,6 +3,7 @@ import unittest
 
 import binding
 import errors
+import injecting
 
 
 class BindingKeyWithoutAnnotationTest(unittest.TestCase):
@@ -141,3 +142,55 @@ class GetImplicitBindingsTest(unittest.TestCase):
             get_arg_names_from_class_name=lambda _: ['foo'])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          implicit_binding.binding_key)
+
+
+class BinderTest(unittest.TestCase):
+
+    def setUp(self):
+        self.future_injector = injecting._FutureInjector()
+        self.collected_bindings = []
+        self.binder = binding.Binder(self.future_injector, self.collected_bindings)
+
+    def test_can_bind_to_class(self):
+        class SomeClass(object):
+            pass
+        self.binder.bind('an-arg-name', to_class=SomeClass)
+        self.future_injector.set_injector(FakeInjector())
+        [only_binding] = self.collected_bindings
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('an-arg-name'),
+                         only_binding.binding_key)
+        self.assertEqual('a-provided-SomeClass', only_binding.provider_fn())
+
+    def test_can_bind_to_instance(self):
+        an_instance = object()
+        self.binder.bind('an-arg-name', to_instance=an_instance)
+        [only_binding] = self.collected_bindings
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('an-arg-name'),
+                         only_binding.binding_key)
+        self.assertIs(an_instance, only_binding.provider_fn())
+
+    def test_can_bind_to_provider(self):
+        self.binder.bind('an-arg-name', to_provider=lambda: 'a-provided-thing')
+        [only_binding] = self.collected_bindings
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('an-arg-name'),
+                         only_binding.binding_key)
+        self.assertEqual('a-provided-thing', only_binding.provider_fn())
+
+    def test_binding_to_nothing_raises_error(self):
+        self.assertRaises(errors.NoBindingTargetError,
+                          self.binder.bind, 'unused-arg-name')
+
+    def test_binding_to_multiple_things_raises_error(self):
+        self.assertRaises(errors.MultipleBindingTargetsError,
+                          self.binder.bind, 'unused-arg-name',
+                          to_instance=object(), to_provider=lambda: None)
+
+    def test_binding_to_non_class_raises_error(self):
+        self.assertRaises(errors.InvalidBindingTargetError,
+                          self.binder.bind, 'unused-arg-name',
+                          to_class='not-a-class')
+
+    def test_binding_to_non_provider_raises_error(self):
+        self.assertRaises(errors.InvalidBindingTargetError,
+                          self.binder.bind, 'unused-arg-name',
+                          to_provider='not-a-provider')
