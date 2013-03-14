@@ -50,62 +50,67 @@ class BindingKeyWithoutAnnotation(BindingKey):
 
 class Binding(object):
 
-    def __init__(self, binding_key, provider_fn):
+    def __init__(self, binding_key, proviser_fn):
         self.binding_key = binding_key
-        self.provider_fn = provider_fn
+        self.proviser_fn = proviser_fn
+
+
+def ProviderToProviser(provider_fn):
+    return lambda unused_binding_key_stack: provider_fn()
 
 
 def new_binding_mapping(explicit_bindings, implicit_bindings):
-    explicit_binding_key_to_provider_fn = {}
+    explicit_binding_key_to_proviser_fn = {}
     for binding in explicit_bindings:
         binding_key = binding.binding_key
-        provider_fn = binding.provider_fn
-        if binding_key in explicit_binding_key_to_provider_fn:
+        proviser_fn = binding.proviser_fn
+        if binding_key in explicit_binding_key_to_proviser_fn:
             raise errors.ConflictingBindingsError(binding_key)
-        explicit_binding_key_to_provider_fn[binding_key] = provider_fn
+        explicit_binding_key_to_proviser_fn[binding_key] = proviser_fn
 
-    implicit_binding_key_to_provider_fn = {}
-    collided_binding_key_to_provider_fns = {}
+    implicit_binding_key_to_proviser_fn = {}
+    collided_binding_key_to_proviser_fns = {}
     for binding in implicit_bindings:
         binding_key = binding.binding_key
-        provider_fn = binding.provider_fn
-        if binding_key in explicit_binding_key_to_provider_fn:
+        proviser_fn = binding.proviser_fn
+        if binding_key in explicit_binding_key_to_proviser_fn:
             continue
-        if binding_key in implicit_binding_key_to_provider_fn:
-            existing_provider_fn = implicit_binding_key_to_provider_fn[binding_key]
-            del implicit_binding_key_to_provider_fn[binding_key]
-            provider_fns = collided_binding_key_to_provider_fns.setdefault(
+        if binding_key in implicit_binding_key_to_proviser_fn:
+            existing_proviser_fn = implicit_binding_key_to_proviser_fn[binding_key]
+            del implicit_binding_key_to_proviser_fn[binding_key]
+            proviser_fns = collided_binding_key_to_proviser_fns.setdefault(
                 binding_key, set())
-            provider_fns.add('{0}.{1}'.format(existing_provider_fn.__module__,
-                                              existing_provider_fn.__name__))
-        if binding_key in collided_binding_key_to_provider_fns:
-            provider_fnes = collided_binding_key_to_provider_fns[binding_key]
-            provider_fnes.add('{0}.{1}'.format(provider_fn.__module__,
-                                               provider_fn.__name__))
+            proviser_fns.add('{0}.{1}'.format(existing_proviser_fn.__module__,
+                                              existing_proviser_fn.__name__))
+        if binding_key in collided_binding_key_to_proviser_fns:
+            proviser_fnes = collided_binding_key_to_proviser_fns[binding_key]
+            proviser_fnes.add('{0}.{1}'.format(proviser_fn.__module__,
+                                               proviser_fn.__name__))
         else:
-            implicit_binding_key_to_provider_fn[binding_key] = binding.provider_fn
+            implicit_binding_key_to_proviser_fn[binding_key] = binding.proviser_fn
 
-    binding_key_to_provider_fn = explicit_binding_key_to_provider_fn
-    binding_key_to_provider_fn.update(implicit_binding_key_to_provider_fn)
+    binding_key_to_proviser_fn = explicit_binding_key_to_proviser_fn
+    binding_key_to_proviser_fn.update(implicit_binding_key_to_proviser_fn)
     return _BindingMapping(
-        binding_key_to_provider_fn,  collided_binding_key_to_provider_fns)
+        binding_key_to_proviser_fn,  collided_binding_key_to_proviser_fns)
 
 
 class _BindingMapping(object):
 
-    def __init__(self, binding_key_to_provider_fn,
-                 collided_binding_key_to_provider_fns):
-        self._binding_key_to_provider_fn = binding_key_to_provider_fn
-        self._collided_binding_key_to_provider_fns = (
-            collided_binding_key_to_provider_fns)
+    def __init__(self, binding_key_to_proviser_fn,
+                 collided_binding_key_to_proviser_fns):
+        self._binding_key_to_proviser_fn = binding_key_to_proviser_fn
+        self._collided_binding_key_to_proviser_fns = (
+            collided_binding_key_to_proviser_fns)
 
-    def get_instance(self, binding_key):
-        if binding_key in self._binding_key_to_provider_fn:
-            return self._binding_key_to_provider_fn[binding_key]()
-        elif binding_key in self._collided_binding_key_to_provider_fns:
+    def get_instance(self, binding_key, binding_key_stack):
+        if binding_key in self._binding_key_to_proviser_fn:
+            return self._binding_key_to_proviser_fn[binding_key](
+                binding_key_stack)
+        elif binding_key in self._collided_binding_key_to_proviser_fns:
             raise errors.AmbiguousArgNameError(
                 binding_key,
-                self._collided_binding_key_to_provider_fns[binding_key])
+                self._collided_binding_key_to_proviser_fns[binding_key])
         else:
             raise errors.NothingInjectableForArgNameError(binding_key)
 
@@ -154,9 +159,9 @@ def get_implicit_bindings(
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
-            def ProvideCls(cls=cls):
-                return future_injector.provide(cls)
-            implicit_bindings.append(Binding(binding_key, ProvideCls))
+            def ProviseCls(binding_key_stack, cls=cls):
+                return future_injector._provide_class(cls, binding_key_stack)
+            implicit_bindings.append(Binding(binding_key, ProviseCls))
     return implicit_bindings
 
 
@@ -185,14 +190,16 @@ class Binder(object):
             if not isinstance(to_class, type):
                 raise errors.InvalidBindingTargetError(
                     binding_key, to_class, 'class')
-            provider_fn = lambda: self._future_injector.provide(to_class)
+            proviser_fn = lambda binding_key_stack: (
+                self._future_injector._provide_class(
+                    to_class, binding_key_stack))
         elif to_instance is not None:
-            provider_fn = lambda: to_instance
+            proviser_fn = ProviderToProviser(lambda: to_instance)
         else:  # to_provider is not None
             if not callable(to_provider):
                 raise errors.InvalidBindingTargetError(
                     binding_key, to_provider, 'callable')
-            provider_fn = to_provider
+            proviser_fn = ProviderToProviser(to_provider)
 
         with self._lock:
-            self._collected_bindings.append(Binding(binding_key, provider_fn))
+            self._collected_bindings.append(Binding(binding_key, proviser_fn))

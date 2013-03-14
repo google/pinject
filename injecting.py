@@ -35,19 +35,25 @@ class _Injector(object):
         self._binding_mapping = binding_mapping
 
     def provide(self, cls):
-        return self._provide_class(cls)
+        return self._provide_class(cls, binding_key_stack=[])
 
-    def _provide_arg(self, arg_name):
+    def _provide_arg(self, arg_name, binding_key_stack):
         binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
-        # TODO(kurts): make a reasonable error message if the mapping raises.
-        return self._binding_mapping.get_instance(binding_key)
+        binding_key_stack.append(binding_key)
+        if binding_key in binding_key_stack[:-1]:
+            raise errors.CyclicInjectionError(binding_key_stack)
+        try:
+            # TODO(kurts): make a reasonable error message if the mapping raises.
+            return self._binding_mapping.get_instance(binding_key, binding_key_stack)
+        finally:
+            binding_key_stack.pop()
 
-    def _provide_class(self, cls):
+    def _provide_class(self, cls, binding_key_stack):
         init_kwargs = {}
         if cls.__init__ is not object.__init__:
             arg_names, unused_varargs, unused_keywords, unused_defaults = inspect.getargspec(cls.__init__)
             for arg_name in _arg_names_without_self(arg_names):
-                init_kwargs[arg_name] = self._provide_arg(arg_name)
+                init_kwargs[arg_name] = self._provide_arg(arg_name, binding_key_stack)
         return cls(**init_kwargs)
 
     def wrap(self, fn):
@@ -63,7 +69,8 @@ class _Injector(object):
             if injected_arg_names:
                 kwargs = dict(kwargs)
                 for arg_name in injected_arg_names:
-                    kwargs[arg_name] = self._provide_arg(arg_name)
+                    kwargs[arg_name] = self._provide_arg(
+                        arg_name, binding_key_stack=[])
             return fn(*pargs, **kwargs)
         return WrappedFn
 

@@ -19,6 +19,10 @@ class ConflictingBindingsError(Error):
             self, 'multiple conflicting bindings for {0}'.format(binding_key))
 
 
+class CyclicInjectionError(Error):
+    pass
+
+
 class InjectorNotYetInstantiatedError(Error):
     pass
 

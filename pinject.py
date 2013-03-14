@@ -13,6 +13,7 @@ import errors
 Error = errors.Error
 AmbiguousArgNameError = errors.AmbiguousArgNameError
 ConflictingBindingsError = errors.ConflictingBindingsError
+CyclicInjectionError = errors.CyclicInjectionError
 InvalidBindingTargetError = errors.InvalidBindingTargetError
 MultipleBindingTargetsError = errors.MultipleBindingTargetsError
 NoBindingTargetError = errors.NoBindingTargetError
@@ -65,7 +66,6 @@ new_injector = injecting.new_injector
 
 
 # TODO:
-# - detect cycles in binding, and automatically insert proxy objects
 # - allow declared bindings at initializer sites
 # - only inject if a class is marked as injectable
 # - safe vs. unsafe mode

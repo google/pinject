@@ -90,6 +90,17 @@ class InjectorProvideTest(unittest.TestCase):
         self.assertRaises(errors.NothingInjectableForArgNameError,
                           injector.provide, UnknownParamClass)
 
+    def test_raises_error_if_injection_cycle(self):
+        class ClassOne(object):
+            def __init__(self, class_two):
+                pass
+        class ClassTwo(object):
+            def __init__(self, class_one):
+                pass
+        injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
+        self.assertRaises(errors.CyclicInjectionError,
+                          injector.provide, ClassOne)
+
 
 class InjectorWrapTest(unittest.TestCase):
 
