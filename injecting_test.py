@@ -8,9 +8,9 @@ import injecting
 class NewInjectorTest(unittest.TestCase):
 
     def test_creates_injector_using_given_modules(self):
-        injector = injecting.new_injector(modules=[injecting])
-        self.assertIsInstance(injector.provide(injecting._FutureInjector),
-                              injecting._FutureInjector)
+        injector = injecting.new_injector(modules=[errors])
+        self.assertIsInstance(injector.provide(errors.Error),
+                              errors.Error)
 
     def test_creates_injector_using_given_classes(self):
         class SomeClass(object):
@@ -151,26 +151,3 @@ class InjectorWrapTest(unittest.TestCase):
             return a + foo.b
         wrapped = injecting.new_injector(classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(2))
-
-
-class InjectorNotYetInstantiatedTest(unittest.TestCase):
-
-    def test_calling_method_raises_error(self):
-        injector = injecting._InjectorNotYetInstantiated()
-        self.assertRaises(errors.InjectorNotYetInstantiatedError,
-                          injector.provide, 'unused-class')
-
-
-class FutureInjectorTest(unittest.TestCase):
-
-    def test_calling_method_when_injector_not_yet_set_raises_error(self):
-        future_injector = injecting._FutureInjector()
-        self.assertRaises(errors.InjectorNotYetInstantiatedError,
-                          future_injector.provide, 'unused-class')
-
-    def test_calling_method_calls_method_on_contained_injector(self):
-        future_injector = injecting._FutureInjector()
-        class SomeClass(object):
-            pass
-        future_injector.set_injector(injecting.new_injector(classes=[SomeClass]))
-        self.assertIsInstance(future_injector.provide(SomeClass), SomeClass)

@@ -34,7 +34,7 @@ class NewBindingMappingTest(unittest.TestCase):
         self.assertRaises(errors.NothingInjectableForArgNameError,
                           binding_mapping.get_instance,
                           binding.BindingKeyWithoutAnnotation('anything'),
-                          binding_key_stack=[])
+                          binding_key_stack=[], injector=None)
 
     def test_unknown_binding_raises_error(self):
         class SomeClass(object):
@@ -46,7 +46,7 @@ class NewBindingMappingTest(unittest.TestCase):
             'unknown_class')
         self.assertRaises(errors.NothingInjectableForArgNameError,
                           binding_mapping.get_instance, unknown_binding_key,
-                          binding_key_stack=[])
+                          binding_key_stack=[], injector=None)
 
     def test_single_implicit_class_gets_mapped(self):
         class SomeClass(object):
@@ -54,7 +54,10 @@ class NewBindingMappingTest(unittest.TestCase):
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
         binding_mapping = binding.new_binding_mapping(
             [], [binding.Binding(binding_key, binding.ProviderToProviser(SomeClass))])
-        self.assertIsInstance(binding_mapping.get_instance(binding_key, binding_key_stack=[]), SomeClass)
+        self.assertIsInstance(
+            binding_mapping.get_instance(
+                binding_key, binding_key_stack=[], injector=None),
+            SomeClass)
 
     def test_multiple_noncolliding_implicit_classes_get_mapped(self):
         class ClassOne(object):
@@ -66,8 +69,14 @@ class NewBindingMappingTest(unittest.TestCase):
         binding_mapping = binding.new_binding_mapping(
             [], [binding.Binding(binding_key_one, binding.ProviderToProviser(ClassOne)),
                  binding.Binding(binding_key_two, binding.ProviderToProviser(ClassTwo))])
-        self.assertIsInstance(binding_mapping.get_instance(binding_key_one, binding_key_stack=[]), ClassOne)
-        self.assertIsInstance(binding_mapping.get_instance(binding_key_two, binding_key_stack=[]), ClassTwo)
+        self.assertIsInstance(
+            binding_mapping.get_instance(
+                binding_key_one, binding_key_stack=[], injector=None),
+            ClassOne)
+        self.assertIsInstance(
+            binding_mapping.get_instance(
+                binding_key_two, binding_key_stack=[], injector=None),
+            ClassTwo)
 
     def test_multiple_colliding_classes_raises_error(self):
         class SomeClass(object):
@@ -79,7 +88,8 @@ class NewBindingMappingTest(unittest.TestCase):
             [], [binding.Binding(binding_key, SomeClass),
                  binding.Binding(binding_key, _SomeClass)])
         self.assertRaises(errors.AmbiguousArgNameError,
-                          binding_mapping.get_instance, binding_key, binding_key_stack=[])
+                          binding_mapping.get_instance,
+                          binding_key, binding_key_stack=[], injector=None)
 
 
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
@@ -109,43 +119,44 @@ class FakeInjector(object):
 class GetImplicitBindingsTest(unittest.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
-        self.assertEqual([], binding.get_implicit_bindings([], FakeInjector()))
+        self.assertEqual([], binding.get_implicit_bindings([]))
 
     def test_returns_binding_for_input_class(self):
         class SomeClass(object):
             pass
-        [implicit_binding] = binding.get_implicit_bindings(
-            [SomeClass], FakeInjector())
+        [implicit_binding] = binding.get_implicit_bindings([SomeClass])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('some_class'),
                          implicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass',
-                         implicit_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK))
+                         implicit_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector()))
 
     def test_returns_binding_for_correct_input_class(self):
         class ClassOne(object):
             pass
         class ClassTwo(object):
             pass
-        implicit_bindings = binding.get_implicit_bindings(
-            [ClassOne, ClassTwo], FakeInjector())
+        implicit_bindings = binding.get_implicit_bindings([ClassOne, ClassTwo])
         for implicit_binding in implicit_bindings:
             if (implicit_binding.binding_key ==
                 binding.BindingKeyWithoutAnnotation('class_one')):
-                self.assertEqual('a-provided-ClassOne',
-                                 implicit_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK))
+                self.assertEqual(
+                    'a-provided-ClassOne',
+                    implicit_binding.proviser_fn(
+                        _UNUSED_BINDING_KEY_STACK, FakeInjector()))
             else:
                 self.assertEqual(
                     implicit_binding.binding_key,
                     binding.BindingKeyWithoutAnnotation('class_two'))
-                self.assertEqual('a-provided-ClassTwo',
-                                 implicit_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK))
+                self.assertEqual(
+                    'a-provided-ClassTwo',
+                    implicit_binding.proviser_fn(
+                        _UNUSED_BINDING_KEY_STACK, FakeInjector()))
 
     def test_uses_provided_fn_to_map_class_names_to_arg_names(self):
         class SomeClass(object):
             pass
         [implicit_binding] = binding.get_implicit_bindings(
-            [SomeClass], FakeInjector(),
-            get_arg_names_from_class_name=lambda _: ['foo'])
+            [SomeClass], get_arg_names_from_class_name=lambda _: ['foo'])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          implicit_binding.binding_key)
 
@@ -156,19 +167,17 @@ _UNUSED_BINDING_KEY_STACK = []
 class BinderTest(unittest.TestCase):
 
     def setUp(self):
-        self.future_injector = injecting._FutureInjector()
         self.collected_bindings = []
-        self.binder = binding.Binder(self.future_injector, self.collected_bindings)
+        self.binder = binding.Binder(self.collected_bindings)
 
     def test_can_bind_to_class(self):
         class SomeClass(object):
             pass
         self.binder.bind('an-arg-name', to_class=SomeClass)
-        self.future_injector.set_injector(FakeInjector())
         [only_binding] = self.collected_bindings
         self.assertEqual(binding.BindingKeyWithoutAnnotation('an-arg-name'),
                          only_binding.binding_key)
-        self.assertEqual('a-provided-SomeClass', only_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK))
+        self.assertEqual('a-provided-SomeClass', only_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector()))
 
     def test_can_bind_to_instance(self):
         an_instance = object()
@@ -176,14 +185,14 @@ class BinderTest(unittest.TestCase):
         [only_binding] = self.collected_bindings
         self.assertEqual(binding.BindingKeyWithoutAnnotation('an-arg-name'),
                          only_binding.binding_key)
-        self.assertIs(an_instance, only_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK))
+        self.assertIs(an_instance, only_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector()))
 
     def test_can_bind_to_provider(self):
         self.binder.bind('an-arg-name', to_provider=lambda: 'a-provided-thing')
         [only_binding] = self.collected_bindings
         self.assertEqual(binding.BindingKeyWithoutAnnotation('an-arg-name'),
                          only_binding.binding_key)
-        self.assertEqual('a-provided-thing', only_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK))
+        self.assertEqual('a-provided-thing', only_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector()))
 
     def test_binding_to_nothing_raises_error(self):
         self.assertRaises(errors.NoBindingTargetError,

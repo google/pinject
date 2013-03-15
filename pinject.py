@@ -72,6 +72,8 @@ new_injector = injecting.new_injector
 #     (but get a second opinion on whether it decreases testability)
 # - only inject if a class is marked as injectable
 # - safe vs. unsafe mode
+# - auto-finding provider functions (e.g., new_foo())
+# - allow provider functions declared to be so via a decorator
 # - annotations
 # - automatically instantiate the concrete subclass of an interface?
 #     (it is possible to determine that something is abstract?)

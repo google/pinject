@@ -56,7 +56,7 @@ class Binding(object):
 
 
 def ProviderToProviser(provider_fn):
-    return lambda unused_binding_key_stack: provider_fn()
+    return lambda binding_key_stack, injector: provider_fn()
 
 
 def new_binding_mapping(explicit_bindings, implicit_bindings):
@@ -103,10 +103,10 @@ class _BindingMapping(object):
         self._collided_binding_key_to_proviser_fns = (
             collided_binding_key_to_proviser_fns)
 
-    def get_instance(self, binding_key, binding_key_stack):
+    def get_instance(self, binding_key, binding_key_stack, injector):
         if binding_key in self._binding_key_to_proviser_fn:
             return self._binding_key_to_proviser_fn[binding_key](
-                binding_key_stack)
+                binding_key_stack, injector)
         elif binding_key in self._collided_binding_key_to_proviser_fns:
             raise errors.AmbiguousArgNameError(
                 binding_key,
@@ -142,7 +142,7 @@ def default_get_arg_names_from_class_name(class_name):
 
 
 def get_implicit_bindings(
-    classes, future_injector,
+    classes,
     get_arg_names_from_class_name=default_get_arg_names_from_class_name):
     """Creates a mapping from arg names to classes.
 
@@ -159,29 +159,27 @@ def get_implicit_bindings(
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
-            def ProviseCls(binding_key_stack, cls=cls):
-                return future_injector._provide_class(cls, binding_key_stack)
-            implicit_bindings.append(Binding(binding_key, ProviseCls))
+            proviser_fn = create_proviser_fn(binding_key, to_class=cls)
+            implicit_bindings.append(Binding(binding_key, proviser_fn))
     return implicit_bindings
 
 
 class Binder(object):
 
-    def __init__(self, future_injector, collected_bindings):
-        self._future_injector = future_injector
+    def __init__(self, collected_bindings):
         self._collected_bindings = collected_bindings
         self._lock = threading.Lock()
 
     def bind(self, arg_name,  # annotated_with=None, in_scope=None
              to_class=None, to_instance=None, to_provider=None):
         binding_key = BindingKeyWithoutAnnotation(arg_name)
-        proviser_fn = create_proviser_fn(binding_key, self._future_injector,
+        proviser_fn = create_proviser_fn(binding_key,
                                          to_class, to_instance, to_provider)
         with self._lock:
             self._collected_bindings.append(Binding(binding_key, proviser_fn))
 
 
-def create_proviser_fn(binding_key, future_injector,
+def create_proviser_fn(binding_key,
                        to_class=None, to_instance=None, to_provider=None):
     specified_to_params = ['to_class' if to_class is not None else None,
                            'to_instance' if to_instance is not None else None,
@@ -197,7 +195,7 @@ def create_proviser_fn(binding_key, future_injector,
         if not isinstance(to_class, type):
             raise errors.InvalidBindingTargetError(
                 binding_key, to_class, 'class')
-        return lambda binding_key_stack: future_injector._provide_class(
+        return lambda binding_key_stack, injector: injector._provide_class(
             to_class, binding_key_stack)
     elif to_instance is not None:
         return ProviderToProviser(lambda: to_instance)

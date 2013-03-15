@@ -18,22 +18,19 @@ import finding
 def new_injector(modules=None, classes=None,
                  get_arg_names_from_class_name=binding.default_get_arg_names_from_class_name,
                  binding_fns=None):
-    future_injector = _FutureInjector()
-
     explicit_bindings = []
-    binder = binding.Binder(future_injector, explicit_bindings)
+    binder = binding.Binder(explicit_bindings)
     if binding_fns is not None:
         for binding_fn in binding_fns:
             binding_fn(bind=binder.bind)
 
     classes = finding.FindClasses(modules, classes)
     implicit_bindings = binding.get_implicit_bindings(
-        classes, future_injector, get_arg_names_from_class_name)
+        classes, get_arg_names_from_class_name)
     binding_mapping = binding.new_binding_mapping(
         explicit_bindings, implicit_bindings)
 
     injector = _Injector(binding_mapping)
-    future_injector.set_injector(injector)
     return injector
 
 
@@ -52,13 +49,15 @@ class _Injector(object):
             raise errors.CyclicInjectionError(binding_key_stack)
         try:
             # TODO(kurts): make a reasonable error message if the mapping raises.
-            return self._binding_mapping.get_instance(binding_key, binding_key_stack)
+            return self._binding_mapping.get_instance(binding_key, binding_key_stack, self)
         finally:
             binding_key_stack.pop()
 
     def _provide_class(self, cls, binding_key_stack):
         init_kwargs = {}
-        if cls.__init__ is not object.__init__:
+        # TODO(kurts): this hard-coding feels strange.  Is there any way to
+        # get all such cases?
+        if cls.__init__ not in (object.__init__, Exception.__init__):
             arg_names, unused_varargs, unused_keywords, unused_defaults = inspect.getargspec(cls.__init__)
             for arg_name in _arg_names_without_self(arg_names):
                 init_kwargs[arg_name] = self._provide_arg(arg_name, binding_key_stack)
@@ -86,25 +85,3 @@ class _Injector(object):
 
 def _arg_names_without_self(args):
     return args[1:]
-
-
-class _InjectorNotYetInstantiated(object):
-
-    def __getattribute__(self, unused_name):
-        def RaiseError(*pargs, **kwargs):
-            raise errors.InjectorNotYetInstantiatedError()
-        return RaiseError
-
-
-class _FutureInjector(object):
-
-    def __init__(self):
-        self._injector = _InjectorNotYetInstantiated()
-
-    def __getattr__(self, name):
-        return getattr(self._injector, name)
-
-    def set_injector(self, injector):
-        if not isinstance(self._injector, _InjectorNotYetInstantiated):
-            raise ProgrammerError('set_injector() should not be called twice')
-        self._injector = injector
