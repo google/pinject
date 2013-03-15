@@ -23,10 +23,6 @@ class CyclicInjectionError(Error):
     pass
 
 
-class InjectorNotYetInstantiatedError(Error):
-    pass
-
-
 class InvalidBindingTargetError(Error):
 
     def __init__(self, binding_key, binding_target, expected_type_str):
@@ -48,6 +44,13 @@ class NoBindingTargetError(Error):
     def __init__(self, binding_key):
         Error.__init__(
             self, 'no binding target given for {0}'.format(binding_key))
+
+
+class NoSuchArgToInjectError(Error):
+
+    def __init__(self, arg_name, fn):
+        Error.__init__(
+            self, 'no such arg {0} to inject into {1}'.format(arg_name, fn))
 
 
 class NothingInjectableForArgNameError(Error):

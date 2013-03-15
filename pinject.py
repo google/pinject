@@ -17,6 +17,7 @@ CyclicInjectionError = errors.CyclicInjectionError
 InvalidBindingTargetError = errors.InvalidBindingTargetError
 MultipleBindingTargetsError = errors.MultipleBindingTargetsError
 NoBindingTargetError = errors.NoBindingTargetError
+NoSuchArgToInjectError = errors.NoSuchArgToInjectError
 NothingInjectableForArgNameError = errors.NothingInjectableForArgNameError
 
 import injecting
@@ -72,6 +73,7 @@ new_injector = injecting.new_injector
 #     (but get a second opinion on whether it decreases testability)
 # - only inject if a class is marked as injectable
 # - safe vs. unsafe mode
+# - auto-inject params of provider functions
 # - auto-finding provider functions (e.g., new_foo())
 # - allow provider functions declared to be so via a decorator
 # - annotations

@@ -7,12 +7,26 @@ import errors
 import finding
 
 
-# def inject(arg_name, to_class=None, to_instance=None, to_provider=None):
-#     binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
-#     def get_decorated_initializer(initializer_fn):
-#         return initializer_fn
-#     return get_decorated_initializer
-
+def inject(arg_name, to_class=None, to_instance=None, to_provider=None):
+    binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
+    proviser_fn = binding.create_proviser_fn(
+        binding_key, to_class, to_instance, to_provider)
+    def get_decorated_initializer(initializer_fn):
+        if hasattr(initializer_fn, '_is_pinject_decorator'):
+            decorated_initializer_fn = initializer_fn
+        else:
+            def decorated_initializer_fn(*pargs, **kwargs):
+                # TODO(kurts): use functools.update_wrapper
+                return initializer_fn(*pargs, **kwargs)
+            decorated_initializer_fn._pinject_is_decorator = True
+            decorated_initializer_fn._pinject_bindings = []
+        arg_names, unused_varargs, unused_keywords, unused_defaults = inspect.getargspec(initializer_fn)
+        if arg_name not in arg_names:
+            raise errors.NoSuchArgToInjectError(arg_name, initializer_fn)
+        decorated_initializer_fn._pinject_bindings.append(
+            binding.Binding(binding_key, proviser_fn))
+        return decorated_initializer_fn
+    return get_decorated_initializer
 
 
 def new_injector(modules=None, classes=None,
