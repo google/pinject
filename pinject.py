@@ -67,6 +67,9 @@ new_injector = injecting.new_injector
 
 # TODO:
 # - allow declared bindings at initializer sites
+# - allow field injection
+#     (lack of field docstrings is OK because they're the appropriate instances of that type)
+#     (but get a second opinion on whether it decreases testability)
 # - only inject if a class is marked as injectable
 # - safe vs. unsafe mode
 # - annotations

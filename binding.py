@@ -175,31 +175,34 @@ class Binder(object):
     def bind(self, arg_name,  # annotated_with=None, in_scope=None
              to_class=None, to_instance=None, to_provider=None):
         binding_key = BindingKeyWithoutAnnotation(arg_name)
-
-        specified_to_params = ['to_class' if to_class is not None else None,
-                               'to_instance' if to_instance is not None else None,
-                               'to_provider' if to_provider is not None else None]
-        specified_to_params = [x for x in specified_to_params if x is not None]
-        if not specified_to_params:
-            raise errors.NoBindingTargetError(binding_key)
-        elif len(specified_to_params) > 1:
-            raise errors.MultipleBindingTargetsError(
-                binding_key, specified_to_params)
-
-        if to_class is not None:
-            if not isinstance(to_class, type):
-                raise errors.InvalidBindingTargetError(
-                    binding_key, to_class, 'class')
-            proviser_fn = lambda binding_key_stack: (
-                self._future_injector._provide_class(
-                    to_class, binding_key_stack))
-        elif to_instance is not None:
-            proviser_fn = ProviderToProviser(lambda: to_instance)
-        else:  # to_provider is not None
-            if not callable(to_provider):
-                raise errors.InvalidBindingTargetError(
-                    binding_key, to_provider, 'callable')
-            proviser_fn = ProviderToProviser(to_provider)
-
+        proviser_fn = create_proviser_fn(binding_key, self._future_injector,
+                                         to_class, to_instance, to_provider)
         with self._lock:
             self._collected_bindings.append(Binding(binding_key, proviser_fn))
+
+
+def create_proviser_fn(binding_key, future_injector,
+                       to_class=None, to_instance=None, to_provider=None):
+    specified_to_params = ['to_class' if to_class is not None else None,
+                           'to_instance' if to_instance is not None else None,
+                           'to_provider' if to_provider is not None else None]
+    specified_to_params = [x for x in specified_to_params if x is not None]
+    if not specified_to_params:
+        raise errors.NoBindingTargetError(binding_key)
+    elif len(specified_to_params) > 1:
+        raise errors.MultipleBindingTargetsError(
+            binding_key, specified_to_params)
+
+    if to_class is not None:
+        if not isinstance(to_class, type):
+            raise errors.InvalidBindingTargetError(
+                binding_key, to_class, 'class')
+        return lambda binding_key_stack: future_injector._provide_class(
+            to_class, binding_key_stack)
+    elif to_instance is not None:
+        return ProviderToProviser(lambda: to_instance)
+    else:  # to_provider is not None
+        if not callable(to_provider):
+            raise errors.InvalidBindingTargetError(
+                binding_key, to_provider, 'callable')
+        return ProviderToProviser(to_provider)

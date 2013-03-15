@@ -7,6 +7,14 @@ import errors
 import finding
 
 
+# def inject(arg_name, to_class=None, to_instance=None, to_provider=None):
+#     binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
+#     def get_decorated_initializer(initializer_fn):
+#         return initializer_fn
+#     return get_decorated_initializer
+
+
+
 def new_injector(modules=None, classes=None,
                  get_arg_names_from_class_name=binding.default_get_arg_names_from_class_name,
                  binding_fns=None):
@@ -57,6 +65,7 @@ class _Injector(object):
         return cls(**init_kwargs)
 
     def wrap(self, fn):
+        # TODO(kurts): use functools.update_wrapper().
         # TODO(kurts): use http://micheles.googlecode.com/hg/decorator/documentation.html
         arg_names, unused_varargs, unused_keywords, defaults = inspect.getargspec(fn)
         if defaults is None:
