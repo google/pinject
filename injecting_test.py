@@ -1,8 +1,39 @@
 
 import unittest
 
+import binding
 import errors
 import injecting
+
+
+class InjectTest(unittest.TestCase):
+
+    def test_adds_pinject_decorated_fn_with_attributes(self):
+        @injecting.inject('foo', with_instance=3)
+        def some_function(foo):
+            return foo
+        self.assertTrue(some_function._pinject_is_decorator)
+        self.assertEqual([binding.BindingKeyWithoutAnnotation('foo')],
+                         [b.binding_key for b in some_function._pinject_bindings])
+        self.assertEqual([3],
+                         [b.proviser_fn('unused-binding-key-stack', 'unused-injector')
+                          for b in some_function._pinject_bindings])
+
+    def test_raises_error_if_injecting_nonexistent_arg(self):
+        def do_bad_inject():
+            @injecting.inject('foo', with_instance=3)
+            def some_function(bar):
+                return bar
+        self.assertRaises(errors.NoSuchArgToInjectError, do_bad_inject)
+
+    def test_reuses_decorated_fn_when_multiple_injections(self):
+        @injecting.inject('foo', with_instance=3)
+        @injecting.inject('bar', with_instance=4)
+        def some_function(foo, bar):
+            return foo + bar
+        self.assertEqual([binding.BindingKeyWithoutAnnotation('bar'),
+                          binding.BindingKeyWithoutAnnotation('foo')],
+                         [b.binding_key for b in some_function._pinject_bindings])
 
 
 class NewInjectorTest(unittest.TestCase):
