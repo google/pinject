@@ -6,7 +6,11 @@ import errors
 
 
 class BindingKey(object):
-    """The key for a binding."""
+    """The key for a binding.
+
+    Attributes:
+      arg_name: the name of the bound arg
+    """
 
     pass
 
@@ -15,43 +19,43 @@ class BindingKeyWithoutAnnotation(BindingKey):
     """A key with no annotation."""
 
     def __init__(self, arg_name):
-        self._arg_name = arg_name
+        self.arg_name = arg_name
 
     def __eq__(self, other):
         return (isinstance(other, BindingKeyWithoutAnnotation) and
-                self._arg_name == other._arg_name)
+                self.arg_name == other.arg_name)
 
     def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):
-        return hash(self._arg_name)
+        return hash(self.arg_name)
 
     def __str__(self):
-        return 'the arg name {0}'.format(self._arg_name)
+        return 'the arg name {0}'.format(self.arg_name)
 
 
 # class BindingKeyWithAnnotation(BindingKey):
 #     """A key with an annotation."""
 
 #     def __init__(self, arg_name, annotation):
-#         self._arg_name = arg_name
+#         self.arg_name = arg_name
 #         self._annotation = annotation
 
 #     def __eq__(self, other):
 #         return (isinstance(other, BindingKeyWithAnnotation) and
-#                 self._arg_name == other._arg_name and
+#                 self.arg_name == other.arg_name and
 #                 self._annotation == other._annotation)
 
 #     def __ne__(self, other):
 #         return not (self == other)
 
 #     def __hash__(self):
-#         return hash(self._arg_name) ^ hash(self._annotation)
+#         return hash(self.arg_name) ^ hash(self._annotation)
 
 #     def __str__(self):
 #         return 'the arg name {0} annotated with {1}'.format(
-#             self._arg_name, self._annotation)
+#             self.arg_name, self._annotation)
 
 
 class Binding(object):

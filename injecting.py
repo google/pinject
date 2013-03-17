@@ -76,7 +76,6 @@ class _Injector(object):
         finally:
             binding_key_stack.pop()
 
-    # TODO(kurts): inline _provide_class().
     def _provide_class(self, cls, binding_key_stack):
         init_kwargs = {}
         if type(cls.__init__) is types.MethodType:
@@ -87,8 +86,7 @@ class _Injector(object):
                     inspect.getargspec(getattr(cls.__init__, _ORIG_FN_ATTR)))
                 prebound_bindings = getattr(cls.__init__, _BINDINGS_ATTR)
                 for prebound_binding in prebound_bindings:
-                    # TODO(kurts): don't peek in BindingKey
-                    init_kwargs[prebound_binding.binding_key._arg_name] = (
+                    init_kwargs[prebound_binding.binding_key.arg_name] = (
                         prebound_binding.proviser_fn(binding_key_stack, self))
                 prebound_binding_keys = [b.binding_key for b in prebound_bindings]
                 arg_names_to_inject = [
