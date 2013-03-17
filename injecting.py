@@ -1,6 +1,7 @@
 
 import inspect
 import re
+import types
 
 import binding
 import errors
@@ -73,9 +74,7 @@ class _Injector(object):
 
     def _provide_class(self, cls, binding_key_stack):
         init_kwargs = {}
-        # TODO(kurts): this hard-coding feels strange.  Is there any way to
-        # get all such cases?
-        if cls.__init__ not in (object.__init__, Exception.__init__):
+        if type(cls.__init__) is types.MethodType:
             arg_names, unused_varargs, unused_keywords, unused_defaults = inspect.getargspec(cls.__init__)
             for arg_name in _arg_names_without_self(arg_names):
                 init_kwargs[arg_name] = self._provide_arg(arg_name, binding_key_stack)
