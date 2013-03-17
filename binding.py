@@ -21,6 +21,9 @@ class BindingKeyWithoutAnnotation(BindingKey):
         return (isinstance(other, BindingKeyWithoutAnnotation) and
                 self._arg_name == other._arg_name)
 
+    def __ne__(self, other):
+        return not (self == other)
+
     def __hash__(self):
         return hash(self._arg_name)
 
@@ -39,6 +42,9 @@ class BindingKeyWithoutAnnotation(BindingKey):
 #         return (isinstance(other, BindingKeyWithAnnotation) and
 #                 self._arg_name == other._arg_name and
 #                 self._annotation == other._annotation)
+
+#     def __ne__(self, other):
+#         return not (self == other)
 
 #     def __hash__(self):
 #         return hash(self._arg_name) ^ hash(self._annotation)

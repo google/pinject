@@ -35,6 +35,12 @@ class InjectTest(unittest.TestCase):
                           binding.BindingKeyWithoutAnnotation('foo')],
                          [b.binding_key for b in some_function._pinject_bindings])
 
+    def test_can_call_inject_decorated_fn_normally(self):
+        @injecting.inject('foo', with_instance=3)
+        def some_function(foo):
+            return foo
+        self.assertEqual('an-arg', some_function('an-arg'))
+
 
 class NewInjectorTest(unittest.TestCase):
 
@@ -131,6 +137,28 @@ class InjectorProvideTest(unittest.TestCase):
         injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
         self.assertRaises(errors.CyclicInjectionError,
                           injector.provide, ClassOne)
+
+    def test_can_provide_class_with_explicitly_injected_arg(self):
+        class SomeClass(object):
+            @injecting.inject('foo', with_instance=3)
+            def __init__(self, foo):
+                self.foo = foo
+        injector = injecting.new_injector(classes=[SomeClass])
+        self.assertEqual(3, injector.provide(SomeClass).foo)
+
+    def test_can_provide_class_with_explicitly_and_implicitly_injected_args(self):
+        class ClassOne(object):
+            def __init__(self):
+                self.foo = 1
+        class ClassTwo(object):
+            @injecting.inject('foo', with_instance=2)
+            def __init__(self, foo, class_one):
+                self.foo = foo
+                self.class_one = class_one
+        injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
+        class_two = injector.provide(ClassTwo)
+        self.assertEqual(2, class_two.foo)
+        self.assertEqual(1, class_two.class_one.foo)
 
 
 class InjectorWrapTest(unittest.TestCase):
