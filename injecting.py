@@ -10,6 +10,7 @@ import finding
 
 _BINDINGS_ATTR = '_pinject_bindings'
 _IS_DECORATOR_ATTR = '_pinject_is_decorator'
+_ORIG_FN_ATTR = '_pinject_orig_fn'
 
 
 def inject(arg_name, with_class=None, with_instance=None, with_provider=None):
@@ -25,11 +26,10 @@ def inject(arg_name, with_class=None, with_instance=None, with_provider=None):
                 return fn(*pargs, **kwargs)
             setattr(pinject_decorated_fn, _IS_DECORATOR_ATTR, True)
             setattr(pinject_decorated_fn, _BINDINGS_ATTR, [])
-            # TODO(kurts): extract a _pinject_orig_fn constant.
-            pinject_decorated_fn._pinject_orig_fn = fn
+            setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
 
         arg_names, unused_varargs, unused_keywords, unused_defaults = (
-            inspect.getargspec(pinject_decorated_fn._pinject_orig_fn))
+            inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
         if arg_name not in arg_names:
             raise errors.NoSuchArgToInjectError(arg_name, fn)
 
@@ -80,9 +80,11 @@ class _Injector(object):
     def _provide_class(self, cls, binding_key_stack):
         init_kwargs = {}
         if type(cls.__init__) is types.MethodType:
+            # TODO(kurts): extract all this pinject-decorated fn stuff to a
+            # common place.
             if hasattr(cls.__init__, _IS_DECORATOR_ATTR):
                 arg_names, unused_varargs, unused_keywords, unused_defaults = (
-                    inspect.getargspec(cls.__init__._pinject_orig_fn))
+                    inspect.getargspec(getattr(cls.__init__, _ORIG_FN_ATTR)))
                 prebound_bindings = getattr(cls.__init__, _BINDINGS_ATTR)
                 for prebound_binding in prebound_bindings:
                     # TODO(kurts): don't peek in BindingKey
