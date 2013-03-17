@@ -1,4 +1,5 @@
 
+import inspect
 import unittest
 
 import binding
@@ -40,6 +41,17 @@ class InjectTest(unittest.TestCase):
         def some_function(foo):
             return foo
         self.assertEqual('an-arg', some_function('an-arg'))
+
+    def test_can_introspect_of_inject_decorated_fn(self):
+        @injecting.inject('foo', with_instance=3)
+        def some_function(foo, bar='BAR', *pargs, **kwargs):
+            pass
+        arg_names, varargs, keywords, defaults = inspect.getargspec(
+            some_function)
+        self.assertEqual(['foo', 'bar'], arg_names)
+        self.assertEqual('pargs', varargs)
+        self.assertEqual('kwargs', keywords)
+        self.assertEqual(('BAR',), defaults)
 
 
 class NewInjectorTest(unittest.TestCase):

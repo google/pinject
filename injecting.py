@@ -1,7 +1,11 @@
 
+import functools
 import inspect
 import re
 import types
+
+# From http://micheles.googlecode.com/hg/decorator/documentation.html
+import decorator
 
 import binding
 import errors
@@ -21,9 +25,9 @@ def inject(arg_name, with_class=None, with_instance=None, with_provider=None):
         if hasattr(fn, _IS_DECORATOR_ATTR):
             pinject_decorated_fn = fn
         else:
-            def pinject_decorated_fn(*pargs, **kwargs):
-                # TODO(kurts): use functools.update_wrapper
-                return fn(*pargs, **kwargs)
+            def _pinject_decorated_fn(fn_to_wrap, *pargs, **kwargs):
+                return fn_to_wrap(*pargs, **kwargs)
+            pinject_decorated_fn = decorator.decorator(_pinject_decorated_fn, fn)
             setattr(pinject_decorated_fn, _IS_DECORATOR_ATTR, True)
             setattr(pinject_decorated_fn, _BINDINGS_ATTR, [])
             setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
@@ -103,12 +107,15 @@ class _Injector(object):
         return cls(**init_kwargs)
 
     def wrap(self, fn):
-        # TODO(kurts): use functools.update_wrapper().
-        # TODO(kurts): use http://micheles.googlecode.com/hg/decorator/documentation.html
+        # This has to return a function with a different signature (and can't
+        # use @decorator) since otherwise python would require the caller to
+        # pass in all positional args without defaults, instead of letting
+        # those be injected if they're not passed in.
         arg_names, unused_varargs, unused_keywords, defaults = inspect.getargspec(fn)
         if defaults is None:
             defaults = []
         injectable_arg_names = arg_names[:(len(arg_names) - len(defaults))]
+        @functools.wraps(fn)
         def WrappedFn(*pargs, **kwargs):
             injected_arg_names = [
                 arg_name for index, arg_name in enumerate(injectable_arg_names)
