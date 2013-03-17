@@ -10,6 +10,9 @@ class BindingKey(object):
 
     Attributes:
       arg_name: the name of the bound arg
+
+    TODO(kurts): think about adding behavior to BindingKey to have it fill in
+    init_kwargs instead of making arg_name public.
     """
 
     pass

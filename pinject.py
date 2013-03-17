@@ -8,17 +8,13 @@
 # - why is it so bad to have providers throw exceptions?
 #     - it is just the java crap with checked exceptions?
 
+import sys
+
 import errors
-# TODO(kurts): copy over Error hierarchy without having to list them explicitly.
 Error = errors.Error
-AmbiguousArgNameError = errors.AmbiguousArgNameError
-ConflictingBindingsError = errors.ConflictingBindingsError
-CyclicInjectionError = errors.CyclicInjectionError
-InvalidBindingTargetError = errors.InvalidBindingTargetError
-MultipleBindingTargetsError = errors.MultipleBindingTargetsError
-NoBindingTargetError = errors.NoBindingTargetError
-NoSuchArgToInjectError = errors.NoSuchArgToInjectError
-NothingInjectableForArgNameError = errors.NothingInjectableForArgNameError
+for thing in dir(errors):
+    if isinstance(thing, errors.Error):
+        setattr(sys.modules(__name__), thing.__name__, thing)
 
 import injecting
 new_injector = injecting.new_injector
