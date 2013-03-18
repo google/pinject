@@ -175,11 +175,11 @@ class InjectorProvideTest(unittest.TestCase):
     def test_injects_implicitly_injected_args_of_provider_fns(self):
         class ClassOne(object):
             pass
-        def ProvidesClassOne(class_one):
+        def provides_class_one(class_one):
             class_one.three = 3
             return class_one
         class ClassTwo(object):
-            @injecting.inject('foo', with_provider=ProvidesClassOne)
+            @injecting.inject('foo', with_provider=provides_class_one)
             def __init__(self, foo):
                 self.foo = foo
         injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
@@ -190,12 +190,12 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassOne(object):
             pass
         @injecting.inject('three', with_instance=3)
-        def ProvidesClassOne(three):
+        def provides_class_one(three):
             class_one = ClassOne()
             class_one.three = three
             return class_one
         class ClassTwo(object):
-            @injecting.inject('foo', with_provider=ProvidesClassOne)
+            @injecting.inject('foo', with_provider=provides_class_one)
             def __init__(self, foo):
                 self.foo = foo
         injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
