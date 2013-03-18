@@ -66,15 +66,16 @@ new_injector = injecting.new_injector
 # - allow field injection
 #     (lack of field docstrings is OK because they're the appropriate instances of that type)
 #     (but get a second opinion on whether it decreases testability)
+#
 # - only inject if a class is marked as injectable
 # - safe vs. unsafe mode
+# - find modules on PYTHONPATH instead of having to import them
+#
 # - auto-finding provider functions (e.g., new_foo())
 # - allow provider functions declared to be so via a decorator
-# - annotations
 # - automatically instantiate the concrete subclass of an interface?
 #     (it is possible to determine that something is abstract?)
-# - find modules on PYTHONPATH instead of having to import them
-# - allow named bindings
+#
 # - scopes
 #   - when providing (highest priority)
 #   - in module
@@ -82,11 +83,12 @@ new_injector = injecting.new_injector
 #   - annotated on class (lowest priority)
 #   - eager singletons
 #   - error-checking for deps from one scope to another
+#
 # - untargetted bindings?  http://code.google.com/p/google-guice/wiki/UntargettedBindings
 # - @ImplementedBy, @ProvidedBy  http://code.google.com/p/google-guice/wiki/JustInTimeBindings
 # - other stuff: http://code.google.com/p/google-guice/wiki/Motivation
 # - refuse to inject None
-# - graph of created objects
+# - visual graph of created objects
 
 # http://code.google.com/p/google-guice/wiki/Motivation
 
