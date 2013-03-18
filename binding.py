@@ -96,9 +96,9 @@ def new_binding_mapping(explicit_bindings, implicit_bindings):
             proviser_fns.add('{0}.{1}'.format(existing_proviser_fn.__module__,
                                               existing_proviser_fn.__name__))
         if binding_key in collided_binding_key_to_proviser_fns:
-            proviser_fnes = collided_binding_key_to_proviser_fns[binding_key]
-            proviser_fnes.add('{0}.{1}'.format(proviser_fn.__module__,
-                                               proviser_fn.__name__))
+            proviser_fns = collided_binding_key_to_proviser_fns[binding_key]
+            proviser_fns.add('{0}.{1}'.format(proviser_fn.__module__,
+                                              proviser_fn.__name__))
         else:
             implicit_binding_key_to_proviser_fn[binding_key] = binding.proviser_fn
 
@@ -216,4 +216,5 @@ def create_proviser_fn(binding_key,
         if not callable(to_provider):
             raise errors.InvalidBindingTargetError(
                 binding_key, to_provider, 'callable')
-        return ProviderToProviser(to_provider)
+        return lambda binding_key_stack, injector: injector._call_with_injection(
+            to_provider, binding_key_stack)

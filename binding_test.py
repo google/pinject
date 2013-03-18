@@ -115,6 +115,9 @@ class FakeInjector(object):
     def _provide_class(self, cls, binding_key_stack):
         return 'a-provided-{0}'.format(cls.__name__)
 
+    def _call_with_injection(self, provider_fn, binding_key_stack):
+        return provider_fn()
+
 
 class GetImplicitBindingsTest(unittest.TestCase):
 

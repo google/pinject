@@ -81,36 +81,20 @@ class _Injector(object):
             binding_key_stack.pop()
 
     def _provide_class(self, cls, binding_key_stack):
-        init_kwargs = {}
         if type(cls.__init__) is types.MethodType:
-            # TODO(kurts): extract all this pinject-decorated fn stuff to a
-            # common place.
-            if hasattr(cls.__init__, _IS_DECORATOR_ATTR):
-                arg_names, unused_varargs, unused_keywords, unused_defaults = (
-                    inspect.getargspec(getattr(cls.__init__, _ORIG_FN_ATTR)))
-                prebound_bindings = getattr(cls.__init__, _BINDINGS_ATTR)
-                for prebound_binding in prebound_bindings:
-                    init_kwargs[prebound_binding.binding_key.arg_name] = (
-                        prebound_binding.proviser_fn(binding_key_stack, self))
-                prebound_binding_keys = [b.binding_key for b in prebound_bindings]
-                arg_names_to_inject = [
-                    arg_name for arg_name in _arg_names_without_self(arg_names)
-                    if binding.BindingKeyWithoutAnnotation(arg_name) not in prebound_binding_keys]
-            else:
-                arg_names, unused_varargs, unused_keywords, unused_defaults = (
-                    inspect.getargspec(cls.__init__))
-                arg_names_to_inject = _arg_names_without_self(arg_names)
-            for arg_name in arg_names_to_inject:
-                binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
-                init_kwargs[arg_name] = self._provide_from_binding_key(
-                    binding_key, binding_key_stack)
+            init_kwargs = self._get_injection_kwargs(
+                cls.__init__, binding_key_stack)
+        else:
+            init_kwargs = {}
         return cls(**init_kwargs)
 
+    # TODO(kurts): what's the use case for this, really?  Provider functions
+    # are already injected by default.  Functional programming?
     def wrap(self, fn):
         # This has to return a function with a different signature (and can't
         # use @decorator) since otherwise python would require the caller to
-        # pass in all positional args without defaults, instead of letting
-        # those be injected if they're not passed in.
+        # pass in all positional args that have no defaults, instead of
+        # letting those be injected if they're not passed in.
         arg_names, unused_varargs, unused_keywords, defaults = inspect.getargspec(fn)
         if defaults is None:
             defaults = []
@@ -129,6 +113,41 @@ class _Injector(object):
             return fn(*pargs, **kwargs)
         return WrappedFn
 
+    def _call_with_injection(self, provider_fn, binding_key_stack):
+        kwargs = self._get_injection_kwargs(provider_fn, binding_key_stack)
+        return provider_fn(**kwargs)
 
-def _arg_names_without_self(args):
-    return args[1:]
+    def _get_injection_kwargs(self, fn, binding_key_stack):
+        kwargs = {}
+        # TODO(kurts): extract all this pinject-decorated fn stuff to a
+        # common place.
+        if hasattr(fn, _IS_DECORATOR_ATTR):
+            arg_names, unused_varargs, unused_keywords, unused_defaults = (
+                inspect.getargspec(getattr(fn, _ORIG_FN_ATTR)))
+            prebound_bindings = getattr(fn, _BINDINGS_ATTR)
+            for prebound_binding in prebound_bindings:
+                kwargs[prebound_binding.binding_key.arg_name] = (
+                    prebound_binding.proviser_fn(binding_key_stack, self))
+            prebound_binding_keys = [b.binding_key for b in prebound_bindings]
+            arg_names_to_inject = [
+                arg_name for arg_name in _remove_self_if_exists(arg_names)
+                if binding.BindingKeyWithoutAnnotation(arg_name) not in prebound_binding_keys]
+        else:
+            arg_names, unused_varargs, unused_keywords, unused_defaults = (
+                inspect.getargspec(fn))
+            arg_names_to_inject = _remove_self_if_exists(arg_names)
+        for arg_name in arg_names_to_inject:
+            binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
+            kwargs[arg_name] = self._provide_from_binding_key(
+                binding_key, binding_key_stack)
+        return kwargs
+
+
+# TODO(kurts): this feels icky.  Is there no way around this, because
+# cls.__init__() takes self but instance.__init__() doesn't, and python is
+# awkward here?
+def _remove_self_if_exists(args):
+    if args and args[0] == 'self':
+        return args[1:]
+    else:
+        return args

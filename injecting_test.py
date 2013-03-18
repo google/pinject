@@ -172,6 +172,36 @@ class InjectorProvideTest(unittest.TestCase):
         self.assertEqual(2, class_two.foo)
         self.assertEqual(1, class_two.class_one.foo)
 
+    def test_injects_implicitly_injected_args_of_provider_fns(self):
+        class ClassOne(object):
+            pass
+        def ProvidesClassOne(class_one):
+            class_one.three = 3
+            return class_one
+        class ClassTwo(object):
+            @injecting.inject('foo', with_provider=ProvidesClassOne)
+            def __init__(self, foo):
+                self.foo = foo
+        injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
+        class_two = injector.provide(ClassTwo)
+        self.assertEqual(3, class_two.foo.three)
+
+    def test_injects_explicitly_injected_args_of_provider_fns(self):
+        class ClassOne(object):
+            pass
+        @injecting.inject('three', with_instance=3)
+        def ProvidesClassOne(three):
+            class_one = ClassOne()
+            class_one.three = three
+            return class_one
+        class ClassTwo(object):
+            @injecting.inject('foo', with_provider=ProvidesClassOne)
+            def __init__(self, foo):
+                self.foo = foo
+        injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
+        class_two = injector.provide(ClassTwo)
+        self.assertEqual(3, class_two.foo.three)
+
 
 class InjectorWrapTest(unittest.TestCase):
 
