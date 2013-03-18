@@ -17,10 +17,21 @@ _IS_DECORATOR_ATTR = '_pinject_is_decorator'
 _ORIG_FN_ATTR = '_pinject_orig_fn'
 
 
+def annotate(arg_name, annotation):
+    binding_key = binding.BindingKeyWithAnnotation(arg_name, annotation)
+    proviser_fn = lambda binding_key_stack, injector: (
+        injector._provide_from_binding_key(binding_key, binding_key_stack))
+    return _get_pinject_decorator(binding_key, proviser_fn)
+
+
 def inject(arg_name, with_class=None, with_instance=None, with_provider=None):
     binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
     proviser_fn = binding.create_proviser_fn(
         binding_key, with_class, with_instance, with_provider)
+    return _get_pinject_decorator(binding_key, proviser_fn)
+
+
+def _get_pinject_decorator(binding_key, proviser_fn):
     def get_pinject_decorated_fn(fn):
         if hasattr(fn, _IS_DECORATOR_ATTR):
             pinject_decorated_fn = fn
@@ -34,8 +45,8 @@ def inject(arg_name, with_class=None, with_instance=None, with_provider=None):
 
         arg_names, unused_varargs, unused_keywords, unused_defaults = (
             inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
-        if arg_name not in arg_names:
-            raise errors.NoSuchArgToInjectError(arg_name, fn)
+        if binding_key.arg_name not in arg_names:
+            raise errors.NoSuchArgToInjectError(binding_key.arg_name, fn)
 
         getattr(pinject_decorated_fn, _BINDINGS_ATTR).append(
             binding.Binding(binding_key, proviser_fn))
@@ -128,10 +139,10 @@ class _Injector(object):
             for prebound_binding in prebound_bindings:
                 kwargs[prebound_binding.binding_key.arg_name] = (
                     prebound_binding.proviser_fn(binding_key_stack, self))
-            prebound_binding_keys = [b.binding_key for b in prebound_bindings]
+            prebound_arg_names = [b.binding_key.arg_name for b in prebound_bindings]
             arg_names_to_inject = [
                 arg_name for arg_name in _remove_self_if_exists(arg_names)
-                if binding.BindingKeyWithoutAnnotation(arg_name) not in prebound_binding_keys]
+                if arg_name not in prebound_arg_names]
         else:
             arg_names, unused_varargs, unused_keywords, unused_defaults = (
                 inspect.getargspec(fn))

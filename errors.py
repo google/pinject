@@ -53,7 +53,7 @@ class NoSuchArgToInjectError(Error):
             self, 'no such arg {0} to inject into {1}'.format(arg_name, fn))
 
 
-class NothingInjectableForArgNameError(Error):
+class NothingInjectableForArgError(Error):
 
     def __init__(self, binding_key):
         Error.__init__(

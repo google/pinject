@@ -18,6 +18,13 @@ class BindingKey(object):
     pass
 
 
+def new_binding_key(arg_name, annotated_with=None):
+    if annotated_with is not None:
+        return BindingKeyWithAnnotation(arg_name, annotated_with)
+    else:
+        return BindingKeyWithoutAnnotation(arg_name)
+
+
 class BindingKeyWithoutAnnotation(BindingKey):
     """A key with no annotation."""
 
@@ -38,27 +45,27 @@ class BindingKeyWithoutAnnotation(BindingKey):
         return 'the arg name {0}'.format(self.arg_name)
 
 
-# class BindingKeyWithAnnotation(BindingKey):
-#     """A key with an annotation."""
+class BindingKeyWithAnnotation(BindingKey):
+    """A key with an annotation."""
 
-#     def __init__(self, arg_name, annotation):
-#         self.arg_name = arg_name
-#         self._annotation = annotation
+    def __init__(self, arg_name, annotation):
+        self.arg_name = arg_name
+        self._annotation = annotation
 
-#     def __eq__(self, other):
-#         return (isinstance(other, BindingKeyWithAnnotation) and
-#                 self.arg_name == other.arg_name and
-#                 self._annotation == other._annotation)
+    def __eq__(self, other):
+        return (isinstance(other, BindingKeyWithAnnotation) and
+                self.arg_name == other.arg_name and
+                self._annotation == other._annotation)
 
-#     def __ne__(self, other):
-#         return not (self == other)
+    def __ne__(self, other):
+        return not (self == other)
 
-#     def __hash__(self):
-#         return hash(self.arg_name) ^ hash(self._annotation)
+    def __hash__(self):
+        return hash(self.arg_name) ^ hash(self._annotation)
 
-#     def __str__(self):
-#         return 'the arg name {0} annotated with {1}'.format(
-#             self.arg_name, self._annotation)
+    def __str__(self):
+        return 'the arg name {0} annotated with {1}'.format(
+            self.arg_name, self._annotation)
 
 
 class Binding(object):
@@ -125,7 +132,7 @@ class _BindingMapping(object):
                 binding_key,
                 self._collided_binding_key_to_proviser_fns[binding_key])
         else:
-            raise errors.NothingInjectableForArgNameError(binding_key)
+            raise errors.NothingInjectableForArgError(binding_key)
 
 
 def default_get_arg_names_from_class_name(class_name):
@@ -183,9 +190,9 @@ class Binder(object):
         self._collected_bindings = collected_bindings
         self._lock = threading.Lock()
 
-    def bind(self, arg_name,  # annotated_with=None, in_scope=None
+    def bind(self, arg_name, annotated_with=None,  # in_scope=None
              to_class=None, to_instance=None, to_provider=None):
-        binding_key = BindingKeyWithoutAnnotation(arg_name)
+        binding_key = new_binding_key(arg_name, annotated_with)
         proviser_fn = create_proviser_fn(binding_key,
                                          to_class, to_instance, to_provider)
         with self._lock:
