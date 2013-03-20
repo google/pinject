@@ -10,6 +10,7 @@ import decorator
 import binding
 import errors
 import finding
+import providing
 
 
 _BINDINGS_ATTR = '_pinject_bindings'
@@ -54,21 +55,27 @@ def _get_pinject_decorator(binding_key, proviser_fn):
     return get_pinject_decorated_fn
 
 
-def new_injector(modules=None, classes=None,
-                 get_arg_names_from_class_name=binding.default_get_arg_names_from_class_name,
-                 binding_fns=None):
+def new_injector(
+    modules=None, classes=None, provider_fns=None,
+    get_arg_names_from_class_name=(
+        binding.default_get_arg_names_from_class_name),
+    get_arg_names_from_provider_fn_name=(
+        providing.default_get_arg_names_from_provider_fn_name),
+    binding_fns=None):
     explicit_bindings = []
     binder = binding.Binder(explicit_bindings)
     if binding_fns is not None:
         for binding_fn in binding_fns:
             binding_fn(bind=binder.bind)
 
-    classes = finding.FindClasses(modules, classes)
+    classes = finding.FindClasses(modules, classes, provider_fns)
+    functions = finding.find_functions(modules, classes, provider_fns)
     implicit_bindings = binding.get_implicit_bindings(
-        classes, get_arg_names_from_class_name)
+        classes, functions, get_arg_names_from_class_name,
+        get_arg_names_from_provider_fn_name)
+
     binding_mapping = binding.new_binding_mapping(
         explicit_bindings, implicit_bindings)
-
     injector = _Injector(binding_mapping)
     return injector
 

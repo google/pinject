@@ -1,13 +1,3 @@
-# - why use @Inject instead of assuming all classes are eligible for JIT binding?
-# - why prefer provider methods to binding instances when instances are complicated to create?
-#     http://code.google.com/p/google-guice/wiki/InstanceBindings
-# - where should Real Work go, when creating an instance?
-#     http://code.google.com/p/google-guice/wiki/ModulesShouldBeFastAndSideEffectFree
-# - should modules install other modules?
-#     - assuming not, how do you update all consumers?  all main modules manually?!
-# - why is it so bad to have providers throw exceptions?
-#     - it is just the java crap with checked exceptions?
-
 import sys
 
 import errors
@@ -71,8 +61,8 @@ new_injector = injecting.new_injector
 # - safe vs. unsafe mode
 # - find modules on PYTHONPATH instead of having to import them
 #
-# - auto-finding provider functions (e.g., new_foo())
 # - allow provider functions declared to be so via a decorator
+# - allow classes to be annotated so that they only inject into annotated args
 # - automatically instantiate the concrete subclass of an interface?
 #     (it is possible to determine that something is abstract?)
 #

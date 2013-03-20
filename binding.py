@@ -3,6 +3,7 @@ import re
 import threading
 
 import errors
+import providing
 
 
 class BindingKey(object):
@@ -162,8 +163,11 @@ def default_get_arg_names_from_class_name(class_name):
 
 
 def get_implicit_bindings(
-    classes,
-    get_arg_names_from_class_name=default_get_arg_names_from_class_name):
+    classes, functions,
+    get_arg_names_from_class_name=(
+        default_get_arg_names_from_class_name),
+    get_arg_names_from_provider_fn_name=(
+        providing.default_get_arg_names_from_provider_fn_name)):
     """Creates a mapping from arg names to classes.
 
     Args:
@@ -180,6 +184,12 @@ def get_implicit_bindings(
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
+            implicit_bindings.append(Binding(binding_key, proviser_fn))
+    for fn in functions:
+        arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
+        for arg_name in arg_names:
+            binding_key = BindingKeyWithoutAnnotation(arg_name)
+            proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
             implicit_bindings.append(Binding(binding_key, proviser_fn))
     return implicit_bindings
 

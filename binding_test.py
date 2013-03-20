@@ -167,54 +167,75 @@ class FakeInjector(object):
         return provider_fn()
 
 
+_UNUSED_BINDING_KEY_STACK = []
+def call_provisor_fn(a_binding):
+    return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector())
+
+
 class GetImplicitBindingsTest(unittest.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
-        self.assertEqual([], binding.get_implicit_bindings([]))
+        self.assertEqual([], binding.get_implicit_bindings([], []))
 
     def test_returns_binding_for_input_class(self):
         class SomeClass(object):
             pass
-        [implicit_binding] = binding.get_implicit_bindings([SomeClass])
+        [implicit_binding] = binding.get_implicit_bindings([SomeClass], functions=[])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('some_class'),
                          implicit_binding.binding_key)
-        self.assertEqual('a-provided-SomeClass',
-                         implicit_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector()))
+        self.assertEqual('a-provided-SomeClass', call_provisor_fn(implicit_binding))
 
     def test_returns_binding_for_correct_input_class(self):
         class ClassOne(object):
             pass
         class ClassTwo(object):
             pass
-        implicit_bindings = binding.get_implicit_bindings([ClassOne, ClassTwo])
+        implicit_bindings = binding.get_implicit_bindings(
+            [ClassOne, ClassTwo], functions=[])
         for implicit_binding in implicit_bindings:
             if (implicit_binding.binding_key ==
                 binding.BindingKeyWithoutAnnotation('class_one')):
                 self.assertEqual(
-                    'a-provided-ClassOne',
-                    implicit_binding.proviser_fn(
-                        _UNUSED_BINDING_KEY_STACK, FakeInjector()))
+                    'a-provided-ClassOne', call_provisor_fn(implicit_binding))
             else:
                 self.assertEqual(
                     implicit_binding.binding_key,
                     binding.BindingKeyWithoutAnnotation('class_two'))
                 self.assertEqual(
-                    'a-provided-ClassTwo',
-                    implicit_binding.proviser_fn(
-                        _UNUSED_BINDING_KEY_STACK, FakeInjector()))
+                    'a-provided-ClassTwo', call_provisor_fn(implicit_binding))
 
     def test_uses_provided_fn_to_map_class_names_to_arg_names(self):
         class SomeClass(object):
             pass
         [implicit_binding] = binding.get_implicit_bindings(
-            [SomeClass], get_arg_names_from_class_name=lambda _: ['foo'])
+            [SomeClass], functions=[],
+            get_arg_names_from_class_name=lambda _: ['foo'])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          implicit_binding.binding_key)
 
+    def test_returns_binding_for_input_provider_fn(self):
+        def new_foo():
+            return 'a-foo'
+        [implicit_binding] = binding.get_implicit_bindings(
+            classes=[], functions=[new_foo])
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
+                         implicit_binding.binding_key)
+        self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
 
-_UNUSED_BINDING_KEY_STACK = []
-def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector())
+    def test_returns_no_binding_for_input_non_provider_fn(self):
+        def some_fn():
+            pass
+        self.assertEqual([], binding.get_implicit_bindings(
+            classes=[], functions=[some_fn]))
+
+    def test_uses_provided_fn_to_map_provider_fn_names_to_arg_names(self):
+        def some_foo():
+            return 'a-foo'
+        [implicit_binding] = binding.get_implicit_bindings(
+            classes=[], functions=[some_foo],
+            get_arg_names_from_provider_fn_name=lambda _: ['foo'])
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
+                         implicit_binding.binding_key)
 
 
 class BinderTest(unittest.TestCase):

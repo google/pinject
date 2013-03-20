@@ -91,6 +91,16 @@ class NewInjectorTest(unittest.TestCase):
         injector = injecting.new_injector(classes=[SomeClass])
         self.assertIsInstance(injector.provide(SomeClass), SomeClass)
 
+    def test_creates_injector_using_given_provider_fns(self):
+        def new_foo():
+            return 'a-foo'
+        class ClassWithFooInjected(object):
+            def __init__(self, foo):
+                self.foo = foo
+        injector = injecting.new_injector(
+            classes=[ClassWithFooInjected], provider_fns=[new_foo])
+        self.assertEqual('a-foo', injector.provide(ClassWithFooInjected).foo)
+
     def test_creates_injector_using_given_binding_fns(self):
         class ClassWithFooInjected(object):
             def __init__(self, foo):
