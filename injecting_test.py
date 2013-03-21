@@ -2,80 +2,9 @@
 import inspect
 import unittest
 
-import binding
 import errors
 import injecting
-
-
-class FakeInjector(object):
-
-    def _provide_from_binding_key(self, binding_key, binding_key_stack):
-        return 'provided with {0}'.format(binding_key)
-
-
-class AnnotateTest(unittest.TestCase):
-
-    def test_adds_binding_in_pinject_decorated_fn(self):
-        @injecting.annotate('foo', 'an-annotation')
-        def some_function(foo):
-            return foo
-        self.assertTrue(hasattr(some_function, injecting._IS_DECORATOR_ATTR))
-        self.assertEqual([binding.BindingKeyWithAnnotation('foo', 'an-annotation')],
-                         [b.binding_key for b in getattr(some_function,
-                                                         injecting._BINDINGS_ATTR)])
-        self.assertEqual(['provided with the arg name foo annotated with an-annotation'],
-                         [b.proviser_fn('unused-binding-key-stack', FakeInjector())
-                          for b in getattr(some_function, injecting._BINDINGS_ATTR)])
-
-
-class InjectTest(unittest.TestCase):
-
-    def test_adds_binding_in_pinject_decorated_fn(self):
-        @injecting.inject('foo', with_instance=3)
-        def some_function(foo):
-            return foo
-        self.assertTrue(hasattr(some_function, injecting._IS_DECORATOR_ATTR))
-        self.assertEqual([binding.BindingKeyWithoutAnnotation('foo')],
-                         [b.binding_key for b in getattr(some_function,
-                                                         injecting._BINDINGS_ATTR)])
-        self.assertEqual([3],
-                         [b.proviser_fn('unused-binding-key-stack', 'unused-injector')
-                          for b in getattr(some_function, injecting._BINDINGS_ATTR)])
-
-    def test_raises_error_if_injecting_nonexistent_arg(self):
-        def do_bad_inject():
-            @injecting.inject('foo', with_instance=3)
-            def some_function(bar):
-                return bar
-        self.assertRaises(errors.NoSuchArgToInjectError, do_bad_inject)
-
-    def test_reuses_decorated_fn_when_multiple_injections(self):
-        @injecting.inject('foo', with_instance=3)
-        @injecting.inject('bar', with_instance=4)
-        def some_function(foo, bar):
-            return foo + bar
-        self.assertEqual([binding.BindingKeyWithoutAnnotation('bar'),
-                          binding.BindingKeyWithoutAnnotation('foo')],
-                         [b.binding_key
-                          for b in getattr(some_function,
-                                           injecting._BINDINGS_ATTR)])
-
-    def test_can_call_inject_decorated_fn_normally(self):
-        @injecting.inject('foo', with_instance=3)
-        def some_function(foo):
-            return foo
-        self.assertEqual('an-arg', some_function('an-arg'))
-
-    def test_can_introspect_inject_decorated_fn(self):
-        @injecting.inject('foo', with_instance=3)
-        def some_function(foo, bar='BAR', *pargs, **kwargs):
-            pass
-        arg_names, varargs, keywords, defaults = inspect.getargspec(
-            some_function)
-        self.assertEqual(['foo', 'bar'], arg_names)
-        self.assertEqual('pargs', varargs)
-        self.assertEqual('kwargs', keywords)
-        self.assertEqual(('BAR',), defaults)
+import wrapping
 
 
 class NewInjectorTest(unittest.TestCase):
@@ -186,7 +115,7 @@ class InjectorProvideTest(unittest.TestCase):
 
     def test_can_provide_class_with_explicitly_injected_arg(self):
         class SomeClass(object):
-            @injecting.inject('foo', with_instance=3)
+            @wrapping.inject('foo', with_instance=3)
             def __init__(self, foo):
                 self.foo = foo
         injector = injecting.new_injector(classes=[SomeClass])
@@ -197,7 +126,7 @@ class InjectorProvideTest(unittest.TestCase):
             def __init__(self):
                 self.foo = 1
         class ClassTwo(object):
-            @injecting.inject('foo', with_instance=2)
+            @wrapping.inject('foo', with_instance=2)
             def __init__(self, foo, class_one):
                 self.foo = foo
                 self.class_one = class_one
@@ -213,7 +142,7 @@ class InjectorProvideTest(unittest.TestCase):
             class_one.three = 3
             return class_one
         class ClassTwo(object):
-            @injecting.inject('foo', with_provider=provides_class_one)
+            @wrapping.inject('foo', with_provider=provides_class_one)
             def __init__(self, foo):
                 self.foo = foo
         injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
@@ -223,13 +152,13 @@ class InjectorProvideTest(unittest.TestCase):
     def test_injects_explicitly_injected_args_of_provider_fns(self):
         class ClassOne(object):
             pass
-        @injecting.inject('three', with_instance=3)
+        @wrapping.inject('three', with_instance=3)
         def provides_class_one(three):
             class_one = ClassOne()
             class_one.three = three
             return class_one
         class ClassTwo(object):
-            @injecting.inject('foo', with_provider=provides_class_one)
+            @wrapping.inject('foo', with_provider=provides_class_one)
             def __init__(self, foo):
                 self.foo = foo
         injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
@@ -238,7 +167,7 @@ class InjectorProvideTest(unittest.TestCase):
 
     def test_can_provide_arg_with_annotation(self):
         class ClassOne(object):
-            @injecting.annotate('foo', 'an-annotation')
+            @wrapping.annotate('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         def bind_annotated_foo(bind, **unused_kwargs):
@@ -250,7 +179,7 @@ class InjectorProvideTest(unittest.TestCase):
 
     def test_raises_error_if_only_binding_has_different_annotation(self):
         class ClassOne(object):
-            @injecting.annotate('foo', 'an-annotation')
+            @wrapping.annotate('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         def bind_annotated_foo(bind, **unused_kwargs):
@@ -262,7 +191,7 @@ class InjectorProvideTest(unittest.TestCase):
 
     def test_raises_error_if_only_binding_has_no_annotation(self):
         class ClassOne(object):
-            @injecting.annotate('foo', 'an-annotation')
+            @wrapping.annotate('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         def bind_unannotated_foo(bind, **unused_kwargs):
