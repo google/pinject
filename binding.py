@@ -1,9 +1,12 @@
 
+import inspect
 import re
 import threading
+import types
 
 import errors
 import providing
+import wrapping
 
 
 class BindingKey(object):
@@ -163,11 +166,17 @@ def default_get_arg_names_from_class_name(class_name):
     return ['_'.join(part.lower() for part in parts)]
 
 
-# TODO(kurts): add a get_explicit_bindings() with a signature like below but
-# that hunts for functions with @provides.
-#
-# Don't forget to create a test with a function with all of @provides and
-# @inject and @annotate.
+def get_explicit_bindings(classes, functions):
+    all_functions = list(functions)
+    for cls in classes:
+        for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
+            all_functions.append(fn)
+    explicit_bindings = []
+    for fn in all_functions:
+        for binding_key in wrapping.get_any_provider_binding_keys(fn):
+            proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
+            explicit_bindings.append(Binding(binding_key, proviser_fn))
+    return explicit_bindings
 
 
 def get_implicit_bindings(
@@ -193,6 +202,7 @@ def get_implicit_bindings(
             binding_key = BindingKeyWithoutAnnotation(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
             implicit_bindings.append(Binding(binding_key, proviser_fn))
+        # TODO(kurts): look for static implicit provider functions.
     for fn in functions:
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:

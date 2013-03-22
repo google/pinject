@@ -43,6 +43,9 @@ class NewInjectorTest(unittest.TestCase):
         self.assertIsInstance(injector.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
 
+# TODO(kurts): Create a test with a function with all of @provides and
+# @inject and @annotate.
+
 
 class InjectorProvideTest(unittest.TestCase):
 

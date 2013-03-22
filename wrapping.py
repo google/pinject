@@ -85,3 +85,10 @@ def _remove_self_if_exists(args):
         return args[1:]
     else:
         return args
+
+
+def get_any_provider_binding_keys(fn):
+    if hasattr(fn, _IS_WRAPPER_ATTR):
+        return getattr(fn, _PROVIDED_BINDING_KEYS_ATTR)
+    else:
+        return []

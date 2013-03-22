@@ -93,3 +93,30 @@ class GetPinjectWrapperTest(unittest.TestCase):
         self.assertEqual('pargs', varargs)
         self.assertEqual('kwargs', keywords)
         self.assertEqual(('BAR',), defaults)
+
+
+class GetPrebindingsAndRemainingArgsTest(unittest.TestCase):
+    # TODO(kurts)
+    pass
+
+
+class GetAnyProviderBindingKeysTest(unittest.TestCase):
+
+    def test_gets_binding_keys_for_explicit_provider_fn(self):
+        @wrapping.provides('arg_name')
+        def some_function():
+            pass
+        self.assertEqual([binding.BindingKeyWithoutAnnotation('arg_name')],
+                         wrapping.get_any_provider_binding_keys(some_function))
+
+    def test_gets_no_binding_keys_for_implicit_provider_fn(self):
+        def new_arg_name():
+            pass
+        self.assertEqual(
+            [], wrapping.get_any_provider_binding_keys(new_arg_name))
+
+    def test_gets_no_binding_keys_for_arbitrary_fn(self):
+        def some_function():
+            pass
+        self.assertEqual(
+            [], wrapping.get_any_provider_binding_keys(some_function))

@@ -85,6 +85,6 @@ new_injector = injecting.new_injector
 # source:
 # http://code.google.com/p/google-guice/source/browse/#git%2Fcore%2Fsrc%2Fcom%2Fgoogle%2Finject%253Fstate%253Dclosed
 
-# The two things that straight Guice-to-python ports miss are:
-#   - python has first-class functions (with which Guice does nothing); and
-#   - python has no static type info (without which straight ports mandate explicit substitutes).
+# Questions:
+# - Why does Guice allow provider bindings and @provider functions, both in modules?  @provider is convenient?
+# - Is there any reason not to allow @provider functions to be located anywhere, instead of just in modules?

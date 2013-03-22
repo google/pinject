@@ -17,17 +17,17 @@ def new_injector(
     get_arg_names_from_provider_fn_name=(
         providing.default_get_arg_names_from_provider_fn_name),
     binding_fns=None):
-    explicit_bindings = []
-    binder = binding.Binder(explicit_bindings)
-    if binding_fns is not None:
-        for binding_fn in binding_fns:
-            binding_fn(bind=binder.bind)
 
     classes = finding.FindClasses(modules, classes, provider_fns)
     functions = finding.find_functions(modules, classes, provider_fns)
     implicit_bindings = binding.get_implicit_bindings(
         classes, functions, get_arg_names_from_class_name,
         get_arg_names_from_provider_fn_name)
+    explicit_bindings = binding.get_explicit_bindings(classes, functions)
+    binder = binding.Binder(explicit_bindings)
+    if binding_fns is not None:
+        for binding_fn in binding_fns:
+            binding_fn(bind=binder.bind)
 
     binding_mapping = binding.new_binding_mapping(
         explicit_bindings, implicit_bindings)

@@ -4,6 +4,7 @@ import unittest
 import binding
 import errors
 import injecting
+import wrapping
 
 
 class NewBindingKeyTest(unittest.TestCase):
@@ -170,6 +171,33 @@ class FakeInjector(object):
 _UNUSED_BINDING_KEY_STACK = []
 def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector())
+
+
+class GetExplicitBindingsTest(unittest.TestCase):
+
+    def test_returns_no_bindings_for_no_input(self):
+        self.assertEqual([], binding.get_explicit_bindings([], []))
+
+    def test_returns_binding_for_input_provider_fn(self):
+        @wrapping.provides('foo')
+        def some_function():
+            return 'a-foo'
+        [explicit_binding] = binding.get_explicit_bindings([], [some_function])
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
+                         explicit_binding.binding_key)
+        self.assertEqual('a-foo', call_provisor_fn(explicit_binding))
+
+    def test_returns_binding_for_provider_fn_on_input_class(self):
+        class SomeClass(object):
+            @staticmethod
+            @wrapping.provides('foo')
+            # TODO(kurts): figure out why the decorator order cannot be reversed.
+            def some_function():
+                return 'a-foo'
+        [explicit_binding] = binding.get_explicit_bindings([SomeClass], [])
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
+                         explicit_binding.binding_key)
+        self.assertEqual('a-foo', call_provisor_fn(explicit_binding))
 
 
 class GetImplicitBindingsTest(unittest.TestCase):
