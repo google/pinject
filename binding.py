@@ -16,7 +16,8 @@ class BindingKey(object):
     init_kwargs instead of making arg_name public.
     """
 
-    pass
+    def __repr__(self):
+        return '<{0}>'.format(self)
 
 
 def new_binding_key(arg_name, annotated_with=None):
@@ -160,6 +161,13 @@ def default_get_arg_names_from_class_name(class_name):
     if not parts:
         return []
     return ['_'.join(part.lower() for part in parts)]
+
+
+# TODO(kurts): add a get_explicit_bindings() with a signature like below but
+# that hunts for functions with @provides.
+#
+# Don't forget to create a test with a function with all of @provides and
+# @inject and @annotate.
 
 
 def get_implicit_bindings(
