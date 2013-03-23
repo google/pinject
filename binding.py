@@ -4,9 +4,34 @@ import re
 import threading
 import types
 
+# From http://micheles.googlecode.com/hg/decorator/documentation.html
+import decorator
+
 import errors
 import providing
 import wrapping
+
+
+_IS_DECORATED_ATTR = '_pinject_is_decorated'
+_BOUND_TO_BINDING_KEYS_ATTR = '_pinject_bound_to_binding_keys'
+
+
+def binds_to(arg_name, annotated_with=None):
+    def get_pinject_decorated_class(cls):
+        if not hasattr(cls, _IS_DECORATED_ATTR):
+            setattr(cls, _IS_DECORATED_ATTR, True)
+            setattr(cls, _BOUND_TO_BINDING_KEYS_ATTR, [])
+        getattr(cls, _BOUND_TO_BINDING_KEYS_ATTR).append(
+            new_binding_key(arg_name, annotated_with))
+        return cls
+    return get_pinject_decorated_class
+
+
+def _get_any_class_binding_keys(cls):
+    if hasattr(cls, _IS_DECORATED_ATTR):
+        return getattr(cls, _BOUND_TO_BINDING_KEYS_ATTR)
+    else:
+        return []
 
 
 class BindingKey(object):
@@ -167,11 +192,14 @@ def default_get_arg_names_from_class_name(class_name):
 
 
 def get_explicit_bindings(classes, functions):
+    explicit_bindings = []
     all_functions = list(functions)
     for cls in classes:
+        for binding_key in _get_any_class_binding_keys(cls):
+            proviser_fn = create_proviser_fn(binding_key, to_class=cls)
+            explicit_bindings.append(Binding(binding_key, proviser_fn))
         for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
             all_functions.append(fn)
-    explicit_bindings = []
     for fn in all_functions:
         for binding_key in wrapping.get_any_provider_binding_keys(fn):
             proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
@@ -198,6 +226,8 @@ def get_implicit_bindings(
     implicit_bindings = []
     all_functions = list(functions)
     for cls in classes:
+        if _get_any_class_binding_keys(cls):
+            continue
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)

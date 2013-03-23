@@ -7,6 +7,28 @@ import injecting
 import wrapping
 
 
+class BindsToTest(unittest.TestCase):
+
+    def test_adds_binding_attrs(self):
+        @binding.binds_to('foo')
+        class SomeClass(object):
+            pass
+        self.assertTrue(getattr(SomeClass, binding._IS_DECORATED_ATTR))
+        self.assertEqual(
+            [binding.BindingKeyWithoutAnnotation('foo')],
+            getattr(SomeClass, binding._BOUND_TO_BINDING_KEYS_ATTR))
+
+    def test_can_decorate_several_times(self):
+        @binding.binds_to('foo', annotated_with='an-annotation')
+        @binding.binds_to('bar')
+        class SomeClass(object):
+            pass
+        self.assertEqual(
+            [binding.BindingKeyWithoutAnnotation('bar'),
+             binding.BindingKeyWithAnnotation('foo', 'an-annotation')],
+            getattr(SomeClass, binding._BOUND_TO_BINDING_KEYS_ATTR))
+
+
 class NewBindingKeyTest(unittest.TestCase):
 
     def test_without_annotation(self):
@@ -178,6 +200,15 @@ class GetExplicitBindingsTest(unittest.TestCase):
     def test_returns_no_bindings_for_no_input(self):
         self.assertEqual([], binding.get_explicit_bindings([], []))
 
+    def test_returns_binding_for_input_explicitly_bound_class(self):
+        @binding.binds_to('foo')
+        class SomeClass(object):
+            pass
+        [explicit_binding] = binding.get_explicit_bindings([SomeClass], [])
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
+                         explicit_binding.binding_key)
+        self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
+
     def test_returns_binding_for_input_provider_fn(self):
         @wrapping.provides('foo')
         def some_function():
@@ -212,6 +243,12 @@ class GetImplicitBindingsTest(unittest.TestCase):
         self.assertEqual(binding.BindingKeyWithoutAnnotation('some_class'),
                          implicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(implicit_binding))
+
+    def test_returns_no_binding_for_explicitly_bound_class(self):
+        @binding.binds_to('foo')
+        class SomeClass(object):
+            pass
+        self.assertEqual([], binding.get_implicit_bindings([SomeClass], functions=[]))
 
     def test_returns_binding_for_correct_input_class(self):
         class ClassOne(object):
