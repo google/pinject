@@ -196,14 +196,16 @@ def get_implicit_bindings(
       an _ArgNameClassMapping
     """
     implicit_bindings = []
+    all_functions = list(functions)
     for cls in classes:
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
             implicit_bindings.append(Binding(binding_key, proviser_fn))
-        # TODO(kurts): look for static implicit provider functions.
-    for fn in functions:
+        for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
+            all_functions.append(fn)
+    for fn in all_functions:
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)

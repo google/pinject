@@ -250,6 +250,18 @@ class GetImplicitBindingsTest(unittest.TestCase):
                          implicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
 
+    def test_returns_binding_for_staticmethod_provider_fn(self):
+        class SomeClass(object):
+            @staticmethod
+            def new_foo():
+                return 'a-foo'
+        implicit_bindings = binding.get_implicit_bindings(
+            classes=[SomeClass], functions=[])
+        self.assertEqual([binding.BindingKeyWithoutAnnotation('some_class'),
+                          binding.BindingKeyWithoutAnnotation('foo')],
+                         [b.binding_key for b in implicit_bindings])
+        self.assertEqual('a-foo', call_provisor_fn(implicit_bindings[1]))
+
     def test_returns_no_binding_for_input_non_provider_fn(self):
         def some_fn():
             pass

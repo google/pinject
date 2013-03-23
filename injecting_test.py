@@ -201,13 +201,24 @@ class InjectorProvideTest(unittest.TestCase):
         self.assertRaises(errors.NothingInjectableForArgError,
                           injector.provide, ClassOne)
 
-    def test_can_provide_using_implicit_provider_fn(self):
+    def test_can_provide_using_explicit_provider_fn(self):
         class ClassOne(object):
             def __init__(self, foo):
                 self.foo = foo
             @staticmethod
             @wrapping.provides('foo')
             def foo_provider():
+                return 'a-foo'
+        injector = injecting.new_injector(classes=[ClassOne])
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-foo', class_one.foo)
+
+    def test_can_provide_using_implicit_provider_fn(self):
+        class ClassOne(object):
+            def __init__(self, foo):
+                self.foo = foo
+            @staticmethod
+            def new_foo():
                 return 'a-foo'
         injector = injecting.new_injector(classes=[ClassOne])
         class_one = injector.provide(ClassOne)
