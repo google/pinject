@@ -21,6 +21,7 @@ def annotate(arg_name, annotation):
     return _get_pinject_wrapper(binding=binding.Binding(binding_key, proviser_fn))
 
 
+# TODO(kurts): probably remove @inject, except as a marker for explicit-only mode.
 def inject(arg_name, with_class=None, with_instance=None, with_provider=None):
     binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
     proviser_fn = binding.create_proviser_fn(

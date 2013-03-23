@@ -43,9 +43,6 @@ class NewInjectorTest(unittest.TestCase):
         self.assertIsInstance(injector.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
 
-# TODO(kurts): Create a test with a function with all of @provides and
-# @inject and @annotate.
-
 
 class InjectorProvideTest(unittest.TestCase):
 
@@ -203,6 +200,48 @@ class InjectorProvideTest(unittest.TestCase):
                                           binding_fns=[bind_unannotated_foo])
         self.assertRaises(errors.NothingInjectableForArgError,
                           injector.provide, ClassOne)
+
+    def test_can_provide_using_implicit_provider_fn(self):
+        class ClassOne(object):
+            def __init__(self, foo):
+                self.foo = foo
+            @staticmethod
+            @wrapping.provides('foo')
+            def foo_provider():
+                return 'a-foo'
+        injector = injecting.new_injector(classes=[ClassOne])
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-foo', class_one.foo)
+
+    def test_autoinjects_args_of_provider_fn(self):
+        class ClassOne(object):
+            def __init__(self, foo):
+                self.foo = foo
+        def new_foo(bar):
+            return 'a-foo with {0}'.format(bar)
+        def new_bar():
+            return 'a-bar'
+        injector = injecting.new_injector(
+            classes=[ClassOne], provider_fns=[new_foo, new_bar])
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-foo with a-bar', class_one.foo)
+
+    def test_can_use_annotate_with_provides(self):
+        class ClassOne(object):
+            @wrapping.annotate('foo', 'an-annotation')
+            def __init__(self, foo):
+                self.foo = foo
+        @wrapping.provides('foo', annotated_with='an-annotation')
+        @wrapping.annotate('bar', 'another-annotation')
+        def new_foo(bar):
+            return 'a-foo with {0}'.format(bar)
+        @wrapping.provides('bar', annotated_with='another-annotation')
+        def new_bar():
+            return 'a-bar'
+        injector = injecting.new_injector(
+            classes=[ClassOne], provider_fns=[new_foo, new_bar])
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-foo with a-bar', class_one.foo)
 
 
 class InjectorWrapTest(unittest.TestCase):
