@@ -3,8 +3,7 @@ import inspect
 import sys
 
 
-# TODO(kurts): rename to find_classes.
-def FindClasses(modules=None, classes=None, provider_fns=None):
+def find_classes(modules=None, classes=None, provider_fns=None):
     modules = _get_explicit_or_default_modules(modules, classes, provider_fns)
     if classes is not None:
         all_classes = set(classes)

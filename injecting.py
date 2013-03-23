@@ -18,7 +18,7 @@ def new_injector(
         providing.default_get_arg_names_from_provider_fn_name),
     binding_fns=None):
 
-    classes = finding.FindClasses(modules, classes, provider_fns)
+    classes = finding.find_classes(modules, classes, provider_fns)
     functions = finding.find_functions(modules, classes, provider_fns)
     implicit_bindings = binding.get_implicit_bindings(
         classes, functions, get_arg_names_from_class_name,
