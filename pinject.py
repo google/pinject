@@ -61,7 +61,6 @@ new_injector = injecting.new_injector
 # - safe vs. unsafe mode
 # - find modules on PYTHONPATH instead of having to import them
 #
-# - auto-inject into provider functions (already done?)
 # - allow classes to be annotated so that they only inject into annotated args
 # - automatically instantiate the concrete subclass of an interface?
 #     (it is possible to determine that something is abstract?)

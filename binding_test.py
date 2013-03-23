@@ -250,6 +250,13 @@ class GetImplicitBindingsTest(unittest.TestCase):
                          implicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
 
+    def test_returns_no_binding_for_explicit_provider_fn(self):
+        @wrapping.provides('bar')
+        def new_foo():
+            return 'a-foo'
+        self.assertEqual(
+            [], binding.get_implicit_bindings(classes=[], functions=[new_foo]))
+
     def test_returns_binding_for_staticmethod_provider_fn(self):
         class SomeClass(object):
             @staticmethod

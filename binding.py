@@ -206,6 +206,8 @@ def get_implicit_bindings(
         for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
             all_functions.append(fn)
     for fn in all_functions:
+        if wrapping.get_any_provider_binding_keys(fn):
+            continue
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
