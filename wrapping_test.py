@@ -9,8 +9,22 @@ import wrapping
 
 class FakeInjector(object):
 
+    def provide(self, cls):
+        return self._provide_class(cls, binding_key_stack=[])
+
+    def _provide_class(self, cls, binding_key_stack):
+        return 'a-provided-{0}'.format(cls.__name__)
+
     def _provide_from_binding_key(self, binding_key, binding_key_stack):
         return 'provided with {0}'.format(binding_key)
+
+    def _call_with_injection(self, provider_fn, binding_key_stack):
+        return provider_fn()
+
+
+_UNUSED_BINDING_KEY_STACK = []
+def call_provisor_fn(a_binding):
+    return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector())
 
 
 class AnnotateTest(unittest.TestCase):
@@ -21,10 +35,10 @@ class AnnotateTest(unittest.TestCase):
             return foo
         self.assertEqual([binding.BindingKeyWithAnnotation('foo', 'an-annotation')],
                          [b.binding_key for b in getattr(some_function,
-                                                         wrapping._BINDINGS_ATTR)])
+                                                         wrapping._ARG_BINDINGS_ATTR)])
         self.assertEqual(['provided with the arg name foo annotated with an-annotation'],
-                         [b.proviser_fn('unused-binding-key-stack', FakeInjector())
-                          for b in getattr(some_function, wrapping._BINDINGS_ATTR)])
+                         [call_provisor_fn(b)
+                          for b in getattr(some_function, wrapping._ARG_BINDINGS_ATTR)])
 
 
 class InjectTest(unittest.TestCase):
@@ -35,10 +49,10 @@ class InjectTest(unittest.TestCase):
             return foo
         self.assertEqual([binding.BindingKeyWithoutAnnotation('foo')],
                          [b.binding_key for b in getattr(some_function,
-                                                         wrapping._BINDINGS_ATTR)])
+                                                         wrapping._ARG_BINDINGS_ATTR)])
         self.assertEqual([3],
-                         [b.proviser_fn('unused-binding-key-stack', 'unused-injector')
-                          for b in getattr(some_function, wrapping._BINDINGS_ATTR)])
+                         [call_provisor_fn(b)
+                          for b in getattr(some_function, wrapping._ARG_BINDINGS_ATTR)])
 
 
 class ProvidesTest(unittest.TestCase):
@@ -47,8 +61,19 @@ class ProvidesTest(unittest.TestCase):
         @wrapping.provides('foo')
         def some_function():
             return 'a-foo'
-        self.assertEqual([binding.BindingKeyWithoutAnnotation('foo')],
-                         getattr(some_function, wrapping._PROVIDED_BINDING_KEYS_ATTR))
+        [provided_binding] = getattr(some_function, wrapping._PROVIDED_BINDINGS_ATTR)
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
+                         provided_binding.binding_key)
+        self.assertEqual('a-foo', call_provisor_fn(provided_binding))
+
+    def test_adds_annotation_and_scope_to_wrapped_fn(self):
+        @wrapping.provides('foo', annotated_with='bar', in_scope='a-scope')
+        def some_function():
+            return 'a-foo'
+        [provided_binding] = getattr(some_function, wrapping._PROVIDED_BINDINGS_ATTR)
+        self.assertEqual(binding.BindingKeyWithAnnotation('foo', 'bar'),
+                         provided_binding.binding_key)
+        self.assertEqual('a-scope', provided_binding.scope)
 
 
 class GetPinjectWrapperTest(unittest.TestCase):
@@ -75,7 +100,7 @@ class GetPinjectWrapperTest(unittest.TestCase):
                           binding.BindingKeyWithoutAnnotation('foo')],
                          [b.binding_key
                           for b in getattr(some_function,
-                                           wrapping._BINDINGS_ATTR)])
+                                           wrapping._ARG_BINDINGS_ATTR)])
 
     def test_can_call_wrapped_fn_normally(self):
         @wrapping.inject('foo', with_instance=3)
@@ -105,18 +130,20 @@ class GetAnyProviderBindingKeysTest(unittest.TestCase):
     def test_gets_binding_keys_for_explicit_provider_fn(self):
         @wrapping.provides('arg_name')
         def some_function():
-            pass
-        self.assertEqual([binding.BindingKeyWithoutAnnotation('arg_name')],
-                         wrapping.get_any_provider_binding_keys(some_function))
+            return 'an-arg-name'
+        [provider_binding] = wrapping.get_any_provider_bindings(some_function)
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('arg_name'),
+                         provider_binding.binding_key)
+        self.assertEqual('an-arg-name', call_provisor_fn(provider_binding))
 
     def test_gets_no_binding_keys_for_implicit_provider_fn(self):
         def new_arg_name():
             pass
         self.assertEqual(
-            [], wrapping.get_any_provider_binding_keys(new_arg_name))
+            [], wrapping.get_any_provider_bindings(new_arg_name))
 
     def test_gets_no_binding_keys_for_arbitrary_fn(self):
         def some_function():
             pass
         self.assertEqual(
-            [], wrapping.get_any_provider_binding_keys(some_function))
+            [], wrapping.get_any_provider_bindings(some_function))

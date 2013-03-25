@@ -361,6 +361,12 @@ class BinderTest(unittest.TestCase):
                          only_binding.binding_key)
         self.assertEqual('a-provided-thing', call_provisor_fn(only_binding))
 
+    def test_can_bind_with_scope(self):
+        self.binder.bind('an-arg-name', to_provider=lambda: 'a-provided-thing',
+                         in_scope='a-scope')
+        [only_binding] = self.collected_bindings
+        self.assertEqual('a-scope', only_binding.scope)
+
     def test_binding_to_nothing_raises_error(self):
         self.assertRaises(errors.NoBindingTargetError,
                           self.binder.bind, 'unused-arg-name')

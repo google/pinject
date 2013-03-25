@@ -16,6 +16,36 @@ _IS_DECORATED_ATTR = '_pinject_is_decorated'
 _BOUND_TO_BINDING_KEYS_ATTR = '_pinject_bound_to_binding_keys'
 
 
+# TODO(kurts): I want to avoid conflicting bindings.  If I annotate SomeClass
+# as @binds_to('foo') and then, in a binding function, say bind('foo'
+# to_class=SomeClass, in_scope=SOME_SCOPE), that seems like a conflicting
+# binding (because the @binds_to is implicitly in whatever the default scope
+# is).
+#
+# Maybe that's OK?  Maybe I say that that will be a conflicting binding, and,
+# if you want to bind in a scope, you need to bind in a binding function
+# instead of using @binds_to?
+#
+# But that seems obtuse.  It seems arbitrary to say, hey, if you want to bind
+# a class to an arg name in the default scope, you can use @binds_to, but if
+# you want it in a *non-default* scope, well then, you have to use a binding
+# function.
+#
+# Maybe the solution is to allow bind(arg_name, in_scope) without specifying
+# what it's bound to.  This would use modify whatever binding arg_name has and
+# make it scoped.  On one hand, that seems like it's dividing binding
+# information in two places (e.g., @binds_to at the class definition,
+# bind(...) in the binding module).  On the other hand, you wouldn't have to
+# specifically say what arg_name is bound to when binding it in a scope.
+#
+# But why shouldn't you have to say what arg_name is bound to, when binding it
+# in a scope?  If you don't have to say what it's bound to, it may not be
+# clear what class you're putting in the scope, or the arg_name-to-class
+# binding could change later without you reconsidering whether the scope is
+# appropriate for the new bound-to class.
+#
+# So it seems like @binds_to has to go, or else allow scoping, and since I'm
+# putting scoping in only one place (the binding module), it has to go?
 def binds_to(arg_name, annotated_with=None):
     def get_pinject_decorated_class(cls):
         if not hasattr(cls, _IS_DECORATED_ATTR):
@@ -100,9 +130,11 @@ class BindingKeyWithAnnotation(BindingKey):
 
 class Binding(object):
 
-    def __init__(self, binding_key, proviser_fn):
+    def __init__(self, binding_key, proviser_fn, scope=None):
         self.binding_key = binding_key
         self.proviser_fn = proviser_fn
+        # TODO(kurts): don't store None.
+        self.scope = scope
 
 
 def ProviderToProviser(provider_fn):
@@ -201,9 +233,8 @@ def get_explicit_bindings(classes, functions):
         for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
             all_functions.append(fn)
     for fn in all_functions:
-        for binding_key in wrapping.get_any_provider_binding_keys(fn):
-            proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
-            explicit_bindings.append(Binding(binding_key, proviser_fn))
+        for provider_binding in wrapping.get_any_provider_bindings(fn):
+            explicit_bindings.append(provider_binding)
     return explicit_bindings
 
 
@@ -236,7 +267,7 @@ def get_implicit_bindings(
         for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
             all_functions.append(fn)
     for fn in all_functions:
-        if wrapping.get_any_provider_binding_keys(fn):
+        if wrapping.get_any_provider_bindings(fn):
             continue
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:
@@ -252,13 +283,13 @@ class Binder(object):
         self._collected_bindings = collected_bindings
         self._lock = threading.Lock()
 
-    def bind(self, arg_name, annotated_with=None,  # in_scope=None
-             to_class=None, to_instance=None, to_provider=None):
+    def bind(self, arg_name, annotated_with=None,
+             to_class=None, to_instance=None, to_provider=None, in_scope=None):
         binding_key = new_binding_key(arg_name, annotated_with)
         proviser_fn = create_proviser_fn(binding_key,
                                          to_class, to_instance, to_provider)
         with self._lock:
-            self._collected_bindings.append(Binding(binding_key, proviser_fn))
+            self._collected_bindings.append(Binding(binding_key, proviser_fn, in_scope))
 
 
 def create_proviser_fn(binding_key,

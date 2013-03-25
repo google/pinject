@@ -9,49 +9,6 @@ for thing in dir(errors):
 import injecting
 new_injector = injecting.new_injector
 
-
-# class Scope(object):
-#     """The interface for a scope."""
-
-#     # Guice returns a provider
-#     # http://code.google.com/p/google-guice/source/browse/core/src/com/google/inject/Scope.java
-#     # Why?
-#     def provide(self, arg_name, annotation):
-#         raise NotImplementedError()
-
-#     # def enter_scope(self, name, scope):
-#     #     """Enters an injection scope.
-
-#     #     Args:
-#     #       name: the scope name
-#     #       scope: a concrete Scope implementation
-#     #     Raises:
-#     #       AlreadyInScopeError: there is already an entered-but-not-left scope
-#     #           with the same name
-#     #     """
-#     #     pass
-
-#     # def leave_scope(self, name):
-#     #     """Leaves an injection scope.
-
-#     #     Args:
-#     #       name: the scope name
-#     #     Raises:
-#     #       NotInScopeError: there is no entered-but-not-left scope with that
-#     #           name
-#     #     """
-#     #     pass
-
-
-# class MapBackedScope(Scope):
-
-#     def __init__(self):
-#         pass
-
-#     def provide_from_arg_name(self, arg_name, class_name):
-#         pass
-
-
 # TODO:
 # - allow field injection
 #     (lack of field docstrings is OK because they're the appropriate instances of that type)
@@ -84,5 +41,14 @@ new_injector = injecting.new_injector
 # http://code.google.com/p/google-guice/source/browse/#git%2Fcore%2Fsrc%2Fcom%2Fgoogle%2Finject%253Fstate%253Dclosed
 
 # Questions:
-# - Why does Guice allow provider bindings and @provider functions, both in modules?  @provider is convenient?
-# - Is there any reason not to allow @provider functions to be located anywhere, instead of just in modules?
+# - Why does Guice allow provider bindings and @provider functions, both in
+#     modules?  @provider is convenient?
+# - Is there any reason not to allow @provider functions to be located
+#     anywhere, instead of just in binding modules?
+# - Should "singleton" be the default scope?  It's what I use most often.  And
+#     it seems like having "prototype" be the default scope means that I'll
+#     accidentally create multiple objects where I should have used just one
+#     more often, because the code will work, albeit slower (e.g., with RPC
+#     connections).
+# - TODO above @binds_to.
+# - Should I allow bind(arg_name, to_scope) without saying what it's bound to?
