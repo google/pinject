@@ -1,4 +1,6 @@
 
+# TODO(kurts): make all errors be named the same part(s) of speech.
+
 
 class Error(Exception):
     pass
@@ -6,10 +8,17 @@ class Error(Exception):
 
 class AmbiguousArgNameError(Error):
 
-    def __init__(self, binding_key, provider_fns):
+    def __init__(self, binding_key, bindings):
         Error.__init__(
             self, '{0} ambiguously refers to any of {1}'.format(
-                binding_key, provider_fns))
+                binding_key, bindings))
+
+
+class CannotOverrideDefaultScopeError(Error):
+
+    def __init__(self, scope_id):
+        Error.__init__(
+            self, 'cannot override default scope {0}'.format(scope_id))
 
 
 class ConflictingBindingsError(Error):

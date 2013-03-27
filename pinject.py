@@ -28,6 +28,9 @@ new_injector = injecting.new_injector
 #   - annotated on class (lowest priority)
 #   - eager singletons
 #   - error-checking for deps from one scope to another
+# - don't allow broader scopes to inject stuff from narrower scopes
+# - check that scopes exist when processing binding functions
+# - allow binding classes to scopes
 #
 # - untargetted bindings?  http://code.google.com/p/google-guice/wiki/UntargettedBindings
 # - @ImplementedBy, @ProvidedBy  http://code.google.com/p/google-guice/wiki/JustInTimeBindings
@@ -52,3 +55,4 @@ new_injector = injecting.new_injector
 #     connections).
 # - TODO above @binds_to.
 # - Should I allow bind(arg_name, to_scope) without saying what it's bound to?
+# - Should I allow users to override the default scope?  (I'm assuming not.)

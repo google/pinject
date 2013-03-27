@@ -7,6 +7,7 @@ import binding
 import errors
 import finding
 import providing
+import scoping
 import wrapping
 
 
@@ -16,7 +17,7 @@ def new_injector(
         binding.default_get_arg_names_from_class_name),
     get_arg_names_from_provider_fn_name=(
         providing.default_get_arg_names_from_provider_fn_name),
-        binding_fns=None, name_to_scope=None):
+        binding_fns=None, id_to_scope=None):
 
     classes = finding.find_classes(modules, classes, provider_fns)
     functions = finding.find_functions(modules, classes, provider_fns)
@@ -29,17 +30,26 @@ def new_injector(
         for binding_fn in binding_fns:
             binding_fn(bind=binder.bind)
 
+    if id_to_scope is not None:
+        if None in id_to_scope:
+            raise errors.CannotOverrideDefaultScopeError(None)
+        if scoping.SINGLETON in id_to_scope:
+            raise errors.CannotOverrideDefaultScopeError(scoping.SINGLETON)
+    else:
+        id_to_scope = {}
+    id_to_scope[None] = scoping.PrototypeScope()
+    id_to_scope[scoping.SINGLETON] = scoping.SingletonScope()
+
     binding_mapping = binding.new_binding_mapping(
-        explicit_bindings, implicit_bindings)
-    injector = _Injector(binding_mapping, name_to_scope)
+        explicit_bindings, implicit_bindings, id_to_scope)
+    injector = _Injector(binding_mapping)
     return injector
 
 
 class _Injector(object):
 
-    def __init__(self, binding_mapping, name_to_scope):
+    def __init__(self, binding_mapping):
         self._binding_mapping = binding_mapping
-        self._name_to_scope = name_to_scope
 
     def provide(self, cls):
         return self._provide_class(cls, binding_key_stack=[])

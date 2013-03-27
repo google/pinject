@@ -73,7 +73,7 @@ class ProvidesTest(unittest.TestCase):
         [provided_binding] = getattr(some_function, wrapping._PROVIDED_BINDINGS_ATTR)
         self.assertEqual(binding.BindingKeyWithAnnotation('foo', 'bar'),
                          provided_binding.binding_key)
-        self.assertEqual('a-scope', provided_binding.scope)
+        self.assertEqual('a-scope', provided_binding.scope_id)
 
 
 class GetPinjectWrapperTest(unittest.TestCase):

@@ -4,6 +4,7 @@ import unittest
 import binding
 import errors
 import injecting
+import scoping
 import wrapping
 
 
@@ -101,7 +102,7 @@ class BindingKeyWithAnnotationTest(unittest.TestCase):
 class NewBindingMappingTest(unittest.TestCase):
 
     def test_no_input_bindings_returns_empty_mapping(self):
-        binding_mapping = binding.new_binding_mapping([], [])
+        binding_mapping = binding.new_binding_mapping([], [], {})
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance,
                           binding.BindingKeyWithoutAnnotation('anything'),
@@ -112,7 +113,7 @@ class NewBindingMappingTest(unittest.TestCase):
             pass
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
         binding_mapping = binding.new_binding_mapping(
-            [], [binding.Binding(binding_key, SomeClass)])
+            [], [binding.Binding(binding_key, SomeClass)], {})
         unknown_binding_key = binding.BindingKeyWithoutAnnotation(
             'unknown_class')
         self.assertRaises(errors.NothingInjectableForArgError,
@@ -124,7 +125,8 @@ class NewBindingMappingTest(unittest.TestCase):
             pass
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
         binding_mapping = binding.new_binding_mapping(
-            [], [binding.Binding(binding_key, binding.ProviderToProviser(SomeClass))])
+            [], [binding.Binding(binding_key, binding.ProviderToProviser(SomeClass))],
+            {None: scoping.PrototypeScope()})
         self.assertIsInstance(
             binding_mapping.get_instance(
                 binding_key, binding_key_stack=[], injector=None),
@@ -138,8 +140,10 @@ class NewBindingMappingTest(unittest.TestCase):
         binding_key_one = binding.BindingKeyWithoutAnnotation('class_one')
         binding_key_two = binding.BindingKeyWithoutAnnotation('class_two')
         binding_mapping = binding.new_binding_mapping(
-            [], [binding.Binding(binding_key_one, binding.ProviderToProviser(ClassOne)),
-                 binding.Binding(binding_key_two, binding.ProviderToProviser(ClassTwo))])
+            [],
+            [binding.Binding(binding_key_one, binding.ProviderToProviser(ClassOne)),
+             binding.Binding(binding_key_two, binding.ProviderToProviser(ClassTwo))],
+            {None: scoping.PrototypeScope()})
         self.assertIsInstance(
             binding_mapping.get_instance(
                 binding_key_one, binding_key_stack=[], injector=None),
@@ -156,8 +160,10 @@ class NewBindingMappingTest(unittest.TestCase):
             pass
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
         binding_mapping = binding.new_binding_mapping(
-            [], [binding.Binding(binding_key, SomeClass),
-                 binding.Binding(binding_key, _SomeClass)])
+            [],
+            [binding.Binding(binding_key, SomeClass),
+             binding.Binding(binding_key, _SomeClass)],
+            {None: scoping.PrototypeScope()})
         self.assertRaises(errors.AmbiguousArgNameError,
                           binding_mapping.get_instance,
                           binding_key, binding_key_stack=[], injector=None)
@@ -365,7 +371,7 @@ class BinderTest(unittest.TestCase):
         self.binder.bind('an-arg-name', to_provider=lambda: 'a-provided-thing',
                          in_scope='a-scope')
         [only_binding] = self.collected_bindings
-        self.assertEqual('a-scope', only_binding.scope)
+        self.assertEqual('a-scope', only_binding.scope_id)
 
     def test_binding_to_nothing_raises_error(self):
         self.assertRaises(errors.NoBindingTargetError,

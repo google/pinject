@@ -4,10 +4,14 @@ import unittest
 
 import errors
 import injecting
+import scoping
 import wrapping
 
 
 class NewInjectorTest(unittest.TestCase):
+
+    def test_can_create_injector_with_all_defaults(self):
+        _ = injecting.new_injector()
 
     def test_creates_injector_using_given_modules(self):
         injector = injecting.new_injector(modules=[errors])
@@ -42,6 +46,45 @@ class NewInjectorTest(unittest.TestCase):
                                           binding_fns=[binding_fn])
         self.assertIsInstance(injector.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
+
+    def test_creates_injector_with_default_scopes(self):
+        class SomeClass(object):
+            def __init__(self, prototype, singleton):
+                self.prototype = prototype
+                self.singleton = singleton
+        def binding_fn(bind, **unused_kwargs):
+            bind('prototype', to_provider=lambda: object(), in_scope=None)
+            bind('singleton', to_provider=lambda: object(),
+                 in_scope=scoping.SINGLETON)
+        injector = injecting.new_injector(
+            classes=[SomeClass], binding_fns=[binding_fn])
+        some_class_one = injector.provide(SomeClass)
+        some_class_two = injector.provide(SomeClass)
+        self.assertIsNot(some_class_one.prototype, some_class_two.prototype)
+        self.assertIs(some_class_one.singleton, some_class_two.singleton)
+
+    def test_allows_nondefault_scopes(self):
+        class SomeClass(object):
+            def __init__(self, foo):
+                self.foo = foo
+        def binding_fn(bind, **unused_kwargs):
+            bind('foo', to_provider=lambda: object(), in_scope='foo-scope')
+        injector = injecting.new_injector(
+            classes=[SomeClass], binding_fns=[binding_fn],
+            id_to_scope={'foo-scope': scoping.SingletonScope()})
+        some_class_one = injector.provide(SomeClass)
+        some_class_two = injector.provide(SomeClass)
+        self.assertIs(some_class_one.foo, some_class_two.foo)
+
+    def test_does_not_allow_overriding_none_scope(self):
+        self.assertRaises(
+            errors.CannotOverrideDefaultScopeError, injecting.new_injector,
+            id_to_scope={None: 'unused'})
+
+    def test_does_not_allow_overriding_singleton_scope(self):
+        self.assertRaises(
+            errors.CannotOverrideDefaultScopeError, injecting.new_injector,
+            id_to_scope={scoping.SINGLETON: 'unused'})
 
 
 class InjectorProvideTest(unittest.TestCase):
