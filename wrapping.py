@@ -6,6 +6,7 @@ import decorator
 
 import binding
 import errors
+import scoping
 
 
 _ARG_BINDINGS_ATTR = '_pinject_arg_bindings'
@@ -31,7 +32,7 @@ def inject(arg_name, with_class=None, with_instance=None, with_provider=None):
         arg_binding=binding.Binding(binding_key, proviser_fn))
 
 
-def provides(arg_name, annotated_with=None, in_scope=None):
+def provides(arg_name, annotated_with=None, in_scope=scoping.PROTOTYPE):
     binding_key = binding.new_binding_key(arg_name, annotated_with)
     return _get_pinject_wrapper(provided_binding_key=binding_key,
                                 provided_in_scope=in_scope)

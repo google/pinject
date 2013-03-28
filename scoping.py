@@ -6,6 +6,15 @@ class _SingletonScopeId(object):
 SINGLETON = _SingletonScopeId()
 
 
+class _PrototypeScopeId(object):
+    def __str__(self):
+        return 'prototype scope'
+PROTOTYPE = _PrototypeScopeId()
+
+
+DEFAULT_SCOPES = [SINGLETON, PROTOTYPE]
+
+
 class Scope(object):
 
     def provide(self, binding_key, default_provider_fn):

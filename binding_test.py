@@ -107,7 +107,7 @@ class NewBindingMappingTest(unittest.TestCase):
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance,
                           binding.BindingKeyWithoutAnnotation('anything'),
-                          binding_key_stack=[], in_scope=None, injector=None)
+                          binding_key_stack=[], in_scope='unused', injector=None)
 
     def test_unknown_binding_raises_error(self):
         class SomeClass(object):
@@ -119,7 +119,7 @@ class NewBindingMappingTest(unittest.TestCase):
             'unknown_class')
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance, unknown_binding_key,
-                          binding_key_stack=[], in_scope=None, injector=None)
+                          binding_key_stack=[], in_scope='unused', injector=None)
 
     def test_single_implicit_class_gets_mapped(self):
         class SomeClass(object):
@@ -127,11 +127,12 @@ class NewBindingMappingTest(unittest.TestCase):
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
         binding_mapping = binding.new_binding_mapping(
             [], [binding.Binding(binding_key, binding.ProviderToProviser(SomeClass))],
-            {None: scoping.PrototypeScope()},
+            {scoping.PROTOTYPE: scoping.PrototypeScope()},
             is_scope_usable_from_scope_fn=lambda _1, _2: True)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key, binding_key_stack=[], in_scope=None, injector=None),
+                binding_key, binding_key_stack=[], in_scope=scoping.PROTOTYPE,
+                injector=None),
             SomeClass)
 
     def test_multiple_noncolliding_implicit_classes_get_mapped(self):
@@ -145,15 +146,17 @@ class NewBindingMappingTest(unittest.TestCase):
             [],
             [binding.Binding(binding_key_one, binding.ProviderToProviser(ClassOne)),
              binding.Binding(binding_key_two, binding.ProviderToProviser(ClassTwo))],
-            {None: scoping.PrototypeScope()},
+            {scoping.PROTOTYPE: scoping.PrototypeScope()},
             is_scope_usable_from_scope_fn=lambda _1, _2: True)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key_one, binding_key_stack=[], in_scope=None, injector=None),
+                binding_key_one, binding_key_stack=[],
+                in_scope=scoping.PROTOTYPE, injector=None),
             ClassOne)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key_two, binding_key_stack=[], in_scope=None, injector=None),
+                binding_key_two, binding_key_stack=[],
+                in_scope=scoping.PROTOTYPE, injector=None),
             ClassTwo)
 
     def test_multiple_colliding_classes_raises_error(self):
@@ -166,11 +169,11 @@ class NewBindingMappingTest(unittest.TestCase):
             [],
             [binding.Binding(binding_key, SomeClass),
              binding.Binding(binding_key, _SomeClass)],
-            {None: scoping.PrototypeScope()},
+            {scoping.PROTOTYPE: scoping.PrototypeScope()},
             is_scope_usable_from_scope_fn=lambda _1, _2: True)
         self.assertRaises(
             errors.AmbiguousArgNameError, binding_mapping.get_instance,
-            binding_key, binding_key_stack=[], in_scope=None, injector=None)
+            binding_key, binding_key_stack=[], in_scope=scoping.PROTOTYPE, injector=None)
 
     def test_scope_not_usable_from_scope_raises_error(self):
         class SomeClass(object):
@@ -178,11 +181,11 @@ class NewBindingMappingTest(unittest.TestCase):
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
         binding_mapping = binding.new_binding_mapping(
             [], [binding.Binding(binding_key, binding.ProviderToProviser(SomeClass))],
-            {None: scoping.PrototypeScope()},
+            {scoping.PROTOTYPE: scoping.PrototypeScope()},
             is_scope_usable_from_scope_fn=lambda _1, _2: False)
         self.assertRaises(errors.BadDependencyScopeError,
                           binding_mapping.get_instance, binding_key,
-                          binding_key_stack=[], in_scope=None, injector=None)
+                          binding_key_stack=[], in_scope=scoping.PROTOTYPE, injector=None)
 
 
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
@@ -227,7 +230,7 @@ class GetExplicitBindingsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         [explicit_binding] = binding.get_explicit_bindings(
-            [SomeClass], [], scope_ids=[None])
+            [SomeClass], [], scope_ids=[scoping.PROTOTYPE])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          explicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
@@ -237,7 +240,7 @@ class GetExplicitBindingsTest(unittest.TestCase):
         def some_function():
             return 'a-foo'
         [explicit_binding] = binding.get_explicit_bindings(
-            [], [some_function], scope_ids=[None])
+            [], [some_function], scope_ids=[scoping.PROTOTYPE])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          explicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(explicit_binding))
@@ -250,7 +253,7 @@ class GetExplicitBindingsTest(unittest.TestCase):
             def some_function():
                 return 'a-foo'
         [explicit_binding] = binding.get_explicit_bindings(
-            [SomeClass], [], scope_ids=[None])
+            [SomeClass], [], scope_ids=[scoping.PROTOTYPE])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          explicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(explicit_binding))
@@ -368,7 +371,8 @@ class BinderTest(unittest.TestCase):
     def setUp(self):
         self.collected_bindings = []
         self.binder = binding.Binder(
-            self.collected_bindings, scope_ids=[None, 'known-scope'])
+            self.collected_bindings,
+            scope_ids=[scoping.PROTOTYPE, 'known-scope'])
 
     def test_can_bind_to_class(self):
         class SomeClass(object):

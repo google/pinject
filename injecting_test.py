@@ -53,7 +53,8 @@ class NewInjectorTest(unittest.TestCase):
                 self.prototype = prototype
                 self.singleton = singleton
         def binding_fn(bind, **unused_kwargs):
-            bind('prototype', to_provider=lambda: object(), in_scope=None)
+            bind('prototype', to_provider=lambda: object(),
+                 in_scope=scoping.PROTOTYPE)
             bind('singleton', to_provider=lambda: object(),
                  in_scope=scoping.SINGLETON)
         injector = injecting.new_injector(
@@ -76,10 +77,10 @@ class NewInjectorTest(unittest.TestCase):
         some_class_two = injector.provide(SomeClass)
         self.assertIs(some_class_one.foo, some_class_two.foo)
 
-    def test_does_not_allow_overriding_none_scope(self):
+    def test_does_not_allow_overriding_prototype_scope(self):
         self.assertRaises(
             errors.CannotOverrideDefaultScopeError, injecting.new_injector,
-            id_to_scope={None: 'unused'})
+            id_to_scope={scoping.PROTOTYPE: 'unused'})
 
     def test_does_not_allow_overriding_singleton_scope(self):
         self.assertRaises(

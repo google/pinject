@@ -8,6 +8,7 @@ import types
 import decorator
 
 import errors
+import scoping
 import providing
 import wrapping
 
@@ -130,10 +131,9 @@ class BindingKeyWithAnnotation(BindingKey):
 
 class Binding(object):
 
-    def __init__(self, binding_key, proviser_fn, scope_id=None):
+    def __init__(self, binding_key, proviser_fn, scope_id=scoping.PROTOTYPE):
         self.binding_key = binding_key
         self.proviser_fn = proviser_fn
-        # TODO(kurts): don't store None.
         self.scope_id = scope_id
 
 
@@ -303,7 +303,8 @@ class Binder(object):
         self._lock = threading.Lock()
 
     def bind(self, arg_name, annotated_with=None,
-             to_class=None, to_instance=None, to_provider=None, in_scope=None):
+             to_class=None, to_instance=None, to_provider=None,
+             in_scope=scoping.PROTOTYPE):
         if in_scope not in self._scope_ids:
             raise errors.UnknownScopeError(in_scope)
         binding_key = new_binding_key(arg_name, annotated_with)
