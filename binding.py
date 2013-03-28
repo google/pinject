@@ -138,7 +138,7 @@ class Binding(object):
 
 
 def ProviderToProviser(provider_fn):
-    return lambda binding_key_stack, in_scope, injector: provider_fn()
+    return lambda binding_context, injector: provider_fn()
 
 
 def new_binding_mapping(explicit_bindings, implicit_bindings,
@@ -188,18 +188,18 @@ class _BindingMapping(object):
         self._id_to_scope = id_to_scope
         self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
-    def get_instance(self, binding_key, binding_key_stack, in_scope, injector):
-        # TODO(kurts): binding_key_stack includes binding_key.  Why pass in
-        # both?  Move the appending of binding_key to binding_key_stack into
-        # this method.
+    def get_instance(self, binding_key, binding_context, injector):
+        # TODO(kurts): binding_context.binding_key_stack includes binding_key.
+        # Why pass in both?  Move the appending of binding_key to
+        # binding_key_stack into this method.
         if binding_key in self._binding_key_to_binding:
             binding = self._binding_key_to_binding[binding_key]
             scope = self._id_to_scope[binding.scope_id]
-            if not self._is_scope_usable_from_scope_fn(scope, in_scope):
-                raise errors.BadDependencyScopeError(scope, in_scope, binding_key_stack)
+            if not self._is_scope_usable_from_scope_fn(scope, binding_context._in_scope):  # TODO(kurts): no reaching in
+                raise errors.BadDependencyScopeError(scope, binding_context)
             return scope.provide(
                 binding_key,
-                lambda: binding.proviser_fn(binding_key_stack, scope, injector))
+                lambda: binding.proviser_fn(binding_context.with_scope(scope), injector))
         elif binding_key in self._collided_binding_key_to_bindings:
             raise errors.AmbiguousArgNameError(
                 binding_key,
@@ -208,9 +208,25 @@ class _BindingMapping(object):
             raise errors.NothingInjectableForArgError(binding_key)
 
 
-# class BindingContext(object):
+def new_binding_context():
+    return BindingContext(binding_key_stack=[], in_scope=scoping.UNSCOPED)
 
-#     def __init__(self, binding_key_stack, scope_id):
+
+class BindingContext(object):
+
+    def __init__(self, binding_key_stack, in_scope):
+        self._binding_key_stack = binding_key_stack
+        self._in_scope = in_scope
+
+    def with_scope(self, scope):
+        return BindingContext(self._binding_key_stack, scope)
+
+    def with_added_binding_key(self, binding_key):
+        new_binding_key_stack = list(self._binding_key_stack)
+        new_binding_key_stack.append(binding_key)
+        if binding_key in self._binding_key_stack:
+            raise errors.CyclicInjectionError(new_binding_key_stack)
+        return BindingContext(new_binding_key_stack, self._in_scope)
 
 
 def default_get_arg_names_from_class_name(class_name):
@@ -330,13 +346,13 @@ def create_proviser_fn(binding_key,
         if not inspect.isclass(to_class):
             raise errors.InvalidBindingTargetError(
                 binding_key, to_class, 'class')
-        return lambda binding_key_stack, in_scope, injector: injector._provide_class(
-            to_class, binding_key_stack, in_scope)
+        return lambda binding_context, injector: injector._provide_class(
+            to_class, binding_context)
     elif to_instance is not None:
         return ProviderToProviser(lambda: to_instance)
     else:  # to_provider is not None
         if not callable(to_provider):
             raise errors.InvalidBindingTargetError(
                 binding_key, to_provider, 'callable')
-        return lambda binding_key_stack, in_scope, injector: injector._call_with_injection(
-            to_provider, binding_key_stack, in_scope)
+        return lambda binding_context, injector: injector._call_with_injection(
+            to_provider, binding_context)

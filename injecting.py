@@ -56,25 +56,18 @@ class _Injector(object):
         self._binding_mapping = binding_mapping
 
     def provide(self, cls):
-        return self._provide_class(
-            cls, binding_key_stack=[], in_scope=scoping.UNSCOPED)
+        return self._provide_class(cls, binding.new_binding_context())
 
-    def _provide_from_binding_key(
-            self, binding_key, binding_key_stack, in_scope):
-        binding_key_stack.append(binding_key)
-        if binding_key in binding_key_stack[:-1]:
-            raise errors.CyclicInjectionError(binding_key_stack)
-        try:
-            # TODO(kurts): make a reasonable error message if the mapping raises.
-            return self._binding_mapping.get_instance(
-                binding_key, binding_key_stack, in_scope, self)
-        finally:
-            binding_key_stack.pop()
+    def _provide_from_binding_key(self, binding_key, binding_context):
+        new_binding_context = binding_context.with_added_binding_key(binding_key)
+        # TODO(kurts): make a reasonable error message if the mapping raises.
+        return self._binding_mapping.get_instance(
+            binding_key, new_binding_context, self)
 
-    def _provide_class(self, cls, binding_key_stack, in_scope):
+    def _provide_class(self, cls, binding_context):
         if type(cls.__init__) is types.MethodType:
             init_kwargs = self._get_injection_kwargs(
-                cls.__init__, binding_key_stack, in_scope)
+                cls.__init__, binding_context)
         else:
             init_kwargs = {}
         return cls(**init_kwargs)
@@ -100,23 +93,22 @@ class _Injector(object):
                 for arg_name in injected_arg_names:
                     kwargs[arg_name] = self._provide_from_binding_key(
                         binding.BindingKeyWithoutAnnotation(arg_name),
-                        binding_key_stack=[], in_scope=scoping.UNSCOPED)
+                        binding.new_binding_context())
             return fn(*pargs, **kwargs)
         return WrappedFn
 
-    def _call_with_injection(self, provider_fn, binding_key_stack, in_scope):
-        kwargs = self._get_injection_kwargs(
-            provider_fn, binding_key_stack, in_scope)
+    def _call_with_injection(self, provider_fn, binding_context):
+        kwargs = self._get_injection_kwargs(provider_fn, binding_context)
         return provider_fn(**kwargs)
 
-    def _get_injection_kwargs(self, fn, binding_key_stack, in_scope):
+    def _get_injection_kwargs(self, fn, binding_context):
         kwargs = {}
         prebound_bindings, arg_names_to_inject = wrapping.get_prebindings_and_remaining_args(fn)
         for prebound_binding in prebound_bindings:
             kwargs[prebound_binding.binding_key.arg_name] = (
-                prebound_binding.proviser_fn(binding_key_stack, in_scope, self))
+                prebound_binding.proviser_fn(binding_context, self))
         for arg_name in arg_names_to_inject:
             binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
             kwargs[arg_name] = self._provide_from_binding_key(
-                binding_key, binding_key_stack, in_scope)
+                binding_key, binding_context)
         return kwargs

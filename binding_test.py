@@ -107,7 +107,7 @@ class NewBindingMappingTest(unittest.TestCase):
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance,
                           binding.BindingKeyWithoutAnnotation('anything'),
-                          binding_key_stack=[], in_scope='unused', injector=None)
+                          _UNUSED_BINDING_CONTEXT, injector=None)
 
     def test_unknown_binding_raises_error(self):
         class SomeClass(object):
@@ -119,7 +119,7 @@ class NewBindingMappingTest(unittest.TestCase):
             'unknown_class')
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance, unknown_binding_key,
-                          binding_key_stack=[], in_scope='unused', injector=None)
+                          _UNUSED_BINDING_CONTEXT, injector=None)
 
     def test_single_implicit_class_gets_mapped(self):
         class SomeClass(object):
@@ -131,8 +131,7 @@ class NewBindingMappingTest(unittest.TestCase):
             is_scope_usable_from_scope_fn=lambda _1, _2: True)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key, binding_key_stack=[], in_scope=scoping.PROTOTYPE,
-                injector=None),
+                binding_key, binding.new_binding_context(), injector=None),
             SomeClass)
 
     def test_multiple_noncolliding_implicit_classes_get_mapped(self):
@@ -150,13 +149,11 @@ class NewBindingMappingTest(unittest.TestCase):
             is_scope_usable_from_scope_fn=lambda _1, _2: True)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key_one, binding_key_stack=[],
-                in_scope=scoping.PROTOTYPE, injector=None),
+                binding_key_one, binding.new_binding_context(), injector=None),
             ClassOne)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key_two, binding_key_stack=[],
-                in_scope=scoping.PROTOTYPE, injector=None),
+                binding_key_two, binding.new_binding_context(), injector=None),
             ClassTwo)
 
     def test_multiple_colliding_classes_raises_error(self):
@@ -173,7 +170,7 @@ class NewBindingMappingTest(unittest.TestCase):
             is_scope_usable_from_scope_fn=lambda _1, _2: True)
         self.assertRaises(
             errors.AmbiguousArgNameError, binding_mapping.get_instance,
-            binding_key, binding_key_stack=[], in_scope=scoping.PROTOTYPE, injector=None)
+            binding_key, binding.new_binding_context(), injector=None)
 
     def test_scope_not_usable_from_scope_raises_error(self):
         class SomeClass(object):
@@ -185,7 +182,7 @@ class NewBindingMappingTest(unittest.TestCase):
             is_scope_usable_from_scope_fn=lambda _1, _2: False)
         self.assertRaises(errors.BadDependencyScopeError,
                           binding_mapping.get_instance, binding_key,
-                          binding_key_stack=[], in_scope=scoping.PROTOTYPE, injector=None)
+                          binding.new_binding_context(), injector=None)
 
 
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
@@ -206,18 +203,18 @@ class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
 class FakeInjector(object):
 
     def provide(self, cls):
-        return self._provide_class(cls, binding_key_stack=[], in_scope='unused')
+        return self._provide_class(cls, _UNUSED_BINDING_CONTEXT)
 
-    def _provide_class(self, cls, binding_key_stack, in_scope):
+    def _provide_class(self, cls, binding_context):
         return 'a-provided-{0}'.format(cls.__name__)
 
-    def _call_with_injection(self, provider_fn, binding_key_stack, in_scope):
+    def _call_with_injection(self, provider_fn, binding_context):
         return provider_fn()
 
 
-_UNUSED_BINDING_KEY_STACK = []
+_UNUSED_BINDING_CONTEXT = binding.BindingContext('unused', 'unused')
 def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, 'unused-scope', FakeInjector())
+    return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
 
 
 class GetExplicitBindingsTest(unittest.TestCase):
