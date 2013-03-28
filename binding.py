@@ -189,17 +189,14 @@ class _BindingMapping(object):
         self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
     def get_instance(self, binding_key, binding_context, injector):
-        # TODO(kurts): binding_context.binding_key_stack includes binding_key.
-        # Why pass in both?  Move the appending of binding_key to
-        # binding_key_stack into this method.
         if binding_key in self._binding_key_to_binding:
             binding = self._binding_key_to_binding[binding_key]
             scope = self._id_to_scope[binding.scope_id]
             if not self._is_scope_usable_from_scope_fn(scope, binding_context._in_scope):  # TODO(kurts): no reaching in
-                raise errors.BadDependencyScopeError(scope, binding_context)
+                raise errors.BadDependencyScopeError(scope, binding_key, binding_context)
             return scope.provide(
                 binding_key,
-                lambda: binding.proviser_fn(binding_context.with_scope(scope), injector))
+                lambda: binding.proviser_fn(binding_context.get_child(binding_key, scope), injector))
         elif binding_key in self._collided_binding_key_to_bindings:
             raise errors.AmbiguousArgNameError(
                 binding_key,
@@ -218,15 +215,12 @@ class BindingContext(object):
         self._binding_key_stack = binding_key_stack
         self._in_scope = in_scope
 
-    def with_scope(self, scope):
-        return BindingContext(self._binding_key_stack, scope)
-
-    def with_added_binding_key(self, binding_key):
+    def get_child(self, binding_key, scope):
         new_binding_key_stack = list(self._binding_key_stack)
         new_binding_key_stack.append(binding_key)
         if binding_key in self._binding_key_stack:
             raise errors.CyclicInjectionError(new_binding_key_stack)
-        return BindingContext(new_binding_key_stack, self._in_scope)
+        return BindingContext(new_binding_key_stack, scope)
 
 
 def default_get_arg_names_from_class_name(class_name):

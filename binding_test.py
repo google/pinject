@@ -107,7 +107,7 @@ class NewBindingMappingTest(unittest.TestCase):
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance,
                           binding.BindingKeyWithoutAnnotation('anything'),
-                          _UNUSED_BINDING_CONTEXT, injector=None)
+                          binding.new_binding_context(), injector=None)
 
     def test_unknown_binding_raises_error(self):
         class SomeClass(object):
@@ -119,7 +119,7 @@ class NewBindingMappingTest(unittest.TestCase):
             'unknown_class')
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance, unknown_binding_key,
-                          _UNUSED_BINDING_CONTEXT, injector=None)
+                          binding.new_binding_context(), injector=None)
 
     def test_single_implicit_class_gets_mapped(self):
         class SomeClass(object):

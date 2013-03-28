@@ -59,10 +59,9 @@ class _Injector(object):
         return self._provide_class(cls, binding.new_binding_context())
 
     def _provide_from_binding_key(self, binding_key, binding_context):
-        new_binding_context = binding_context.with_added_binding_key(binding_key)
         # TODO(kurts): make a reasonable error message if the mapping raises.
         return self._binding_mapping.get_instance(
-            binding_key, new_binding_context, self)
+            binding_key, binding_context, self)
 
     def _provide_class(self, cls, binding_context):
         if type(cls.__init__) is types.MethodType:
