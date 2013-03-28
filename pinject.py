@@ -30,7 +30,6 @@ new_injector = injecting.new_injector
 #   - error-checking for deps from one scope to another
 # - don't allow broader scopes to inject stuff from narrower scopes
 # - check that scopes exist when processing binding functions
-# - allow binding classes to scopes
 #
 # - untargetted bindings?  http://code.google.com/p/google-guice/wiki/UntargettedBindings
 # - @ImplementedBy, @ProvidedBy  http://code.google.com/p/google-guice/wiki/JustInTimeBindings
@@ -56,3 +55,8 @@ new_injector = injecting.new_injector
 # - TODO above @binds_to.
 # - Should I allow bind(arg_name, to_scope) without saying what it's bound to?
 # - Should I allow users to override the default scope?  (I'm assuming not.)
+# - How should I deal with someone wanting to instantiate a class in a scope,
+#     without using an arg name in between?  Scopes apply to binding keys,
+#     which are arg names, not classes.  Is it going to be harmful if you
+#     can't instantiate a class directly in a scope?  I don't think so, but
+#     I'm not sure.
