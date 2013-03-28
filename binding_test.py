@@ -204,13 +204,14 @@ def call_provisor_fn(a_binding):
 class GetExplicitBindingsTest(unittest.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
-        self.assertEqual([], binding.get_explicit_bindings([], []))
+        self.assertEqual([], binding.get_explicit_bindings([], [], []))
 
     def test_returns_binding_for_input_explicitly_bound_class(self):
         @binding.binds_to('foo')
         class SomeClass(object):
             pass
-        [explicit_binding] = binding.get_explicit_bindings([SomeClass], [])
+        [explicit_binding] = binding.get_explicit_bindings(
+            [SomeClass], [], scope_ids=[None])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          explicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
@@ -219,7 +220,8 @@ class GetExplicitBindingsTest(unittest.TestCase):
         @wrapping.provides('foo')
         def some_function():
             return 'a-foo'
-        [explicit_binding] = binding.get_explicit_bindings([], [some_function])
+        [explicit_binding] = binding.get_explicit_bindings(
+            [], [some_function], scope_ids=[None])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          explicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(explicit_binding))
@@ -231,10 +233,27 @@ class GetExplicitBindingsTest(unittest.TestCase):
             # TODO(kurts): figure out why the decorator order cannot be reversed.
             def some_function():
                 return 'a-foo'
-        [explicit_binding] = binding.get_explicit_bindings([SomeClass], [])
+        [explicit_binding] = binding.get_explicit_bindings(
+            [SomeClass], [], scope_ids=[None])
         self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
                          explicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(explicit_binding))
+
+    def test_returns_binding_in_known_scope(self):
+        @wrapping.provides('foo', in_scope='a-scope')
+        def some_function():
+            return 'a-foo'
+        [explicit_binding] = binding.get_explicit_bindings(
+            [], [some_function], scope_ids=['a-scope'])
+        self.assertEqual('a-scope', explicit_binding.scope_id)
+
+    def test_raises_error_for_binding_in_unknown_scope(self):
+        @wrapping.provides('foo', in_scope='unknown-scope')
+        def some_function():
+            return 'a-foo'
+        self.assertRaises(errors.UnknownScopeError,
+                          binding.get_explicit_bindings,
+                          [], [some_function], scope_ids=['known-scope'])
 
 
 class GetImplicitBindingsTest(unittest.TestCase):
@@ -332,7 +351,8 @@ class BinderTest(unittest.TestCase):
 
     def setUp(self):
         self.collected_bindings = []
-        self.binder = binding.Binder(self.collected_bindings)
+        self.binder = binding.Binder(
+            self.collected_bindings, scope_ids=[None, 'known-scope'])
 
     def test_can_bind_to_class(self):
         class SomeClass(object):
@@ -369,9 +389,14 @@ class BinderTest(unittest.TestCase):
 
     def test_can_bind_with_scope(self):
         self.binder.bind('an-arg-name', to_provider=lambda: 'a-provided-thing',
-                         in_scope='a-scope')
+                         in_scope='known-scope')
         [only_binding] = self.collected_bindings
-        self.assertEqual('a-scope', only_binding.scope_id)
+        self.assertEqual('known-scope', only_binding.scope_id)
+
+    def test_binding_to_unknown_scope_raises_error(self):
+        self.assertRaises(
+            errors.UnknownScopeError, self.binder.bind, 'unused-arg-name',
+            to_instance='unused-instance', in_scope='unknown-scope')
 
     def test_binding_to_nothing_raises_error(self):
         self.assertRaises(errors.NoBindingTargetError,

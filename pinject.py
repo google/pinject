@@ -10,31 +10,22 @@ import injecting
 new_injector = injecting.new_injector
 
 # TODO:
+# - don't allow broader scopes to inject stuff from narrower scopes
+# - eager singletons
+# - only inject if a class is marked as injectable
+# - safe vs. unsafe mode
+# - refuse to inject None
+
+# Maybe TODO:
 # - allow field injection
 #     (lack of field docstrings is OK because they're the appropriate instances of that type)
 #     (but get a second opinion on whether it decreases testability)
-#
-# - only inject if a class is marked as injectable
-# - safe vs. unsafe mode
 # - find modules on PYTHONPATH instead of having to import them
-#
 # - automatically instantiate the concrete subclass of an interface?
 #     (it is possible to determine that something is abstract?)
-#
-# - scopes
-#   - when providing (highest priority)
-#   - in module
-#   - annotated on provider
-#   - annotated on class (lowest priority)
-#   - eager singletons
-#   - error-checking for deps from one scope to another
-# - don't allow broader scopes to inject stuff from narrower scopes
-# - check that scopes exist when processing binding functions
-#
 # - untargetted bindings?  http://code.google.com/p/google-guice/wiki/UntargettedBindings
 # - @ImplementedBy, @ProvidedBy  http://code.google.com/p/google-guice/wiki/JustInTimeBindings
 # - other stuff: http://code.google.com/p/google-guice/wiki/Motivation
-# - refuse to inject None
 # - visual graph of created objects
 
 # http://code.google.com/p/google-guice/wiki/Motivation

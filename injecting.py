@@ -19,17 +19,6 @@ def new_injector(
         providing.default_get_arg_names_from_provider_fn_name),
         binding_fns=None, id_to_scope=None):
 
-    classes = finding.find_classes(modules, classes, provider_fns)
-    functions = finding.find_functions(modules, classes, provider_fns)
-    implicit_bindings = binding.get_implicit_bindings(
-        classes, functions, get_arg_names_from_class_name,
-        get_arg_names_from_provider_fn_name)
-    explicit_bindings = binding.get_explicit_bindings(classes, functions)
-    binder = binding.Binder(explicit_bindings)
-    if binding_fns is not None:
-        for binding_fn in binding_fns:
-            binding_fn(bind=binder.bind)
-
     if id_to_scope is not None:
         if None in id_to_scope:
             raise errors.CannotOverrideDefaultScopeError(None)
@@ -39,6 +28,19 @@ def new_injector(
         id_to_scope = {}
     id_to_scope[None] = scoping.PrototypeScope()
     id_to_scope[scoping.SINGLETON] = scoping.SingletonScope()
+    known_scope_ids = id_to_scope.keys()
+
+    classes = finding.find_classes(modules, classes, provider_fns)
+    functions = finding.find_functions(modules, classes, provider_fns)
+    implicit_bindings = binding.get_implicit_bindings(
+        classes, functions, get_arg_names_from_class_name,
+        get_arg_names_from_provider_fn_name)
+    explicit_bindings = binding.get_explicit_bindings(
+        classes, functions, known_scope_ids)
+    binder = binding.Binder(explicit_bindings, known_scope_ids)
+    if binding_fns is not None:
+        for binding_fn in binding_fns:
+            binding_fn(bind=binder.bind)
 
     binding_mapping = binding.new_binding_mapping(
         explicit_bindings, implicit_bindings, id_to_scope)

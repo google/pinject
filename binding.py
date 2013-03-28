@@ -224,7 +224,7 @@ def default_get_arg_names_from_class_name(class_name):
     return ['_'.join(part.lower() for part in parts)]
 
 
-def get_explicit_bindings(classes, functions):
+def get_explicit_bindings(classes, functions, scope_ids):
     explicit_bindings = []
     all_functions = list(functions)
     for cls in classes:
@@ -235,6 +235,8 @@ def get_explicit_bindings(classes, functions):
             all_functions.append(fn)
     for fn in all_functions:
         for provider_binding in wrapping.get_any_provider_bindings(fn):
+            if provider_binding.scope_id not in scope_ids:
+                raise errors.UnknownScopeError(provider_binding.scope_id)
             explicit_bindings.append(provider_binding)
     return explicit_bindings
 
@@ -280,12 +282,15 @@ def get_implicit_bindings(
 
 class Binder(object):
 
-    def __init__(self, collected_bindings):
+    def __init__(self, collected_bindings, scope_ids):
         self._collected_bindings = collected_bindings
+        self._scope_ids = scope_ids
         self._lock = threading.Lock()
 
     def bind(self, arg_name, annotated_with=None,
              to_class=None, to_instance=None, to_provider=None, in_scope=None):
+        if in_scope not in self._scope_ids:
+            raise errors.UnknownScopeError(in_scope)
         binding_key = new_binding_key(arg_name, annotated_with)
         proviser_fn = create_proviser_fn(binding_key,
                                          to_class, to_instance, to_provider)

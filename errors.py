@@ -67,3 +67,9 @@ class NothingInjectableForArgError(Error):
     def __init__(self, binding_key):
         Error.__init__(
             self, 'there is no injectable class for {0}'.format(binding_key))
+
+
+class UnknownScopeError(Error):
+
+    def __init__(self, scope_id):
+        Error.__init__(self, 'no such scope with ID {0}'.format(scope_id))
