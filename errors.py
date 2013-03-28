@@ -14,6 +14,14 @@ class AmbiguousArgNameError(Error):
                 binding_key, bindings))
 
 
+class BadDependencyScopeError(Error):
+
+    def __init__(self, to_scope, from_scope, binding_key_stack):
+        Error.__init__(
+            self, 'scope {0} is not usable from scope {1} when injecting'
+            ' {2}'.format(to_scope, from_scope, binding_key_stack))
+
+
 class CannotOverrideDefaultScopeError(Error):
 
     def __init__(self, scope_id):

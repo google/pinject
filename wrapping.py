@@ -16,8 +16,8 @@ _PROVIDED_BINDINGS_ATTR = '_pinject_provided_bindings'
 
 def annotate(arg_name, annotation):
     binding_key = binding.BindingKeyWithAnnotation(arg_name, annotation)
-    proviser_fn = lambda binding_key_stack, injector: (
-        injector._provide_from_binding_key(binding_key, binding_key_stack))
+    proviser_fn = lambda binding_key_stack, in_scope, injector: (
+        injector._provide_from_binding_key(binding_key, binding_key_stack, in_scope))
     return _get_pinject_wrapper(
         arg_binding=binding.Binding(binding_key, proviser_fn))
 

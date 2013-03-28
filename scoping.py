@@ -30,3 +30,6 @@ class SingletonScope(object):
             instance = default_provider_fn()
             self._binding_key_to_instance[binding_key] = instance
             return instance
+
+
+UNSCOPED = object()

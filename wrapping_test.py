@@ -7,24 +7,26 @@ import errors
 import wrapping
 
 
+# TODO(kurts): have only one FakeInjector for tests.
 class FakeInjector(object):
 
     def provide(self, cls):
-        return self._provide_class(cls, binding_key_stack=[])
+        return self._provide_class(cls, binding_key_stack=[], in_scope='unused')
 
-    def _provide_class(self, cls, binding_key_stack):
+    def _provide_class(self, cls, binding_key_stack, in_scope):
         return 'a-provided-{0}'.format(cls.__name__)
 
-    def _provide_from_binding_key(self, binding_key, binding_key_stack):
+    def _provide_from_binding_key(self, binding_key, binding_key_stack, in_scope):
         return 'provided with {0}'.format(binding_key)
 
-    def _call_with_injection(self, provider_fn, binding_key_stack):
+    def _call_with_injection(self, provider_fn, binding_key_stack, in_scope):
         return provider_fn()
 
 
+# TODO(kurts): have only one call_provisor_fn() for tests.
 _UNUSED_BINDING_KEY_STACK = []
 def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector())
+    return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, 'unused-scope', FakeInjector())
 
 
 class AnnotateTest(unittest.TestCase):

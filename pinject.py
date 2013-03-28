@@ -10,7 +10,6 @@ import injecting
 new_injector = injecting.new_injector
 
 # TODO:
-# - don't allow broader scopes to inject stuff from narrower scopes
 # - eager singletons
 # - only inject if a class is marked as injectable
 # - safe vs. unsafe mode
@@ -50,4 +49,14 @@ new_injector = injecting.new_injector
 #     without using an arg name in between?  Scopes apply to binding keys,
 #     which are arg names, not classes.  Is it going to be harmful if you
 #     can't instantiate a class directly in a scope?  I don't think so, but
-#     I'm not sure.
+#     I'm not sure.  It makes some things awkward, like a special scope from
+#     which it's OK to inject objects from any scope.  Maybe the main
+#     _Injector method should be wrap() instead of provide_class()??
+# - It seems like Guice and others don't have a problem with object A from
+#     singleton scope getting injected with object B from prototype scope.  Is
+#     that because you may just need one of something, and it's immutable, so
+#     you can create them with impunity?  And: is it good to have a feature
+#     that limits what scopes are usable from what other scopes?  For
+#     instance, I'd want to make sure that I never created a singleton that
+#     included a request-scoped instance.
+# - Remove _Injector.wrap()?

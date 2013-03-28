@@ -99,26 +99,27 @@ class BindingKeyWithAnnotationTest(unittest.TestCase):
                          str(binding_key))
 
 
+# TODO(kurts): this test is unwieldy.
 class NewBindingMappingTest(unittest.TestCase):
 
     def test_no_input_bindings_returns_empty_mapping(self):
-        binding_mapping = binding.new_binding_mapping([], [], {})
+        binding_mapping = binding.new_binding_mapping([], [], {}, lambda _1, _2: True)
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance,
                           binding.BindingKeyWithoutAnnotation('anything'),
-                          binding_key_stack=[], injector=None)
+                          binding_key_stack=[], in_scope=None, injector=None)
 
     def test_unknown_binding_raises_error(self):
         class SomeClass(object):
             pass
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
         binding_mapping = binding.new_binding_mapping(
-            [], [binding.Binding(binding_key, SomeClass)], {})
+            [], [binding.Binding(binding_key, SomeClass)], {}, lambda _1, _2: True)
         unknown_binding_key = binding.BindingKeyWithoutAnnotation(
             'unknown_class')
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get_instance, unknown_binding_key,
-                          binding_key_stack=[], injector=None)
+                          binding_key_stack=[], in_scope=None, injector=None)
 
     def test_single_implicit_class_gets_mapped(self):
         class SomeClass(object):
@@ -126,10 +127,11 @@ class NewBindingMappingTest(unittest.TestCase):
         binding_key = binding.BindingKeyWithoutAnnotation('some_class')
         binding_mapping = binding.new_binding_mapping(
             [], [binding.Binding(binding_key, binding.ProviderToProviser(SomeClass))],
-            {None: scoping.PrototypeScope()})
+            {None: scoping.PrototypeScope()},
+            is_scope_usable_from_scope_fn=lambda _1, _2: True)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key, binding_key_stack=[], injector=None),
+                binding_key, binding_key_stack=[], in_scope=None, injector=None),
             SomeClass)
 
     def test_multiple_noncolliding_implicit_classes_get_mapped(self):
@@ -143,14 +145,15 @@ class NewBindingMappingTest(unittest.TestCase):
             [],
             [binding.Binding(binding_key_one, binding.ProviderToProviser(ClassOne)),
              binding.Binding(binding_key_two, binding.ProviderToProviser(ClassTwo))],
-            {None: scoping.PrototypeScope()})
+            {None: scoping.PrototypeScope()},
+            is_scope_usable_from_scope_fn=lambda _1, _2: True)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key_one, binding_key_stack=[], injector=None),
+                binding_key_one, binding_key_stack=[], in_scope=None, injector=None),
             ClassOne)
         self.assertIsInstance(
             binding_mapping.get_instance(
-                binding_key_two, binding_key_stack=[], injector=None),
+                binding_key_two, binding_key_stack=[], in_scope=None, injector=None),
             ClassTwo)
 
     def test_multiple_colliding_classes_raises_error(self):
@@ -163,10 +166,23 @@ class NewBindingMappingTest(unittest.TestCase):
             [],
             [binding.Binding(binding_key, SomeClass),
              binding.Binding(binding_key, _SomeClass)],
-            {None: scoping.PrototypeScope()})
-        self.assertRaises(errors.AmbiguousArgNameError,
-                          binding_mapping.get_instance,
-                          binding_key, binding_key_stack=[], injector=None)
+            {None: scoping.PrototypeScope()},
+            is_scope_usable_from_scope_fn=lambda _1, _2: True)
+        self.assertRaises(
+            errors.AmbiguousArgNameError, binding_mapping.get_instance,
+            binding_key, binding_key_stack=[], in_scope=None, injector=None)
+
+    def test_scope_not_usable_from_scope_raises_error(self):
+        class SomeClass(object):
+            pass
+        binding_key = binding.BindingKeyWithoutAnnotation('some_class')
+        binding_mapping = binding.new_binding_mapping(
+            [], [binding.Binding(binding_key, binding.ProviderToProviser(SomeClass))],
+            {None: scoping.PrototypeScope()},
+            is_scope_usable_from_scope_fn=lambda _1, _2: False)
+        self.assertRaises(errors.BadDependencyScopeError,
+                          binding_mapping.get_instance, binding_key,
+                          binding_key_stack=[], in_scope=None, injector=None)
 
 
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
@@ -187,18 +203,18 @@ class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
 class FakeInjector(object):
 
     def provide(self, cls):
-        return self._provide_class(cls, binding_key_stack=[])
+        return self._provide_class(cls, binding_key_stack=[], in_scope='unused')
 
-    def _provide_class(self, cls, binding_key_stack):
+    def _provide_class(self, cls, binding_key_stack, in_scope):
         return 'a-provided-{0}'.format(cls.__name__)
 
-    def _call_with_injection(self, provider_fn, binding_key_stack):
+    def _call_with_injection(self, provider_fn, binding_key_stack, in_scope):
         return provider_fn()
 
 
 _UNUSED_BINDING_KEY_STACK = []
 def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, FakeInjector())
+    return a_binding.proviser_fn(_UNUSED_BINDING_KEY_STACK, 'unused-scope', FakeInjector())
 
 
 class GetExplicitBindingsTest(unittest.TestCase):
