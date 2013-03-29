@@ -20,15 +20,7 @@ def new_injector(
     binding_fns=None, id_to_scope=None,
     is_scope_usable_from_scope_fn=lambda _1, _2: True):
 
-    # TODO(kurts): extract this paragraph to scoping.py.
-    if id_to_scope is not None:
-        for scope_id in scoping.DEFAULT_SCOPES:
-            if scope_id in id_to_scope:
-                raise errors.CannotOverrideDefaultScopeError(scope_id)
-    else:
-        id_to_scope = {}
-    id_to_scope[scoping.PROTOTYPE] = scoping.PrototypeScope()
-    id_to_scope[scoping.SINGLETON] = scoping.SingletonScope()
+    id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
     known_scope_ids = id_to_scope.keys()
 
     classes = finding.find_classes(modules, classes, provider_fns)

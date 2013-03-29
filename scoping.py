@@ -1,4 +1,6 @@
 
+import errors
+
 
 class _SingletonScopeId(object):
     def __str__(self):
@@ -12,7 +14,7 @@ class _PrototypeScopeId(object):
 PROTOTYPE = _PrototypeScopeId()
 
 
-DEFAULT_SCOPES = [SINGLETON, PROTOTYPE]
+_DEFAULT_SCOPES = [SINGLETON, PROTOTYPE]
 
 
 class Scope(object):
@@ -42,3 +44,16 @@ class SingletonScope(object):
 
 
 UNSCOPED = object()
+
+
+def get_id_to_scope_with_defaults(id_to_scope=None):
+    if id_to_scope is not None:
+        for scope_id in _DEFAULT_SCOPES:
+            if scope_id in id_to_scope:
+                raise errors.CannotOverrideDefaultScopeError(scope_id)
+        id_to_scope = dict(id_to_scope)
+    else:
+        id_to_scope = {}
+    id_to_scope[PROTOTYPE] = PrototypeScope()
+    id_to_scope[SINGLETON] = SingletonScope()
+    return id_to_scope

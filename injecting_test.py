@@ -47,24 +47,7 @@ class NewInjectorTest(unittest.TestCase):
         self.assertIsInstance(injector.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
 
-    def test_creates_injector_with_default_scopes(self):
-        class SomeClass(object):
-            def __init__(self, prototype, singleton):
-                self.prototype = prototype
-                self.singleton = singleton
-        def binding_fn(bind, **unused_kwargs):
-            bind('prototype', to_provider=lambda: object(),
-                 in_scope=scoping.PROTOTYPE)
-            bind('singleton', to_provider=lambda: object(),
-                 in_scope=scoping.SINGLETON)
-        injector = injecting.new_injector(
-            classes=[SomeClass], binding_fns=[binding_fn])
-        some_class_one = injector.provide(SomeClass)
-        some_class_two = injector.provide(SomeClass)
-        self.assertIsNot(some_class_one.prototype, some_class_two.prototype)
-        self.assertIs(some_class_one.singleton, some_class_two.singleton)
-
-    def test_allows_nondefault_scopes(self):
+    def test_creates_injector_using_given_scopes(self):
         class SomeClass(object):
             def __init__(self, foo):
                 self.foo = foo
@@ -76,16 +59,6 @@ class NewInjectorTest(unittest.TestCase):
         some_class_one = injector.provide(SomeClass)
         some_class_two = injector.provide(SomeClass)
         self.assertIs(some_class_one.foo, some_class_two.foo)
-
-    def test_does_not_allow_overriding_prototype_scope(self):
-        self.assertRaises(
-            errors.CannotOverrideDefaultScopeError, injecting.new_injector,
-            id_to_scope={scoping.PROTOTYPE: 'unused'})
-
-    def test_does_not_allow_overriding_singleton_scope(self):
-        self.assertRaises(
-            errors.CannotOverrideDefaultScopeError, injecting.new_injector,
-            id_to_scope={scoping.SINGLETON: 'unused'})
 
 
 class InjectorProvideTest(unittest.TestCase):
