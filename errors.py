@@ -1,6 +1,4 @@
 
-# TODO(kurts): make all errors be named the same part(s) of speech.
-
 
 class Error(Exception):
     pass
@@ -20,13 +18,6 @@ class BadDependencyScopeError(Error):
         Error.__init__(
             self, 'scope {0} is not usable when binding {1} from context'
             ' {1}'.format(to_scope, binding_key, binding_context))
-
-
-class CannotOverrideDefaultScopeError(Error):
-
-    def __init__(self, scope_id):
-        Error.__init__(
-            self, 'cannot override default scope {0}'.format(scope_id))
 
 
 class ConflictingBindingsError(Error):
@@ -75,6 +66,13 @@ class NothingInjectableForArgError(Error):
     def __init__(self, binding_key):
         Error.__init__(
             self, 'there is no injectable class for {0}'.format(binding_key))
+
+
+class OverridingDefaultScopeError(Error):
+
+    def __init__(self, scope_id):
+        Error.__init__(
+            self, 'cannot override default scope {0}'.format(scope_id))
 
 
 class UnknownScopeError(Error):

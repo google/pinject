@@ -50,7 +50,7 @@ def get_id_to_scope_with_defaults(id_to_scope=None):
     if id_to_scope is not None:
         for scope_id in _DEFAULT_SCOPES:
             if scope_id in id_to_scope:
-                raise errors.CannotOverrideDefaultScopeError(scope_id)
+                raise errors.OverridingDefaultScopeError(scope_id)
         id_to_scope = dict(id_to_scope)
     else:
         id_to_scope = {}

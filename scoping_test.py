@@ -55,11 +55,11 @@ class GetIdToScopeWithDefaultsTest(unittest.TestCase):
                          set(id_to_scope.keys()))
 
     def test_does_not_allow_overriding_prototype_scope(self):
-        self.assertRaises(errors.CannotOverrideDefaultScopeError,
+        self.assertRaises(errors.OverridingDefaultScopeError,
                           scoping.get_id_to_scope_with_defaults,
                           id_to_scope={scoping.PROTOTYPE: 'unused'})
 
     def test_does_not_allow_overriding_singleton_scope(self):
-        self.assertRaises(errors.CannotOverrideDefaultScopeError,
+        self.assertRaises(errors.OverridingDefaultScopeError,
                           scoping.get_id_to_scope_with_defaults,
                           id_to_scope={scoping.SINGLETON: 'unused'})
