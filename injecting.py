@@ -35,8 +35,11 @@ def new_injector(
         for binding_fn in binding_fns:
             binding_fn(bind=binder.bind)
 
-    binding_mapping = binding.new_binding_mapping(
-        explicit_bindings, implicit_bindings,
+    binding_key_to_binding, collided_binding_key_to_bindings = (
+        binding.get_binding_key_to_binding_maps(
+            explicit_bindings, implicit_bindings))
+    binding_mapping = binding.BindingMapping(
+        binding_key_to_binding, collided_binding_key_to_bindings,
         id_to_scope, is_scope_usable_from_scope_fn)
     injector = _Injector(binding_mapping)
     return injector

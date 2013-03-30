@@ -141,8 +141,7 @@ def ProviderToProviser(provider_fn):
     return lambda binding_context, injector: provider_fn()
 
 
-def new_binding_mapping(explicit_bindings, implicit_bindings,
-                        id_to_scope, is_scope_usable_from_scope_fn):
+def get_binding_key_to_binding_maps(explicit_bindings, implicit_bindings):
     explicit_binding_key_to_binding = {}
     for binding in explicit_bindings:
         binding_key = binding.binding_key
@@ -170,14 +169,10 @@ def new_binding_mapping(explicit_bindings, implicit_bindings,
 
     binding_key_to_binding = explicit_binding_key_to_binding
     binding_key_to_binding.update(implicit_binding_key_to_binding)
-    return _BindingMapping(
-        binding_key_to_binding, collided_binding_key_to_bindings,
-        # TODO(kurts): avoid passing the two scope variables through this
-        # factory method untouched?
-        id_to_scope, is_scope_usable_from_scope_fn)
+    return binding_key_to_binding, collided_binding_key_to_bindings
 
 
-class _BindingMapping(object):
+class BindingMapping(object):
 
     def __init__(self, binding_key_to_binding,
                  collided_binding_key_to_bindings,
