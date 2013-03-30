@@ -180,6 +180,7 @@ class BindingMapping(object):
         self._binding_key_to_binding = binding_key_to_binding
         self._collided_binding_key_to_bindings = (
             collided_binding_key_to_bindings)
+        # TODO(kurts): move these two into their own object.
         self._id_to_scope = id_to_scope
         self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
@@ -187,7 +188,8 @@ class BindingMapping(object):
         if binding_key in self._binding_key_to_binding:
             binding = self._binding_key_to_binding[binding_key]
             scope = self._id_to_scope[binding.scope_id]
-            if not self._is_scope_usable_from_scope_fn(scope, binding_context._in_scope):  # TODO(kurts): no reaching in
+            is_scope_usable = lambda s: self._is_scope_usable_from_scope_fn(scope, s)
+            if not binding_context.does_scope_match(is_scope_usable):
                 raise errors.BadDependencyScopeError(scope, binding_key, binding_context)
             return scope.provide(
                 binding_key,
@@ -216,6 +218,9 @@ class BindingContext(object):
         if binding_key in self._binding_key_stack:
             raise errors.CyclicInjectionError(new_binding_key_stack)
         return BindingContext(new_binding_key_stack, scope)
+
+    def does_scope_match(self, does_scope_match_fn):
+        return does_scope_match_fn(self._in_scope)
 
 
 def default_get_arg_names_from_class_name(class_name):

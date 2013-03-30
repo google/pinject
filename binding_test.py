@@ -215,6 +215,34 @@ class BindingMappingTest(unittest.TestCase):
                           binding.new_binding_context(), injector=None)
 
 
+class BindingContextTest(unittest.TestCase):
+
+    def setUp(self):
+        self.binding_key = binding.BindingKeyWithoutAnnotation('foo')
+        self.binding_context = binding.BindingContext(
+            [self.binding_key], 'curr-scope')
+
+    def test_get_child_successfully(self):
+        other_binding_key = binding.BindingKeyWithoutAnnotation('bar')
+        new_binding_context = self.binding_context.get_child(
+            other_binding_key, 'new-scope')
+        self.assertTrue(
+            new_binding_context.does_scope_match(lambda s: s == 'new-scope'))
+
+    def test_get_child_raises_error_when_binding_key_already_seen(self):
+        self.assertRaises(
+            errors.CyclicInjectionError, self.binding_context.get_child,
+            self.binding_key, 'new-scope')
+
+    def test_scope_does_match(self):
+        self.assertTrue(
+            self.binding_context.does_scope_match(lambda s: s == 'curr-scope'))
+
+    def test_scope_does_not_match(self):
+        self.assertFalse(
+            self.binding_context.does_scope_match(lambda s: s == 'other-scope'))
+
+
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
 
     def test_single_word_lowercased(self):
