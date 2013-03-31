@@ -61,3 +61,5 @@ new_injector = injecting.new_injector
 #     instance, I'd want to make sure that I never created a singleton that
 #     included a request-scoped instance.
 # - Remove _Injector.wrap()?
+# - In safe mode, where initializers must have @inject to be injected, should
+#     that also apply to classes whose only initializer param is self?

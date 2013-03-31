@@ -28,6 +28,10 @@ def annotate(arg_name, annotation):
 
 
 def inject(fn):
+    if not inspect.isfunction(fn):
+        raise errors.InjectDecoratorAppliedToNonInitError(fn)
+    if fn.__name__ != '__init__':
+        raise errors.InjectDecoratorAppliedToNonInitError(fn)
     return _get_pinject_decorated_fn(fn)
 
 

@@ -45,11 +45,29 @@ class AnnotateTest(unittest.TestCase):
 
 class InjectTest(unittest.TestCase):
 
-    def test_wrapper_to_fn(self):
-        @wrapping.inject
-        def some_function(foo):
-            return foo
-        self.assertTrue(hasattr(some_function, wrapping._IS_WRAPPER_ATTR))
+    def test_adds_wrapper_to_init(self):
+        class SomeClass(object):
+            @wrapping.inject
+            def __init__(self, foo):
+                return foo
+        self.assertTrue(hasattr(SomeClass.__init__, wrapping._IS_WRAPPER_ATTR))
+
+    def test_cannot_be_applied_to_non_init_method(self):
+        def do_bad_inject():
+            class SomeClass(object):
+                @wrapping.inject
+                def regular_fn(self, foo):
+                    return foo
+        self.assertRaises(errors.InjectDecoratorAppliedToNonInitError,
+                          do_bad_inject)
+
+    def test_cannot_be_applied_to_regular_function(self):
+        def do_bad_inject():
+            @wrapping.inject
+            def regular_fn(foo):
+                return foo
+        self.assertRaises(errors.InjectDecoratorAppliedToNonInitError,
+                          do_bad_inject)
 
 
 class ProvidesTest(unittest.TestCase):

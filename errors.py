@@ -31,6 +31,13 @@ class CyclicInjectionError(Error):
     pass
 
 
+class InjectDecoratorAppliedToNonInitError(Error):
+
+    def __init__(self, fn):
+        Error.__init__(
+            self, '@inject cannot be applied to non-initializer {0}'.format(fn.__name__))
+
+
 class InvalidBindingTargetError(Error):
 
     def __init__(self, binding_key, binding_target, expected_type_str):
