@@ -175,22 +175,16 @@ def get_binding_key_to_binding_maps(explicit_bindings, implicit_bindings):
 class BindingMapping(object):
 
     def __init__(self, binding_key_to_binding,
-                 collided_binding_key_to_bindings,
-                 id_to_scope, is_scope_usable_from_scope_fn):
+                 collided_binding_key_to_bindings, bindable_scopes):
         self._binding_key_to_binding = binding_key_to_binding
         self._collided_binding_key_to_bindings = (
             collided_binding_key_to_bindings)
-        # TODO(kurts): move these two into their own object.
-        self._id_to_scope = id_to_scope
-        self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
+        self._bindable_scopes = bindable_scopes
 
     def get_instance(self, binding_key, binding_context, injector):
         if binding_key in self._binding_key_to_binding:
             binding = self._binding_key_to_binding[binding_key]
-            scope = self._id_to_scope[binding.scope_id]
-            is_scope_usable = lambda s: self._is_scope_usable_from_scope_fn(scope, s)
-            if not binding_context.does_scope_match(is_scope_usable):
-                raise errors.BadDependencyScopeError(scope, binding_key, binding_context)
+            scope = self._bindable_scopes.get_sub_scope(binding, binding_context)
             return scope.provide(
                 binding_key,
                 lambda: binding.proviser_fn(binding_context.get_child(binding_key, scope), injector))
@@ -219,6 +213,8 @@ class BindingContext(object):
             raise errors.CyclicInjectionError(new_binding_key_stack)
         return BindingContext(new_binding_key_stack, scope)
 
+    # TODO(kurts): this smells like a public attribute.  Maybe move
+    # BindableScopes in here?
     def does_scope_match(self, does_scope_match_fn):
         return does_scope_match_fn(self._in_scope)
 

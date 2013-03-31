@@ -40,7 +40,7 @@ def new_injector(
             explicit_bindings, implicit_bindings))
     binding_mapping = binding.BindingMapping(
         binding_key_to_binding, collided_binding_key_to_bindings,
-        id_to_scope, is_scope_usable_from_scope_fn)
+        scoping.BindableScopes(id_to_scope, is_scope_usable_from_scope_fn))
     injector = _Injector(binding_mapping)
     return injector
 

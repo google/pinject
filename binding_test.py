@@ -178,11 +178,13 @@ class BindingMappingTest(unittest.TestCase):
             self.some_binding_key, binding.ProviderToProviser(lambda: 'a-some-class'))
         self.another_some_binding = binding.Binding(
             self.some_binding_key, binding.ProviderToProviser(lambda: 'another-some-class'))
+        self.bindable_scopes = scoping.BindableScopes(
+            {scoping.PROTOTYPE: scoping.PrototypeScope()}, lambda _1, _2: True)
 
     def test_success(self):
         binding_mapping = binding.BindingMapping(
             {self.some_binding_key: self.some_binding}, {},
-            {scoping.PROTOTYPE: scoping.PrototypeScope()}, lambda _1, _2: True)
+            self.bindable_scopes)
         self.assertEqual('a-some-class',
                          binding_mapping.get_instance(
                              self.some_binding_key, binding.new_binding_context(), injector=None))
@@ -190,7 +192,7 @@ class BindingMappingTest(unittest.TestCase):
     def test_unknown_binding_raises_error(self):
         binding_mapping = binding.BindingMapping(
             {self.some_binding_key: self.some_binding}, {},
-            {scoping.PROTOTYPE: scoping.PrototypeScope()}, lambda _1, _2: True)
+            self.bindable_scopes)
         unknown_binding_key = binding.BindingKeyWithoutAnnotation(
             'unknown_class')
         self.assertRaises(errors.NothingInjectableForArgError,
@@ -201,18 +203,10 @@ class BindingMappingTest(unittest.TestCase):
         binding_mapping = binding.BindingMapping(
             {}, {self.some_binding_key: self.some_binding,
                  self.some_binding_key: self.another_some_binding},
-            {scoping.PROTOTYPE: scoping.PrototypeScope()}, lambda _1, _2: True)
+            self.bindable_scopes)
         self.assertRaises(
             errors.AmbiguousArgNameError, binding_mapping.get_instance,
             self.some_binding_key, binding.new_binding_context(), injector=None)
-
-    def test_scope_not_usable_from_scope_raises_error(self):
-        binding_mapping = binding.BindingMapping(
-            {self.some_binding_key: self.some_binding}, {},
-            {scoping.PROTOTYPE: scoping.PrototypeScope()}, lambda _1, _2: False)
-        self.assertRaises(errors.BadDependencyScopeError,
-                          binding_mapping.get_instance, self.some_binding_key,
-                          binding.new_binding_context(), injector=None)
 
 
 class BindingContextTest(unittest.TestCase):

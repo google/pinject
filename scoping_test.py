@@ -63,3 +63,29 @@ class GetIdToScopeWithDefaultsTest(unittest.TestCase):
         self.assertRaises(errors.OverridingDefaultScopeError,
                           scoping.get_id_to_scope_with_defaults,
                           id_to_scope={scoping.SINGLETON: 'unused'})
+
+
+class BindableScopesTest(unittest.TestCase):
+
+    def setUp(self):
+        def is_scope_usable_from_scope(child_scope_id, parent_scope_id):
+            return child_scope_id == 'usable-scope-id'
+        self.bindable_scopes = scoping.BindableScopes(
+            {'usable-scope-id': 'usable-scope'}, is_scope_usable_from_scope)
+
+    def test_get_sub_scope_successfully(self):
+        usable_binding = binding.Binding(
+            binding.BindingKeyWithoutAnnotation('foo'),
+            'unused-proviser-fn', 'usable-scope-id')
+        self.assertEqual(
+            'usable-scope',
+            self.bindable_scopes.get_sub_scope(
+                usable_binding, binding.new_binding_context()))
+
+    def test_sub_scope_not_usable_from_scope_raises_error(self):
+        unusable_binding = binding.Binding(
+            binding.BindingKeyWithoutAnnotation('foo'),
+            'unused-proviser-fn', 'unusable-scope-id')
+        self.assertRaises(errors.BadDependencyScopeError,
+                          self.bindable_scopes.get_sub_scope, unusable_binding,
+                          binding.new_binding_context())
