@@ -194,6 +194,25 @@ class InjectorProvideTest(unittest.TestCase):
         class_one = injector.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
+    def test_annotated_arg_is_provided_in_correct_scope(self):
+        class SomeClass(object):
+            @wrapping.annotate('foo', 'specific-foo')
+            @wrapping.annotate('bar', 'specific-bar')
+            def __init__(self, foo, bar):
+                self.foo = foo
+                self.bar = bar
+        def binding_fn(bind, **unused_kwargs):
+            bind('foo', annotated_with='specific-foo', to_provider=lambda: object(),
+                 in_scope=scoping.SINGLETON)
+            bind('bar', annotated_with='specific-bar', to_provider=lambda: object(),
+                 in_scope=scoping.PROTOTYPE)
+        injector = injecting.new_injector(classes=[SomeClass],
+                                          binding_fns=[binding_fn])
+        class_one = injector.provide(SomeClass)
+        class_two = injector.provide(SomeClass)
+        self.assertIs(class_one.foo, class_two.foo)
+        self.assertIsNot(class_one.bar, class_two.bar)
+
     def test_raises_error_if_only_binding_has_different_annotation(self):
         class ClassOne(object):
             @wrapping.annotate('foo', 'an-annotation')

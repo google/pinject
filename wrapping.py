@@ -19,6 +19,10 @@ def annotate(arg_name, annotation):
     binding_key = binding.BindingKeyWithAnnotation(arg_name, annotation)
     proviser_fn = lambda binding_context, injector: (
         injector._provide_from_binding_key(binding_key, binding_context))
+    # TODO(kurts): something's fishy here: this Binding is created in the
+    # default scope, and yet the arg will be provided in whatever the correct
+    # scope is.  That probably means that the scope part of Binding needs to
+    # be separated out?
     return _get_pinject_wrapper(
         arg_binding=binding.Binding(binding_key, proviser_fn))
 
