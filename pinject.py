@@ -14,6 +14,7 @@ new_injector = injecting.new_injector
 # - only inject if a class is marked as injectable
 # - safe vs. unsafe mode
 # - refuse to inject None
+# - reasonable error messages for all exceptions
 
 # Maybe TODO:
 # - allow field injection

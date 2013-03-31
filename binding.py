@@ -175,19 +175,14 @@ def get_binding_key_to_binding_maps(explicit_bindings, implicit_bindings):
 class BindingMapping(object):
 
     def __init__(self, binding_key_to_binding,
-                 collided_binding_key_to_bindings, bindable_scopes):
+                 collided_binding_key_to_bindings):
         self._binding_key_to_binding = binding_key_to_binding
         self._collided_binding_key_to_bindings = (
             collided_binding_key_to_bindings)
-        self._bindable_scopes = bindable_scopes
 
-    def get_instance(self, binding_key, binding_context, injector):
+    def get(self, binding_key):
         if binding_key in self._binding_key_to_binding:
-            binding = self._binding_key_to_binding[binding_key]
-            scope = self._bindable_scopes.get_sub_scope(binding, binding_context)
-            return scope.provide(
-                binding_key,
-                lambda: binding.proviser_fn(binding_context.get_child(binding_key, scope), injector))
+            return self._binding_key_to_binding[binding_key]
         elif binding_key in self._collided_binding_key_to_bindings:
             raise errors.AmbiguousArgNameError(
                 binding_key,

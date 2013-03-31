@@ -169,44 +169,23 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
 
 class BindingMappingTest(unittest.TestCase):
 
-    def setUp(self):
-        class SomeClass(object):
-            pass
-        self.some_binding_key = binding.BindingKeyWithoutAnnotation(
-            'some_class')
-        self.some_binding = binding.Binding(
-            self.some_binding_key, binding.ProviderToProviser(lambda: 'a-some-class'))
-        self.another_some_binding = binding.Binding(
-            self.some_binding_key, binding.ProviderToProviser(lambda: 'another-some-class'))
-        self.bindable_scopes = scoping.BindableScopes(
-            {scoping.PROTOTYPE: scoping.PrototypeScope()}, lambda _1, _2: True)
-
     def test_success(self):
         binding_mapping = binding.BindingMapping(
-            {self.some_binding_key: self.some_binding}, {},
-            self.bindable_scopes)
-        self.assertEqual('a-some-class',
-                         binding_mapping.get_instance(
-                             self.some_binding_key, binding.new_binding_context(), injector=None))
+            {'a-binding-key': 'a-binding'}, {})
+        self.assertEqual('a-binding',
+                         binding_mapping.get('a-binding-key'))
 
     def test_unknown_binding_raises_error(self):
         binding_mapping = binding.BindingMapping(
-            {self.some_binding_key: self.some_binding}, {},
-            self.bindable_scopes)
-        unknown_binding_key = binding.BindingKeyWithoutAnnotation(
-            'unknown_class')
+            {'a-binding-key': 'a-binding'}, {})
         self.assertRaises(errors.NothingInjectableForArgError,
-                          binding_mapping.get_instance, unknown_binding_key,
-                          binding.new_binding_context(), injector=None)
+                          binding_mapping.get, 'unknown-binding-key')
 
     def test_colliding_bindings_raises_error(self):
         binding_mapping = binding.BindingMapping(
-            {}, {self.some_binding_key: self.some_binding,
-                 self.some_binding_key: self.another_some_binding},
-            self.bindable_scopes)
-        self.assertRaises(
-            errors.AmbiguousArgNameError, binding_mapping.get_instance,
-            self.some_binding_key, binding.new_binding_context(), injector=None)
+            {}, {'colliding-binding-key': ['binding-one', 'binding-two']})
+        self.assertRaises(errors.AmbiguousArgNameError,
+                          binding_mapping.get, 'colliding-binding-key')
 
 
 class BindingContextTest(unittest.TestCase):

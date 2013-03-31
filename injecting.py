@@ -21,6 +21,8 @@ def new_injector(
     is_scope_usable_from_scope_fn=lambda _1, _2: True):
 
     id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
+    bindable_scopes = scoping.BindableScopes(
+        id_to_scope, is_scope_usable_from_scope_fn)
     known_scope_ids = id_to_scope.keys()
 
     classes = finding.find_classes(modules, classes, provider_fns)
@@ -39,24 +41,26 @@ def new_injector(
         binding.get_binding_key_to_binding_maps(
             explicit_bindings, implicit_bindings))
     binding_mapping = binding.BindingMapping(
-        binding_key_to_binding, collided_binding_key_to_bindings,
-        scoping.BindableScopes(id_to_scope, is_scope_usable_from_scope_fn))
-    injector = _Injector(binding_mapping)
+        binding_key_to_binding, collided_binding_key_to_bindings)
+    injector = _Injector(binding_mapping, bindable_scopes)
     return injector
 
 
 class _Injector(object):
 
-    def __init__(self, binding_mapping):
+    def __init__(self, binding_mapping, bindable_scopes):
         self._binding_mapping = binding_mapping
+        self._bindable_scopes = bindable_scopes
 
     def provide(self, cls):
         return self._provide_class(cls, binding.new_binding_context())
 
     def _provide_from_binding_key(self, binding_key, binding_context):
-        # TODO(kurts): make a reasonable error message if the mapping raises.
-        return self._binding_mapping.get_instance(
-            binding_key, binding_context, self)
+        binding_ = self._binding_mapping.get(binding_key)
+        scope = self._bindable_scopes.get_sub_scope(binding_, binding_context)
+        return scope.provide(
+            binding_key,
+            lambda: binding_.proviser_fn(binding_context.get_child(binding_key, scope), self))
 
     def _provide_class(self, cls, binding_context):
         if type(cls.__init__) is types.MethodType:
