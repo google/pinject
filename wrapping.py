@@ -27,13 +27,8 @@ def annotate(arg_name, annotation):
         arg_binding=binding.Binding(binding_key, proviser_fn))
 
 
-# TODO(kurts): probably remove @inject, except as a marker for explicit-only mode.
-def inject(arg_name, with_class=None, with_instance=None, with_provider=None):
-    binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
-    proviser_fn = binding.create_proviser_fn(
-        binding_key, with_class, with_instance, with_provider)
-    return _get_pinject_wrapper(
-        arg_binding=binding.Binding(binding_key, proviser_fn))
+def inject(fn):
+    return _get_pinject_decorated_fn(fn)
 
 
 def provides(arg_name, annotated_with=None, in_scope=scoping.PROTOTYPE):
@@ -42,25 +37,34 @@ def provides(arg_name, annotated_with=None, in_scope=scoping.PROTOTYPE):
                                 provided_in_scope=in_scope)
 
 
+def _get_pinject_decorated_fn(fn):
+    if hasattr(fn, _IS_WRAPPER_ATTR):
+        pinject_decorated_fn = fn
+    else:
+        def _pinject_decorated_fn(fn_to_wrap, *pargs, **kwargs):
+            return fn_to_wrap(*pargs, **kwargs)
+        pinject_decorated_fn = decorator.decorator(_pinject_decorated_fn, fn)
+        setattr(pinject_decorated_fn, _IS_WRAPPER_ATTR, True)
+        setattr(pinject_decorated_fn, _ARG_BINDINGS_ATTR, [])
+        setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
+        setattr(pinject_decorated_fn, _PROVIDED_BINDINGS_ATTR, [])
+    return pinject_decorated_fn
+
+
 def _get_pinject_wrapper(arg_binding=None,
                          provided_binding_key=None, provided_in_scope=None):
-    def get_pinject_decorated_fn(fn):
-        if hasattr(fn, _IS_WRAPPER_ATTR):
-            pinject_decorated_fn = fn
-        else:
-            def _pinject_decorated_fn(fn_to_wrap, *pargs, **kwargs):
-                return fn_to_wrap(*pargs, **kwargs)
-            pinject_decorated_fn = decorator.decorator(_pinject_decorated_fn, fn)
-            setattr(pinject_decorated_fn, _IS_WRAPPER_ATTR, True)
-            setattr(pinject_decorated_fn, _ARG_BINDINGS_ATTR, [])
-            setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
-            setattr(pinject_decorated_fn, _PROVIDED_BINDINGS_ATTR, [])
-
+    def get_pinject_decorated_fn_with_additions(fn):
+        pinject_decorated_fn = _get_pinject_decorated_fn(fn)
         if arg_binding is not None:
             arg_names, unused_varargs, unused_keywords, unused_defaults = (
                 inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
             if arg_binding.binding_key.arg_name not in arg_names:
                 raise errors.NoSuchArgToInjectError(arg_binding.binding_key.arg_name, fn)
+            bound_arg_names = [binding_.binding_key.arg_name
+                               for binding_ in getattr(pinject_decorated_fn, _ARG_BINDINGS_ATTR)]
+            if arg_binding.binding_key.arg_name in bound_arg_names:
+                raise errors.MultipleAnnotationsForSameArgError(
+                    arg_binding.binding_key.arg_name)
             getattr(pinject_decorated_fn, _ARG_BINDINGS_ATTR).append(arg_binding)
         if provided_binding_key is not None:
             proviser_fn = binding.create_proviser_fn(
@@ -69,9 +73,8 @@ def _get_pinject_wrapper(arg_binding=None,
                 provided_binding_key, proviser_fn, provided_in_scope)
             getattr(pinject_decorated_fn, _PROVIDED_BINDINGS_ATTR).append(
                 provided_binding)
-
         return pinject_decorated_fn
-    return get_pinject_decorated_fn
+    return get_pinject_decorated_fn_with_additions
 
 
 def get_prebindings_and_remaining_args(fn):

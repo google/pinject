@@ -130,55 +130,22 @@ class InjectorProvideTest(unittest.TestCase):
         self.assertRaises(errors.CyclicInjectionError,
                           injector.provide, ClassOne)
 
-    def test_can_provide_class_with_explicitly_injected_arg(self):
-        class SomeClass(object):
-            @wrapping.inject('foo', with_instance=3)
-            def __init__(self, foo):
-                self.foo = foo
-        injector = injecting.new_injector(classes=[SomeClass])
-        self.assertEqual(3, injector.provide(SomeClass).foo)
+    # TODO(kurts): implicit provider functions should be preferred to, not
+    # conflict with, implicit bindings created from classes.
 
-    def test_can_provide_class_with_explicitly_and_implicitly_injected_args(self):
-        class ClassOne(object):
-            def __init__(self):
-                self.foo = 1
-        class ClassTwo(object):
-            @wrapping.inject('foo', with_instance=2)
-            def __init__(self, foo, class_one):
-                self.foo = foo
-                self.class_one = class_one
-        injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
-        class_two = injector.provide(ClassTwo)
-        self.assertEqual(2, class_two.foo)
-        self.assertEqual(1, class_two.class_one.foo)
-
-    def test_injects_implicitly_injected_args_of_provider_fns(self):
+    def test_injects_args_of_provider_fns(self):
         class ClassOne(object):
             pass
         def provides_class_one(class_one):
             class_one.three = 3
             return class_one
         class ClassTwo(object):
-            @wrapping.inject('foo', with_provider=provides_class_one)
             def __init__(self, foo):
                 self.foo = foo
-        injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
-        class_two = injector.provide(ClassTwo)
-        self.assertEqual(3, class_two.foo.three)
-
-    def test_injects_explicitly_injected_args_of_provider_fns(self):
-        class ClassOne(object):
-            pass
-        @wrapping.inject('three', with_instance=3)
-        def provides_class_one(three):
-            class_one = ClassOne()
-            class_one.three = three
-            return class_one
-        class ClassTwo(object):
-            @wrapping.inject('foo', with_provider=provides_class_one)
-            def __init__(self, foo):
-                self.foo = foo
-        injector = injecting.new_injector(classes=[ClassOne, ClassTwo])
+        def binding_fn(bind, **unused_kwargs):
+            bind('foo', to_provider=provides_class_one)
+        injector = injecting.new_injector(classes=[ClassOne, ClassTwo],
+                                          binding_fns=[binding_fn])
         class_two = injector.provide(ClassTwo)
         self.assertEqual(3, class_two.foo.three)
 

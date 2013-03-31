@@ -45,16 +45,11 @@ class AnnotateTest(unittest.TestCase):
 
 class InjectTest(unittest.TestCase):
 
-    def test_adds_binding_in_wrapped_fn(self):
-        @wrapping.inject('foo', with_instance=3)
+    def test_wrapper_to_fn(self):
+        @wrapping.inject
         def some_function(foo):
             return foo
-        self.assertEqual([binding.BindingKeyWithoutAnnotation('foo')],
-                         [b.binding_key for b in getattr(some_function,
-                                                         wrapping._ARG_BINDINGS_ATTR)])
-        self.assertEqual([3],
-                         [call_provisor_fn(b)
-                          for b in getattr(some_function, wrapping._ARG_BINDINGS_ATTR)])
+        self.assertTrue(hasattr(some_function, wrapping._IS_WRAPPER_ATTR))
 
 
 class ProvidesTest(unittest.TestCase):
@@ -81,37 +76,46 @@ class ProvidesTest(unittest.TestCase):
 class GetPinjectWrapperTest(unittest.TestCase):
 
     def test_sets_recognizable_wrapper_attribute(self):
-        @wrapping.inject('foo', with_instance=3)
+        @wrapping.annotate('foo', 'an-annotation')
         def some_function(foo):
             return foo
         self.assertTrue(hasattr(some_function, wrapping._IS_WRAPPER_ATTR))
 
     def test_raises_error_if_referencing_nonexistent_arg(self):
-        def do_bad_inject():
-            @wrapping.inject('foo', with_instance=3)
+        def do_bad_annotate():
+            @wrapping.annotate('foo', 'an-annotation')
             def some_function(bar):
                 return bar
-        self.assertRaises(errors.NoSuchArgToInjectError, do_bad_inject)
+        self.assertRaises(errors.NoSuchArgToInjectError, do_bad_annotate)
 
     def test_reuses_wrapper_fn_when_multiple_wrapping_decorators(self):
-        @wrapping.inject('foo', with_instance=3)
-        @wrapping.inject('bar', with_instance=4)
+        @wrapping.annotate('foo', 'an-annotation')
+        @wrapping.annotate('bar', 'an-annotation')
         def some_function(foo, bar):
             return foo + bar
-        self.assertEqual([binding.BindingKeyWithoutAnnotation('bar'),
-                          binding.BindingKeyWithoutAnnotation('foo')],
+        self.assertEqual([binding.BindingKeyWithAnnotation('bar', 'an-annotation'),
+                          binding.BindingKeyWithAnnotation('foo', 'an-annotation')],
                          [b.binding_key
                           for b in getattr(some_function,
                                            wrapping._ARG_BINDINGS_ATTR)])
 
+    def test_raises_error_if_annotating_arg_twice(self):
+        def do_bad_annotate():
+            @wrapping.annotate('foo', 'an-annotation')
+            @wrapping.annotate('foo', 'an-annotation')
+            def some_function(foo):
+                return foo
+        self.assertRaises(errors.MultipleAnnotationsForSameArgError,
+                          do_bad_annotate)
+
     def test_can_call_wrapped_fn_normally(self):
-        @wrapping.inject('foo', with_instance=3)
+        @wrapping.annotate('foo', 'an-annotation')
         def some_function(foo):
             return foo
         self.assertEqual('an-arg', some_function('an-arg'))
 
     def test_can_introspect_wrapped_fn(self):
-        @wrapping.inject('foo', with_instance=3)
+        @wrapping.annotate('foo', 'an-annotation')
         def some_function(foo, bar='BAR', *pargs, **kwargs):
             pass
         arg_names, varargs, keywords, defaults = inspect.getargspec(

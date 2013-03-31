@@ -39,6 +39,13 @@ class InvalidBindingTargetError(Error):
             ' {2}'.format(binding_key, binding_target, expected_type_str))
 
 
+class MultipleAnnotationsForSameArgError(Error):
+
+    def __init__(self, arg_name):
+        Error.__init__(
+            self, 'multiple annotations for arg {0}'.format(arg_name))
+
+
 class MultipleBindingTargetsError(Error):
 
     def __init__(self, binding_key, specified_to_params):
