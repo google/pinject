@@ -27,9 +27,10 @@ def new_injector(
 
     classes = finding.find_classes(modules, classes, provider_fns)
     functions = finding.find_functions(modules, classes, provider_fns)
-    implicit_bindings = binding.get_implicit_bindings(
-        classes, functions, get_arg_names_from_class_name,
-        get_arg_names_from_provider_fn_name)
+    implicit_provider_bindings = binding.get_implicit_provider_bindings(
+        classes, functions, get_arg_names_from_provider_fn_name)
+    implicit_class_bindings = binding.get_implicit_class_bindings(
+        classes, get_arg_names_from_class_name)
     explicit_bindings = binding.get_explicit_bindings(
         classes, functions, known_scope_ids)
     binder = binding.Binder(explicit_bindings, known_scope_ids)
@@ -38,8 +39,9 @@ def new_injector(
             binding_fn(bind=binder.bind)
 
     binding_key_to_binding, collided_binding_key_to_bindings = (
-        binding.get_binding_key_to_binding_maps(
-            explicit_bindings, implicit_bindings))
+        binding.get_overall_binding_key_to_binding_maps(
+            [implicit_class_bindings, implicit_provider_bindings,
+             explicit_bindings]))
     binding_mapping = binding.BindingMapping(
         binding_key_to_binding, collided_binding_key_to_bindings)
     injector = _Injector(binding_mapping, bindable_scopes)

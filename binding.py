@@ -131,6 +131,8 @@ class BindingKeyWithAnnotation(BindingKey):
 
 class Binding(object):
 
+    # TODO(kurts): remove the scope_id default; it's introducing bugs and
+    # inconsistencies.
     def __init__(self, binding_key, proviser_fn, scope_id=scoping.PROTOTYPE):
         self.binding_key = binding_key
         self.proviser_fn = proviser_fn
@@ -141,34 +143,45 @@ def ProviderToProviser(provider_fn):
     return lambda binding_context, injector: provider_fn()
 
 
-def get_binding_key_to_binding_maps(explicit_bindings, implicit_bindings):
-    explicit_binding_key_to_binding = {}
-    for binding in explicit_bindings:
-        binding_key = binding.binding_key
-        if binding_key in explicit_binding_key_to_binding:
-            raise errors.ConflictingBindingsError(binding_key)
-        explicit_binding_key_to_binding[binding_key] = binding
-
-    implicit_binding_key_to_binding = {}
+# TODO(kurts): replace are_explicit with policy object.
+def _get_binding_key_to_binding_maps(bindings, are_explicit):
+    binding_key_to_binding = {}
     collided_binding_key_to_bindings = {}
-    for binding in implicit_bindings:
-        binding_key = binding.binding_key
-        if binding_key in explicit_binding_key_to_binding:
-            continue
-        if binding_key in implicit_binding_key_to_binding:
-            existing_binding = implicit_binding_key_to_binding[binding_key]
-            del implicit_binding_key_to_binding[binding_key]
-            bindings = collided_binding_key_to_bindings.setdefault(
-                binding_key, set())
-            bindings.add(existing_binding)
+    for binding_ in bindings:
+        binding_key = binding_.binding_key
+        if binding_key in binding_key_to_binding:
+            if are_explicit:
+                raise errors.ConflictingBindingsError(binding_key)
+            else:
+                bindings = collided_binding_key_to_bindings.setdefault(
+                    binding_key, set())
+                bindings.add(binding_key_to_binding[binding_key])
+                del binding_key_to_binding[binding_key]
         if binding_key in collided_binding_key_to_bindings:
-            bindings = collided_binding_key_to_bindings[binding_key]
-            bindings.add(binding)
+            collided_binding_key_to_bindings[binding_key].add(binding_)
         else:
-            implicit_binding_key_to_binding[binding_key] = binding
+            binding_key_to_binding[binding_key] = binding_
+    return binding_key_to_binding, collided_binding_key_to_bindings
 
-    binding_key_to_binding = explicit_binding_key_to_binding
-    binding_key_to_binding.update(implicit_binding_key_to_binding)
+
+def get_overall_binding_key_to_binding_maps(bindings_lists):
+    """bindings_lists from lowest to highest priority.  Last item in
+    bindings_lists is assumed explicit.
+
+    """
+    binding_key_to_binding = {}
+    collided_binding_key_to_bindings = {}
+
+    for index, bindings in enumerate(bindings_lists):
+        are_explicit = (index == (len(bindings_lists) - 1))
+        this_binding_key_to_binding, this_collided_binding_key_to_bindings = (
+            _get_binding_key_to_binding_maps(bindings, are_explicit))
+        for good_binding_key in this_binding_key_to_binding:
+            collided_binding_key_to_bindings.pop(good_binding_key, None)
+        binding_key_to_binding.update(this_binding_key_to_binding)
+        collided_binding_key_to_bindings.update(
+            this_collided_binding_key_to_bindings)
+
     return binding_key_to_binding, collided_binding_key_to_bindings
 
 
@@ -257,10 +270,8 @@ def get_explicit_bindings(classes, functions, scope_ids):
     return explicit_bindings
 
 
-def get_implicit_bindings(
+def get_implicit_provider_bindings(
     classes, functions,
-    get_arg_names_from_class_name=(
-        default_get_arg_names_from_class_name),
     get_arg_names_from_provider_fn_name=(
         providing.default_get_arg_names_from_provider_fn_name)):
     """Creates a mapping from arg names to classes.
@@ -273,8 +284,37 @@ def get_implicit_bindings(
     Returns:
       an _ArgNameClassMapping
     """
-    implicit_bindings = []
     all_functions = list(functions)
+    for cls in classes:
+        for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
+            all_functions.append(fn)
+    implicit_provider_bindings = []
+    for fn in all_functions:
+        if wrapping.get_any_provider_bindings(fn):
+            continue  # it's already an explicit provider fn
+        arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
+        for arg_name in arg_names:
+            binding_key = BindingKeyWithoutAnnotation(arg_name)
+            proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
+            implicit_provider_bindings.append(Binding(binding_key, proviser_fn))
+    return implicit_provider_bindings
+
+
+def get_implicit_class_bindings(
+    classes,
+    get_arg_names_from_class_name=(
+        default_get_arg_names_from_class_name)):
+    """Creates a mapping from arg names to classes.
+
+    Args:
+      classes: an iterable of classes
+      get_arg_names_from_class_name: a function taking an (unqualified) class
+          name and returning a (possibly empty) iterable of the arg names that
+          would map to that class
+    Returns:
+      an _ArgNameClassMapping
+    """
+    implicit_bindings = []
     for cls in classes:
         if _get_any_class_binding_keys(cls):
             continue
@@ -282,16 +322,6 @@ def get_implicit_bindings(
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
-            implicit_bindings.append(Binding(binding_key, proviser_fn))
-        for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
-            all_functions.append(fn)
-    for fn in all_functions:
-        if wrapping.get_any_provider_bindings(fn):
-            continue
-        arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
-        for arg_name in arg_names:
-            binding_key = BindingKeyWithoutAnnotation(arg_name)
-            proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
             implicit_bindings.append(Binding(binding_key, proviser_fn))
     return implicit_bindings
 

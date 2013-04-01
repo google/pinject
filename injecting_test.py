@@ -130,9 +130,6 @@ class InjectorProvideTest(unittest.TestCase):
         self.assertRaises(errors.CyclicInjectionError,
                           injector.provide, ClassOne)
 
-    # TODO(kurts): implicit provider functions should be preferred to, not
-    # conflict with, implicit bindings created from classes.
-
     def test_injects_args_of_provider_fns(self):
         class ClassOne(object):
             pass
@@ -224,6 +221,18 @@ class InjectorProvideTest(unittest.TestCase):
             def new_foo():
                 return 'a-foo'
         injector = injecting.new_injector(classes=[ClassOne])
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-foo', class_one.foo)
+
+    def test_implicit_provider_fn_overrides_implicit_class_binding(self):
+        class ClassOne(object):
+            def __init__(self, foo):
+                self.foo = foo
+        class Foo(object):
+            @staticmethod
+            def new_foo():
+                return 'a-foo'
+        injector = injecting.new_injector(classes=[ClassOne, Foo])
         class_one = injector.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
