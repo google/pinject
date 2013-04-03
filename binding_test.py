@@ -1,4 +1,5 @@
 
+import threading
 import unittest
 
 import binding
@@ -112,43 +113,47 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
             self.some_binding_key, 'another-proviser-fn')
 
     def assertBindingsReturnMaps(
-            self, bindings, are_explicit, binding_key_to_binding,
-            collided_binding_key_to_bindings):
+            self, bindings, binding_key_to_binding,
+            collided_binding_key_to_bindings,
+            handle_binding_collision_fn='unused-handle-binding-collision'):
         self.assertEqual(
             (binding_key_to_binding, collided_binding_key_to_bindings),
             binding._get_binding_key_to_binding_maps(
-                bindings, are_explicit))
+                bindings, handle_binding_collision_fn))
 
-    def assertBindingsRaise(self, bindings, are_explicit, error_type):
+    def assertBindingsRaise(
+            self, bindings, error_type,
+            handle_binding_collision_fn='unused-handle-binding-collision'):
         self.assertRaises(error_type,
                           binding._get_binding_key_to_binding_maps,
-                          bindings, are_explicit)
+                          bindings, handle_binding_collision_fn)
 
     def test_no_input_bindings_returns_empty_maps(self):
         self.assertBindingsReturnMaps(
-            bindings=[], are_explicit=True,
+            bindings=[],
             binding_key_to_binding={}, collided_binding_key_to_bindings={})
 
     def test_single_binding_gets_returned(self):
         self.assertBindingsReturnMaps(
-            bindings=[self.some_binding], are_explicit=True,
+            bindings=[self.some_binding],
             binding_key_to_binding={self.some_binding_key: self.some_binding},
             collided_binding_key_to_bindings={})
 
-    def test_colliding_explicit_classes_raises_error(self):
-        self.assertBindingsRaise(
-            bindings=[self.some_binding, self.another_some_binding],
-            are_explicit=True,
-            error_type=errors.ConflictingBindingsError)
-
-    def test_colliding_implicit_classes_returned_as_colliding(self):
+    def test_colliding_classes_calls_handler(self):
+        was_called = threading.Event()
+        def handle_binding_collision_fn(binding_key, binding_key_to_binding,
+                                        collided_binding_key_to_bindings):
+            self.assertEqual(self.another_some_binding.binding_key, binding_key)
+            self.assertEqual({self.some_binding_key: self.some_binding},
+                             binding_key_to_binding)
+            self.assertEqual({}, collided_binding_key_to_bindings)
+            was_called.set()
         self.assertBindingsReturnMaps(
             bindings=[self.some_binding, self.another_some_binding],
-            are_explicit=False,
-            binding_key_to_binding={},
-            collided_binding_key_to_bindings={
-                self.some_binding_key: set([self.some_binding,
-                                            self.another_some_binding])})
+            handle_binding_collision_fn=handle_binding_collision_fn,
+            binding_key_to_binding={self.some_binding_key: self.another_some_binding},
+            collided_binding_key_to_bindings={})
+        self.assertTrue(was_called.is_set())
 
 
 class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):

@@ -143,20 +143,27 @@ def ProviderToProviser(provider_fn):
     return lambda binding_context, injector: provider_fn()
 
 
-# TODO(kurts): replace are_explicit with policy object.
-def _get_binding_key_to_binding_maps(bindings, are_explicit):
+def _handle_explicit_binding_collision(binding_key, *pargs):
+    raise errors.ConflictingBindingsError(binding_key)
+
+
+def _handle_implicit_binding_collision(binding_key, binding_key_to_binding,
+                                      collided_binding_key_to_bindings):
+    bindings = collided_binding_key_to_bindings.setdefault(
+        binding_key, set())
+    bindings.add(binding_key_to_binding[binding_key])
+    del binding_key_to_binding[binding_key]
+
+
+def _get_binding_key_to_binding_maps(bindings, handle_binding_collision_fn):
     binding_key_to_binding = {}
     collided_binding_key_to_bindings = {}
     for binding_ in bindings:
         binding_key = binding_.binding_key
         if binding_key in binding_key_to_binding:
-            if are_explicit:
-                raise errors.ConflictingBindingsError(binding_key)
-            else:
-                bindings = collided_binding_key_to_bindings.setdefault(
-                    binding_key, set())
-                bindings.add(binding_key_to_binding[binding_key])
-                del binding_key_to_binding[binding_key]
+            handle_binding_collision_fn(
+                binding_key, binding_key_to_binding,
+                collided_binding_key_to_bindings)
         if binding_key in collided_binding_key_to_bindings:
             collided_binding_key_to_bindings[binding_key].add(binding_)
         else:
@@ -173,9 +180,12 @@ def get_overall_binding_key_to_binding_maps(bindings_lists):
     collided_binding_key_to_bindings = {}
 
     for index, bindings in enumerate(bindings_lists):
-        are_explicit = (index == (len(bindings_lists) - 1))
+        is_final_index = (index == (len(bindings_lists) - 1))
+        handle_binding_collision_fn = {
+            True: _handle_explicit_binding_collision,
+            False: _handle_implicit_binding_collision}[is_final_index]
         this_binding_key_to_binding, this_collided_binding_key_to_bindings = (
-            _get_binding_key_to_binding_maps(bindings, are_explicit))
+            _get_binding_key_to_binding_maps(bindings, handle_binding_collision_fn))
         for good_binding_key in this_binding_key_to_binding:
             collided_binding_key_to_bindings.pop(good_binding_key, None)
         binding_key_to_binding.update(this_binding_key_to_binding)
