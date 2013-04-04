@@ -266,6 +266,79 @@ class InjectorProvideTest(unittest.TestCase):
         class_one = injector.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
+    def test_inject_decorated_class_can_be_directly_provided(self):
+        class SomeClass(object):
+            @wrapping.inject
+            def __init__(self):
+                self.foo = 'a-foo'
+        injector = injecting.new_injector(
+            classes=[SomeClass], only_use_explicit_bindings=True)
+        class_one = injector.provide(SomeClass)
+        self.assertEqual('a-foo', class_one.foo)
+
+    def test_non_inject_decorated_class_cannot_be_directly_provided(self):
+        class SomeClass(object):
+            def __init__(self):
+                self.foo = 'a-foo'
+        injector = injecting.new_injector(
+            classes=[SomeClass], only_use_explicit_bindings=True)
+        self.assertRaises(
+            errors.NonExplicitlyBoundClassError, injector.provide, SomeClass)
+
+    def test_inject_decorated_class_is_explicitly_bound(self):
+        class ClassOne(object):
+            @wrapping.inject
+            def __init__(self, class_two):
+                self.class_two = class_two
+        class ClassTwo(object):
+            @wrapping.inject
+            def __init__(self):
+                self.foo = 'a-foo'
+        injector = injecting.new_injector(
+            classes=[ClassOne, ClassTwo], only_use_explicit_bindings=True)
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-foo', class_one.class_two.foo)
+
+    def test_explicit_binding_is_explicitly_bound(self):
+        class ClassOne(object):
+            @wrapping.inject
+            def __init__(self, class_two):
+                self.class_two = class_two
+        def binding_fn(bind, **unused_kwargs):
+            bind('class_two', to_instance='a-class-two')
+        injector = injecting.new_injector(
+            classes=[ClassOne], binding_fns=[binding_fn],
+            only_use_explicit_bindings=True)
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-class-two', class_one.class_two)
+
+    def test_explicitly_provided_class_is_explicitly_bound(self):
+        class ClassOne(object):
+            @wrapping.inject
+            def __init__(self, class_two):
+                self.class_two = class_two
+        @wrapping.provides('class_two')
+        def new_class_two():
+            return 'a-class-two'
+        injector = injecting.new_injector(
+            classes=[ClassOne], provider_fns=[new_class_two],
+            only_use_explicit_bindings=True)
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-class-two', class_one.class_two)
+
+    def test_non_bound_non_decorated_class_is_not_explicitly_bound(self):
+        class ClassOne(object):
+            @wrapping.inject
+            def __init__(self, class_two):
+                self.class_two = class_two
+        class ClassTwo(object):
+            def __init__(self):
+                self.foo = 'a-foo'
+        injector = injecting.new_injector(
+            classes=[ClassOne, ClassTwo], only_use_explicit_bindings=True)
+        self.assertRaises(errors.NothingInjectableForArgError,
+                          injector.provide, ClassOne)
+
 
 class InjectorWrapTest(unittest.TestCase):
 

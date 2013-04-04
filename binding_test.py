@@ -306,6 +306,17 @@ class GetExplicitBindingsTest(unittest.TestCase):
                          explicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
 
+    def test_returns_binding_for_input_explicitly_injected_class(self):
+        class SomeClass(object):
+            @wrapping.inject
+            def __init__(self):
+                pass
+        [explicit_binding] = binding.get_explicit_bindings(
+            [SomeClass], [], scope_ids=[scoping.PROTOTYPE])
+        self.assertEqual(binding.BindingKeyWithoutAnnotation('some_class'),
+                         explicit_binding.binding_key)
+        self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
+
     def test_returns_binding_for_input_provider_fn(self):
         @wrapping.provides('foo')
         def some_function():

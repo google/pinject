@@ -75,6 +75,15 @@ class NoSuchArgToInjectError(Error):
             self, 'no such arg {0} to inject into {1}'.format(arg_name, fn))
 
 
+class NonExplicitlyBoundClassError(Error):
+
+    def __init__(self, cls):
+        Error.__init__(
+            self, 'cannot instantiate class {0}, which is not explicitly'
+            ' marked as injectable, when only_use_explicit_bindings is set'
+            ' to True'.format(cls.__name__))
+
+
 class NothingInjectableForArgError(Error):
 
     def __init__(self, binding_key):

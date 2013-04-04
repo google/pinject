@@ -263,10 +263,16 @@ def default_get_arg_names_from_class_name(class_name):
     return ['_'.join(part.lower() for part in parts)]
 
 
-def get_explicit_bindings(classes, functions, scope_ids):
+def get_explicit_bindings(
+        classes, functions, scope_ids,
+        get_arg_names_from_class_name=default_get_arg_names_from_class_name):
     explicit_bindings = []
     all_functions = list(functions)
     for cls in classes:
+        for binding_key in wrapping.get_any_class_binding_keys(
+                cls, get_arg_names_from_class_name):
+            proviser_fn = create_proviser_fn(binding_key, to_class=cls)
+            explicit_bindings.append(Binding(binding_key, proviser_fn))
         for binding_key in _get_any_class_binding_keys(cls):
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
             explicit_bindings.append(Binding(binding_key, proviser_fn))

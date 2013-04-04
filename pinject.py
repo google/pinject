@@ -11,8 +11,6 @@ new_injector = injecting.new_injector
 
 # TODO:
 # - eager singletons
-# - only inject if a class is marked as injectable
-# - safe vs. unsafe mode
 # - refuse to inject None
 # - reasonable error messages for all exceptions
 
@@ -63,3 +61,9 @@ new_injector = injecting.new_injector
 # - Remove _Injector.wrap()?
 # - In safe mode, where initializers must have @inject to be injected, should
 #     that also apply to classes whose only initializer param is self?
+# - Should @inject conflict with an explicit binding in a binding function?
+#     @inject creates a binding from the class's corresponding arg name(s) to
+#     the class, in the default scope.  But isn't that the same as @binds_to?
+#     Why is it OK to mark a class injectable with @inject?  Doesn't that make
+#     two places you have to look to see if a class is injectable?
+# - Why should @inject apply to __init__() rather than the class?

@@ -81,7 +81,17 @@ def _get_pinject_wrapper(arg_binding=None,
     return get_pinject_decorated_fn_with_additions
 
 
-def get_prebindings_and_remaining_args(fn):
+def get_any_class_binding_keys(cls, get_arg_names_from_class_name):
+    if (hasattr(cls, '__init__') and hasattr(cls.__init__, _IS_WRAPPER_ATTR)):
+        # TODO(kurts): raise an error if @inject was applied to the
+        # initializer of a class that ends up having no bound arg names.
+        return [binding.BindingKeyWithoutAnnotation(arg_name)
+                for arg_name in get_arg_names_from_class_name(cls.__name__)]
+    else:
+        return []
+
+
+def get_arg_prebindings_and_remaining_args(fn):
     if hasattr(fn, _IS_WRAPPER_ATTR):
         prebound_bindings = getattr(fn, _ARG_BINDINGS_ATTR)
         prebound_arg_names = [b.binding_key.arg_name for b in prebound_bindings]

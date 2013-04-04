@@ -12,13 +12,14 @@ import wrapping
 
 
 def new_injector(
-    modules=None, classes=None, provider_fns=None,
-    get_arg_names_from_class_name=(
-        binding.default_get_arg_names_from_class_name),
-    get_arg_names_from_provider_fn_name=(
-        providing.default_get_arg_names_from_provider_fn_name),
-    binding_fns=None, id_to_scope=None,
-    is_scope_usable_from_scope_fn=lambda _1, _2: True):
+        modules=None, classes=None, provider_fns=None,
+        only_use_explicit_bindings=False,
+        get_arg_names_from_class_name=(
+            binding.default_get_arg_names_from_class_name),
+        get_arg_names_from_provider_fn_name=(
+            providing.default_get_arg_names_from_provider_fn_name),
+        binding_fns=None, id_to_scope=None,
+        is_scope_usable_from_scope_fn=lambda _1, _2: True):
 
     id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
     bindable_scopes = scoping.BindableScopes(
@@ -27,12 +28,17 @@ def new_injector(
 
     classes = finding.find_classes(modules, classes, provider_fns)
     functions = finding.find_functions(modules, classes, provider_fns)
-    implicit_provider_bindings = binding.get_implicit_provider_bindings(
-        classes, functions, get_arg_names_from_provider_fn_name)
-    implicit_class_bindings = binding.get_implicit_class_bindings(
-        classes, get_arg_names_from_class_name)
+    if only_use_explicit_bindings:
+        implicit_provider_bindings = []
+        implicit_class_bindings = []
+    else:
+        implicit_provider_bindings = binding.get_implicit_provider_bindings(
+            classes, functions, get_arg_names_from_provider_fn_name)
+        implicit_class_bindings = binding.get_implicit_class_bindings(
+            classes, get_arg_names_from_class_name)
     explicit_bindings = binding.get_explicit_bindings(
-        classes, functions, known_scope_ids)
+        classes, functions, known_scope_ids,
+        get_arg_names_from_class_name)
     binder = binding.Binder(explicit_bindings, known_scope_ids)
     if binding_fns is not None:
         for binding_fn in binding_fns:
@@ -44,17 +50,26 @@ def new_injector(
              explicit_bindings]))
     binding_mapping = binding.BindingMapping(
         binding_key_to_binding, collided_binding_key_to_bindings)
-    injector = _Injector(binding_mapping, bindable_scopes)
+
+    is_injectable_fn = {
+        True: (lambda cls: bool(wrapping.get_any_class_binding_keys(
+            cls, get_arg_names_from_class_name))),
+        False: (lambda cls: True)
+    }[only_use_explicit_bindings]
+    injector = _Injector(binding_mapping, bindable_scopes, is_injectable_fn)
     return injector
 
 
 class _Injector(object):
 
-    def __init__(self, binding_mapping, bindable_scopes):
+    def __init__(self, binding_mapping, bindable_scopes, is_injectable_fn):
         self._binding_mapping = binding_mapping
         self._bindable_scopes = bindable_scopes
+        self._is_injectable_fn = is_injectable_fn
 
     def provide(self, cls):
+        if not self._is_injectable_fn(cls):
+            raise errors.NonExplicitlyBoundClassError(cls)
         return self._provide_class(cls, binding.new_binding_context())
 
     def _provide_from_binding_key(self, binding_key, binding_context):
@@ -103,10 +118,11 @@ class _Injector(object):
 
     def _get_injection_kwargs(self, fn, binding_context):
         kwargs = {}
-        prebound_bindings, arg_names_to_inject = wrapping.get_prebindings_and_remaining_args(fn)
-        for prebound_binding in prebound_bindings:
-            kwargs[prebound_binding.binding_key.arg_name] = (
-                prebound_binding.proviser_fn(binding_context, self))
+        prebound_arg_bindings, arg_names_to_inject = (
+            wrapping.get_arg_prebindings_and_remaining_args(fn))
+        for prebound_arg_binding in prebound_arg_bindings:
+            kwargs[prebound_arg_binding.binding_key.arg_name] = (
+                prebound_arg_binding.proviser_fn(binding_context, self))
         for arg_name in arg_names_to_inject:
             binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
             kwargs[arg_name] = self._provide_from_binding_key(

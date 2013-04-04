@@ -144,7 +144,29 @@ class GetPinjectWrapperTest(unittest.TestCase):
         self.assertEqual(('BAR',), defaults)
 
 
-class GetPrebindingsAndRemainingArgsTest(unittest.TestCase):
+class GetAnyClassBindingKeys(unittest.TestCase):
+
+    def test_non_injectable_class_returns_no_binding_keys(self):
+        class SomeClass(object):
+            pass
+        self.assertEqual(
+            [],
+            wrapping.get_any_class_binding_keys(
+                SomeClass, get_arg_names_from_class_name=None))
+
+    def test_injectable_class_returns_binding_key(self):
+        class SomeClass(object):
+            @wrapping.inject
+            def __init__(self):
+                pass
+        self.assertEqual(
+            [binding.BindingKeyWithoutAnnotation('foo')],
+            wrapping.get_any_class_binding_keys(
+                SomeClass,
+                get_arg_names_from_class_name=lambda cls_name: ['foo']))
+
+
+class GetArgPrebindingsAndRemainingArgsTest(unittest.TestCase):
     # TODO(kurts)
     pass
 
