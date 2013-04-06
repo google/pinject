@@ -19,6 +19,10 @@ def annotate(arg_name, annotation):
     binding_key = binding.BindingKeyWithAnnotation(arg_name, annotation)
     proviser_fn = lambda binding_context, injector: (
         injector._provide_from_binding_key(binding_key, binding_context))
+    # TODO(kurts): that I don't have a description of the proviser means that
+    # something is wrong.  Why is this creating a whole binding instead of
+    # just a binding key?
+    proviser_fn._pinject_desc = '???'
     # TODO(kurts): something's fishy here: this Binding is created in the
     # default scope, and yet the arg will be provided in whatever the correct
     # scope is.  That probably means that the scope part of Binding needs to

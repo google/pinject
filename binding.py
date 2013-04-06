@@ -139,10 +139,6 @@ class Binding(object):
         self.scope_id = scope_id
 
 
-def ProviderToProviser(provider_fn):
-    return lambda binding_context, injector: provider_fn()
-
-
 def _handle_explicit_binding_collision(binding_key, *pargs):
     raise errors.ConflictingBindingsError(binding_key)
 
@@ -377,13 +373,17 @@ def create_proviser_fn(binding_key,
         if not inspect.isclass(to_class):
             raise errors.InvalidBindingTargetError(
                 binding_key, to_class, 'class')
-        return lambda binding_context, injector: injector._provide_class(
+        proviser_fn = lambda binding_context, injector: injector._provide_class(
             to_class, binding_context)
+        proviser_fn._pinject_desc = 'the class {0!r}'.format(to_class)
     elif to_instance is not None:
-        return ProviderToProviser(lambda: to_instance)
+        proviser_fn = lambda binding_context, injector: to_instance
+        proviser_fn._pinject_desc = 'the instance {0!r}'.format(to_instance)
     else:  # to_provider is not None
         if not callable(to_provider):
             raise errors.InvalidBindingTargetError(
                 binding_key, to_provider, 'callable')
-        return lambda binding_context, injector: injector._call_with_injection(
+        proviser_fn = lambda binding_context, injector: injector._call_with_injection(
             to_provider, binding_context)
+        proviser_fn._pinject_desc = 'the provider {0!r}'.format(to_provider)
+    return proviser_fn

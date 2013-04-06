@@ -8,8 +8,8 @@ class AmbiguousArgNameError(Error):
 
     def __init__(self, binding_key, bindings):
         Error.__init__(
-            self, '{0} ambiguously refers to any of {1}'.format(
-                binding_key, bindings))
+            self, '{0} ambiguously refers to any of:\n{1}'.format(
+                binding_key, '\n'.join('  {0}'.format(b.proviser_fn._pinject_desc) for b in bindings)))
 
 
 class BadDependencyScopeError(Error):

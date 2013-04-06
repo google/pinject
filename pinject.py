@@ -10,10 +10,10 @@ import injecting
 new_injector = injecting.new_injector
 
 # TODO:
-# - eager singletons
 # - reasonable error messages for all exceptions
 
 # Maybe TODO:
+# - eager singletons
 # - allow field injection
 #     (lack of field docstrings is OK because they're the appropriate instances of that type)
 #     (but get a second opinion on whether it decreases testability)
@@ -67,3 +67,11 @@ new_injector = injecting.new_injector
 #     Why is it OK to mark a class injectable with @inject?  Doesn't that make
 #     two places you have to look to see if a class is injectable?
 # - Why should @inject apply to __init__() rather than the class?
+# - How would eager singletons work?
+# - Should I do the same thing w.r.t. singletons that Guice does?
+#     https://code.google.com/p/google-guice/wiki/Scopes
+#     It looks like singletons by default are eager, except during
+#     development.  Is it important to create them eagerly?  Is it important
+#     to have a development mode?  Are there other things that turning on
+#     development mode enables?
+# - Field injection?
