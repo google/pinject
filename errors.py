@@ -16,8 +16,8 @@ class BadDependencyScopeError(Error):
 
     def __init__(self, to_scope_id, binding_key, binding_context):
         Error.__init__(
-            self, 'scope {0} is not usable when binding {1} from context'
-            ' {1}'.format(to_scope_id, binding_key, binding_context))
+            self, 'scope "{0}" is not usable when binding {1} from'
+            ' {2}'.format(to_scope_id, binding_key, binding_context))
 
 
 class ConflictingBindingsError(Error):

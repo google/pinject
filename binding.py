@@ -103,7 +103,7 @@ class BindingKeyWithoutAnnotation(BindingKey):
         return hash(self.arg_name)
 
     def __str__(self):
-        return 'the arg name {0}'.format(self.arg_name)
+        return 'the arg name "{0}"'.format(self.arg_name)
 
 
 class BindingKeyWithAnnotation(BindingKey):
@@ -125,7 +125,7 @@ class BindingKeyWithAnnotation(BindingKey):
         return hash(self.arg_name) ^ hash(self._annotation)
 
     def __str__(self):
-        return 'the arg name {0} annotated with {1}'.format(
+        return 'the arg name "{0}" annotated with "{1}"'.format(
             self.arg_name, self._annotation)
 
 
@@ -231,6 +231,9 @@ class BindingContext(object):
     # BindableScopes in here?
     def does_scope_match(self, does_scope_match_fn):
         return does_scope_match_fn(self._in_scope)
+
+    def __str__(self):
+        return 'the scope "{0}"'.format(self._in_scope)
 
 
 def default_get_arg_names_from_class_name(class_name):

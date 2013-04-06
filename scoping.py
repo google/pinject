@@ -43,7 +43,10 @@ class SingletonScope(object):
             return instance
 
 
-UNSCOPED = object()
+class _UnscopedScopeId(object):
+    def __str__(self):
+        return 'unscoped scope'
+UNSCOPED = _UnscopedScopeId()
 
 
 def get_id_to_scope_with_defaults(id_to_scope=None):

@@ -35,11 +35,11 @@ class NewBindingKeyTest(unittest.TestCase):
 
     def test_without_annotation(self):
         binding_key = binding.new_binding_key('an-arg-name')
-        self.assertEqual('the arg name an-arg-name', str(binding_key))
+        self.assertEqual('the arg name "an-arg-name"', str(binding_key))
 
     def test_with_annotation(self):
         binding_key = binding.new_binding_key('an-arg-name', 'an-annotation')
-        self.assertEqual('the arg name an-arg-name annotated with an-annotation',
+        self.assertEqual('the arg name "an-arg-name" annotated with "an-annotation"',
                          str(binding_key))
 
 
@@ -61,7 +61,7 @@ class BindingKeyWithoutAnnotationTest(unittest.TestCase):
 
     def test_str(self):
         binding_key = binding.BindingKeyWithoutAnnotation('an-arg-name')
-        self.assertEqual('the arg name an-arg-name', str(binding_key))
+        self.assertEqual('the arg name "an-arg-name"', str(binding_key))
 
 
 class BindingKeyWithAnnotationTest(unittest.TestCase):
@@ -96,7 +96,7 @@ class BindingKeyWithAnnotationTest(unittest.TestCase):
     def test_str(self):
         binding_key = binding.BindingKeyWithAnnotation(
             'an-arg-name', 'an-annotation')
-        self.assertEqual('the arg name an-arg-name annotated with an-annotation',
+        self.assertEqual('the arg name "an-arg-name" annotated with "an-annotation"',
                          str(binding_key))
 
 
