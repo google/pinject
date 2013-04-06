@@ -339,6 +339,30 @@ class InjectorProvideTest(unittest.TestCase):
         self.assertRaises(errors.NothingInjectableForArgError,
                           injector.provide, ClassOne)
 
+    def test_can_inject_none_when_allowing_injecting_none(self):
+        class SomeClass(object):
+            def __init__(self, foo):
+                self.foo = foo
+        def binding_fn(bind, **unused_kwargs):
+            bind('foo', to_provider=lambda: None)
+        injector = injecting.new_injector(
+            classes=[SomeClass], binding_fns=[binding_fn],
+            allow_injecting_none=True)
+        some_class = injector.provide(SomeClass)
+        self.assertIsNone(some_class.foo)
+
+    def test_cannot_inject_none_when_disallowing_injecting_none(self):
+        class SomeClass(object):
+            def __init__(self, foo):
+                self.foo = foo
+        def binding_fn(bind, **unused_kwargs):
+            bind('foo', to_provider=lambda: None)
+        injector = injecting.new_injector(
+            classes=[SomeClass], binding_fns=[binding_fn],
+            allow_injecting_none=False)
+        self.assertRaises(errors.InjectingNoneDisallowedError,
+                          injector.provide, SomeClass)
+
 
 class InjectorWrapTest(unittest.TestCase):
 

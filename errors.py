@@ -38,6 +38,13 @@ class InjectDecoratorAppliedToNonInitError(Error):
             self, '@inject cannot be applied to non-initializer {0}'.format(fn.__name__))
 
 
+class InjectingNoneDisallowedError(Error):
+
+    def __init__(self):
+        Error.__init__(
+            self, 'cannot inject None because allow_injecting_none=False')
+
+
 class InvalidBindingTargetError(Error):
 
     def __init__(self, binding_key, binding_target, expected_type_str):

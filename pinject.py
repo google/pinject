@@ -11,7 +11,6 @@ new_injector = injecting.new_injector
 
 # TODO:
 # - eager singletons
-# - refuse to inject None
 # - reasonable error messages for all exceptions
 
 # Maybe TODO:
@@ -60,7 +59,8 @@ new_injector = injecting.new_injector
 #     included a request-scoped instance.
 # - Remove _Injector.wrap()?
 # - In safe mode, where initializers must have @inject to be injected, should
-#     that also apply to classes whose only initializer param is self?
+#     that also apply to classes whose only initializer param is self?  It
+#     seems like Guice makes an exception in this case.  Why?
 # - Should @inject conflict with an explicit binding in a binding function?
 #     @inject creates a binding from the class's corresponding arg name(s) to
 #     the class, in the default scope.  But isn't that the same as @binds_to?

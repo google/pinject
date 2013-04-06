@@ -13,7 +13,7 @@ import wrapping
 
 def new_injector(
         modules=None, classes=None, provider_fns=None,
-        only_use_explicit_bindings=False,
+        only_use_explicit_bindings=False, allow_injecting_none=False,
         get_arg_names_from_class_name=(
             binding.default_get_arg_names_from_class_name),
         get_arg_names_from_provider_fn_name=(
@@ -56,16 +56,19 @@ def new_injector(
             cls, get_arg_names_from_class_name))),
         False: (lambda cls: True)
     }[only_use_explicit_bindings]
-    injector = _Injector(binding_mapping, bindable_scopes, is_injectable_fn)
+    injector = _Injector(binding_mapping, bindable_scopes, is_injectable_fn,
+                         allow_injecting_none)
     return injector
 
 
 class _Injector(object):
 
-    def __init__(self, binding_mapping, bindable_scopes, is_injectable_fn):
+    def __init__(self, binding_mapping, bindable_scopes, is_injectable_fn,
+                 allow_injecting_none):
         self._binding_mapping = binding_mapping
         self._bindable_scopes = bindable_scopes
         self._is_injectable_fn = is_injectable_fn
+        self._allow_injecting_none = allow_injecting_none
 
     def provide(self, cls):
         if not self._is_injectable_fn(cls):
@@ -75,9 +78,12 @@ class _Injector(object):
     def _provide_from_binding_key(self, binding_key, binding_context):
         binding_ = self._binding_mapping.get(binding_key)
         scope = self._bindable_scopes.get_sub_scope(binding_, binding_context)
-        return scope.provide(
+        provided = scope.provide(
             binding_key,
             lambda: binding_.proviser_fn(binding_context.get_child(binding_key, scope), self))
+        if (provided is None) and not self._allow_injecting_none:
+            raise errors.InjectingNoneDisallowedError()
+        return provided
 
     def _provide_class(self, cls, binding_context):
         if type(cls.__init__) is types.MethodType:
