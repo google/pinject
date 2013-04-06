@@ -36,11 +36,8 @@ class AnnotateTest(unittest.TestCase):
         def some_function(foo):
             return foo
         self.assertEqual([binding.BindingKeyWithAnnotation('foo', 'an-annotation')],
-                         [b.binding_key for b in getattr(some_function,
-                                                         wrapping._ARG_BINDINGS_ATTR)])
-        self.assertEqual(['provided with the arg name foo annotated with an-annotation'],
-                         [call_provisor_fn(b)
-                          for b in getattr(some_function, wrapping._ARG_BINDINGS_ATTR)])
+                         [binding_key for binding_key in getattr(some_function,
+                                                                 wrapping._ARG_BINDING_KEYS_ATTR)])
 
 
 class InjectTest(unittest.TestCase):
@@ -113,9 +110,9 @@ class GetPinjectWrapperTest(unittest.TestCase):
             return foo + bar
         self.assertEqual([binding.BindingKeyWithAnnotation('bar', 'an-annotation'),
                           binding.BindingKeyWithAnnotation('foo', 'an-annotation')],
-                         [b.binding_key
-                          for b in getattr(some_function,
-                                           wrapping._ARG_BINDINGS_ATTR)])
+                         [binding_key
+                          for binding_key in getattr(some_function,
+                                                     wrapping._ARG_BINDING_KEYS_ATTR)])
 
     def test_raises_error_if_annotating_arg_twice(self):
         def do_bad_annotate():

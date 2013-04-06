@@ -124,11 +124,11 @@ class _Injector(object):
 
     def _get_injection_kwargs(self, fn, binding_context):
         kwargs = {}
-        prebound_arg_bindings, arg_names_to_inject = (
-            wrapping.get_arg_prebindings_and_remaining_args(fn))
-        for prebound_arg_binding in prebound_arg_bindings:
-            kwargs[prebound_arg_binding.binding_key.arg_name] = (
-                prebound_arg_binding.proviser_fn(binding_context, self))
+        arg_binding_keys, arg_names_to_inject = (
+            wrapping.get_arg_binding_keys_and_remaining_args(fn))
+        for arg_binding_key in arg_binding_keys:
+            kwargs[arg_binding_key.arg_name] = self._provide_from_binding_key(
+                arg_binding_key, binding_context)
         for arg_name in arg_names_to_inject:
             binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
             kwargs[arg_name] = self._provide_from_binding_key(

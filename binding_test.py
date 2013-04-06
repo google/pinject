@@ -225,8 +225,15 @@ class BindingMappingTest(unittest.TestCase):
                           binding_mapping.get, 'unknown-binding-key')
 
     def test_colliding_bindings_raises_error(self):
+        binding_key = binding.BindingKeyWithoutAnnotation('unused')
+        binding_one = binding.Binding(
+            binding_key,
+            binding.create_proviser_fn(binding_key, to_instance='unused'))
+        binding_two = binding.Binding(
+            binding_key,
+            binding.create_proviser_fn(binding_key, to_instance='unused'))
         binding_mapping = binding.BindingMapping(
-            {}, {'colliding-binding-key': ['binding-one', 'binding-two']})
+            {}, {'colliding-binding-key': [binding_one, binding_two]})
         self.assertRaises(errors.AmbiguousArgNameError,
                           binding_mapping.get, 'colliding-binding-key')
 

@@ -9,7 +9,7 @@ import errors
 import scoping
 
 
-_ARG_BINDINGS_ATTR = '_pinject_arg_bindings'
+_ARG_BINDING_KEYS_ATTR = '_pinject_arg_binding_keys'
 _IS_WRAPPER_ATTR = '_pinject_is_wrapper'
 _ORIG_FN_ATTR = '_pinject_orig_fn'
 _PROVIDED_BINDINGS_ATTR = '_pinject_provided_bindings'
@@ -17,18 +17,7 @@ _PROVIDED_BINDINGS_ATTR = '_pinject_provided_bindings'
 
 def annotate(arg_name, annotation):
     binding_key = binding.BindingKeyWithAnnotation(arg_name, annotation)
-    proviser_fn = lambda binding_context, injector: (
-        injector._provide_from_binding_key(binding_key, binding_context))
-    # TODO(kurts): that I don't have a description of the proviser means that
-    # something is wrong.  Why is this creating a whole binding instead of
-    # just a binding key?
-    proviser_fn._pinject_desc = '???'
-    # TODO(kurts): something's fishy here: this Binding is created in the
-    # default scope, and yet the arg will be provided in whatever the correct
-    # scope is.  That probably means that the scope part of Binding needs to
-    # be separated out?
-    return _get_pinject_wrapper(
-        arg_binding=binding.Binding(binding_key, proviser_fn))
+    return _get_pinject_wrapper(arg_binding_key=binding_key)
 
 
 def inject(fn):
@@ -53,27 +42,27 @@ def _get_pinject_decorated_fn(fn):
             return fn_to_wrap(*pargs, **kwargs)
         pinject_decorated_fn = decorator.decorator(_pinject_decorated_fn, fn)
         setattr(pinject_decorated_fn, _IS_WRAPPER_ATTR, True)
-        setattr(pinject_decorated_fn, _ARG_BINDINGS_ATTR, [])
+        setattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR, [])
         setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
         setattr(pinject_decorated_fn, _PROVIDED_BINDINGS_ATTR, [])
     return pinject_decorated_fn
 
 
-def _get_pinject_wrapper(arg_binding=None,
+def _get_pinject_wrapper(arg_binding_key=None,
                          provided_binding_key=None, provided_in_scope=None):
     def get_pinject_decorated_fn_with_additions(fn):
         pinject_decorated_fn = _get_pinject_decorated_fn(fn)
-        if arg_binding is not None:
+        if arg_binding_key is not None:
             arg_names, unused_varargs, unused_keywords, unused_defaults = (
                 inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
-            if arg_binding.binding_key.arg_name not in arg_names:
-                raise errors.NoSuchArgToInjectError(arg_binding.binding_key.arg_name, fn)
-            bound_arg_names = [binding_.binding_key.arg_name
-                               for binding_ in getattr(pinject_decorated_fn, _ARG_BINDINGS_ATTR)]
-            if arg_binding.binding_key.arg_name in bound_arg_names:
+            if arg_binding_key.arg_name not in arg_names:
+                raise errors.NoSuchArgToInjectError(arg_binding_key.arg_name, fn)
+            bound_arg_names = [binding_key.arg_name
+                               for binding_key in getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)]
+            if arg_binding_key.arg_name in bound_arg_names:
                 raise errors.MultipleAnnotationsForSameArgError(
-                    arg_binding.binding_key.arg_name)
-            getattr(pinject_decorated_fn, _ARG_BINDINGS_ATTR).append(arg_binding)
+                    arg_binding_key.arg_name)
+            getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(arg_binding_key)
         if provided_binding_key is not None:
             proviser_fn = binding.create_proviser_fn(
                 provided_binding_key, to_provider=pinject_decorated_fn)
@@ -87,29 +76,27 @@ def _get_pinject_wrapper(arg_binding=None,
 
 def get_any_class_binding_keys(cls, get_arg_names_from_class_name):
     if (hasattr(cls, '__init__') and hasattr(cls.__init__, _IS_WRAPPER_ATTR)):
-        # TODO(kurts): raise an error if @inject was applied to the
-        # initializer of a class that ends up having no bound arg names.
         return [binding.BindingKeyWithoutAnnotation(arg_name)
                 for arg_name in get_arg_names_from_class_name(cls.__name__)]
     else:
         return []
 
 
-def get_arg_prebindings_and_remaining_args(fn):
+def get_arg_binding_keys_and_remaining_args(fn):
     if hasattr(fn, _IS_WRAPPER_ATTR):
-        prebound_bindings = getattr(fn, _ARG_BINDINGS_ATTR)
-        prebound_arg_names = [b.binding_key.arg_name for b in prebound_bindings]
+        arg_binding_keys = getattr(fn, _ARG_BINDING_KEYS_ATTR)
+        prebound_arg_names = [binding_key.arg_name for binding_key in arg_binding_keys]
         arg_names, unused_varargs, unused_keywords, unused_defaults = (
             inspect.getargspec(getattr(fn, _ORIG_FN_ATTR)))
         arg_names_to_inject = [
             arg_name for arg_name in _remove_self_if_exists(arg_names)
             if arg_name not in prebound_arg_names]
     else:
-        prebound_bindings = []
+        arg_binding_keys = []
         arg_names, unused_varargs, unused_keywords, unused_defaults = (
             inspect.getargspec(fn))
         arg_names_to_inject = _remove_self_if_exists(arg_names)
-    return prebound_bindings, arg_names_to_inject
+    return arg_binding_keys, arg_names_to_inject
 
 
 # TODO(kurts): this feels icky.  Is there no way around this, because

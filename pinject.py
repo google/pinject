@@ -75,3 +75,9 @@ new_injector = injecting.new_injector
 #     to have a development mode?  Are there other things that turning on
 #     development mode enables?
 # - Field injection?
+# - Should it be an error if @inject is applied to an initializer whose class
+#     ends up not being bound to any arg names?  It seems like that situation
+#     could signal an error--why write @inject if you're not going to use
+#     it?--but it could be that that class is a shared class and happens not
+#     to be bound in this program's modules?  If the check were done, it
+#     should probably happen in get_any_class_binding_keys().
