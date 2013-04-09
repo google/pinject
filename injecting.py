@@ -26,18 +26,18 @@ def new_injector(
         id_to_scope, is_scope_usable_from_scope_fn)
     known_scope_ids = id_to_scope.keys()
 
-    classes = finding.find_classes(modules, classes, provider_fns)
-    functions = finding.find_functions(modules, classes, provider_fns)
+    found_classes = finding.find_classes(modules, classes, provider_fns)
+    found_functions = finding.find_functions(modules, classes, provider_fns)
     if only_use_explicit_bindings:
         implicit_provider_bindings = []
         implicit_class_bindings = []
     else:
         implicit_provider_bindings = binding.get_implicit_provider_bindings(
-            classes, functions, get_arg_names_from_provider_fn_name)
+            found_classes, found_functions, get_arg_names_from_provider_fn_name)
         implicit_class_bindings = binding.get_implicit_class_bindings(
-            classes, get_arg_names_from_class_name)
+            found_classes, get_arg_names_from_class_name)
     explicit_bindings = binding.get_explicit_bindings(
-        classes, functions, known_scope_ids,
+        found_classes, found_functions, known_scope_ids,
         get_arg_names_from_class_name)
     binder = binding.Binder(explicit_bindings, known_scope_ids)
     if binding_fns is not None:

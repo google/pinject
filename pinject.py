@@ -81,3 +81,4 @@ new_injector = injecting.new_injector
 #     it?--but it could be that that class is a shared class and happens not
 #     to be bound in this program's modules?  If the check were done, it
 #     should probably happen in get_any_class_binding_keys().
+# - Should the main class be called ObjectGraph instead of Injector?
