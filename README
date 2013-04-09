@@ -1,0 +1,250 @@
+= Pinject =
+
+Pinject is a dependency injection framework for python.
+
+The primary goal of Pinject is to help you assemble objects into graphs in
+an easy, maintainable way.
+
+== Basic injection ==
+
+The most important function in the `pinject` module is `new_injector()`.  This
+creates an `Injector`, which you can use to instantiate objects using
+dependency injection.  If you pass no args to `new_injector()`, it will return
+a reasonably configured default `Injector`.
+
+{{{
+>>> class OuterClass(object):
+...   def __init__(self, inner_class):
+...     self.inner_class = inner_class
+...
+>>> class InnerClass(object):
+...   def __init__(self):
+...     self.forty_two = 42
+...
+>>> injector = pinject.new_injector()
+>>> outer_class = injector.provide(OuterClass)
+>>> outer_class.inner_class.forty_two
+42
+>>>
+}}}
+
+As you can see, you don't need to tell Pinject how to construct its
+`Injector`, and you don't even need to put decorators in your code.  Pinject
+has reasonable defaults that allow it to work out of the box.
+
+A Pinject _binding_ is an association between an _arg name_ and a _provider_.
+In the example above, Pinject created a binding between the arg name
+`inner_class` and an implicitly created provider for the class `InnerClass`.
+That was how Pinject knew that it should pass an instance of `InnerClass` as
+the value of the `inner_class` arg when instantiating `OuterClass`.
+
+== Implicit bindings ==
+
+Pinject creates implicit bindings for classes.  The implicit bindings assume
+your code follows PEP8 conventions: your classes are named in `CamelCase`, and
+your args are named with lower_with_underscores.  Pinject transforms class
+names to injectable arg names by lowercasing words and connecting them with
+underscores.  It will also ignore any leading underscore on the class name.
+
+|| Class name || Arg name  ||
+|| `Foo`      || `foo`     ||
+|| `FooBar`   || `foo_bar` ||
+|| '_Foo'     || `foo`     ||
+|| `_FooBar`  || `foo_bar` ||
+
+If two classes map to the same arg name, whether in the same module or
+different modules, Pinject will not create an implicit binding for that arg
+name (though it will not raise an error).
+
+`new_injector()` takes a `get_arg_names_from_class_name` arg.  This is a
+function that takes in a class name (e.g., `FooBar`) and returns the arg names
+to which that class should be implicitly bound (e.g., `foo_bar`).  It has the
+behavior above by default but can be overridden.
+
+{{{
+>>> class OuterClass(object):
+...   def __init__(self, my_InnerClass):
+...     self.my_InnerClass = my_InnerClass
+...
+>>> class InnerClass(object):
+...   def __init__(self):
+...     self.forty_two = 42
+...
+>>> def custom_get_arg_names(class_name):
+...   return ['my_' + class_name]
+...
+>>> injector = pinject.new_injector(
+...     get_arg_names_from_class_name=custom_get_arg_names)
+>>> outer_class = injector.provide(OuterClass)
+>>> outer_class.my_InnerClass.forty_two
+42
+>>>
+}}}
+
+The function passed as the `get_arg_names_from_class_name` arg can return as
+many or as few arg names as it wants.  If it always returns the empty list
+(i.e., is `lambda _: []`), then that disables implicit class bindings.
+
+== Provider functions ==
+
+If it takes more to instantiate a class than calling its initializer and
+injecting initializer args, then you can write a _provider function_ for it.
+Pinject uses provider functions to instantiate the objects used to inject as
+the values of other args.
+
+Pinject looks for functions named like provider functions and then creates
+implicit bindings for them.
+
+{{{
+>>> class SomeClass(object):
+...   def __init__(self, foo):
+...     self.foo = foo
+...
+>>> def new_foo():
+...   return 'some-foo'
+...
+>>> injector = pinject.new_injector()
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'some-foo'
+>>>
+}}}
+
+By default, Pinject looks for functions whose names start with `new_` or
+`provide_`, and it assumes that the function is a provider for whatever the
+rest of the function name is.  For instance, Pinject assumes that the function
+`new_foo_bar()` is a provider function for the arg name `foo_bar`.
+
+You can override this default behavior by passing an arg named
+`get_arg_names_from_provider_fn_name` to `new_injector()`.
+
+{{{
+>>> class SomeClass(object):
+...   def __init__(self, foo):
+...     self.foo = foo
+...
+>>> def gimme_some_foo():
+...   return 'some-foo'
+...
+>>> def custom_get_arg_names(provider_fn_name):
+...   if provider_fn_name.startswith('gimme_some_'):
+...     return [provider_fn_name[len('gimme_some_'):]]
+...   else:
+...     return []
+...
+>>> injector = injecting.new_injector(
+...     get_arg_names_from_provider_fn_name=custom_get_arg_names)
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'some-foo'
+>>>
+}}}
+
+A function passed as the `get_arg_names_from_provider_fn_name` arg to
+`new_injector()` takes the name of a potential provider function and returns
+the arg names for which that provider function is a provider (and an empty
+list if it does not seem to name a provider function).  If it always returns
+the empty list (i.e., is `lambda _: []`), then that disables implicit provider
+bindings.
+
+If you want a function to be a provider function but don't want to (or can't)
+name it according to the default convention, you can decorate it as an
+explicit provider function,
+
+{{{
+>>> class SomeClass(object):
+...   def __init__(self, foo):
+...     self.foo = foo
+...
+>>> @pinject.provides('foo')
+... def spam_spam_spam():
+...   return 'spam-foo'
+...
+>>> injector = pinject.new_injector()
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'spam-foo'
+>>>
+}}}
+
+Both explicit and implicit provider functions can be static methods of a class
+instead of being module-level methods.
+
+{{{
+>>> class SomeClass(object):
+...   def __init__(self, foo):
+...     self.foo = foo
+...   @staticmethod
+...   def new_foo():
+...     return 'static-foo'
+...
+>>> injector = pinject.new_injector()
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'static-foo'
+>>>
+}}}
+
+Pinject injects all args of provider methods that have no default when it
+calls the provider method.
+
+{{{
+>>> class SomeClass(object):
+...   def __init__(self, foo):
+...     self.foo = foo
+...
+>>> def new_foo(bar):
+...   return 'foo-' + bar
+...
+>>> def new_bar():
+...   return 'bar'
+...
+>>> injector = pinject.new_injector()
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'foo-bar'
+>>>
+}}}
+
+== Binding functions ==
+
+HERE
+
+== Finding classes and providers ==
+
+The `new_injector()` function takes three args, `modules`, `classes`, and
+`provider_fns`, that tell it what you want it to traverse when it creates
+implicit bindings.
+
+If you specify `modules`, then Pinject will look in those (python) modules
+for:
+
+  * classes, for which it creates implicit bindings;
+  * explicit provider functions, for which it creates explicit bindings and implicit
+provider functions.
+
+If you specify `classes`, then Pinject will
+
+provider_fns
+
+== Binding precedence ==
+
+First explicit.
+Then implicit provider.
+Then implicit class.
+
+== Annotations ==
+
+@annotate
+
+== Safety ==
+
+only_use_explicit_bindings
+@inject
+allow_injecting_none
+
+== Scopes ==
+
+== Gotchas ==
+
+singletons are per arg name, not per class instance
