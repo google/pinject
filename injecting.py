@@ -19,11 +19,11 @@ def new_injector(
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name),
         binding_fns=None, id_to_scope=None,
-        is_scope_usable_from_scope_fn=lambda _1, _2: True):
+        is_scope_usable_from_scope=lambda _1, _2: True):
 
     id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
     bindable_scopes = scoping.BindableScopes(
-        id_to_scope, is_scope_usable_from_scope_fn)
+        id_to_scope, is_scope_usable_from_scope)
     known_scope_ids = id_to_scope.keys()
 
     found_classes = finding.find_classes(modules, classes, provider_fns)
@@ -80,7 +80,7 @@ class _Injector(object):
         scope = self._bindable_scopes.get_sub_scope(binding_, binding_context)
         provided = scope.provide(
             binding_key,
-            lambda: binding_.proviser_fn(binding_context.get_child(binding_key, scope), self))
+            lambda: binding_.proviser_fn(binding_context.get_child(binding_key, binding_.scope_id), self))
         if (provided is None) and not self._allow_injecting_none:
             raise errors.InjectingNoneDisallowedError()
         return provided

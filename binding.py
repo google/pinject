@@ -211,29 +211,29 @@ class BindingMapping(object):
 
 
 def new_binding_context():
-    return BindingContext(binding_key_stack=[], in_scope=scoping.UNSCOPED)
+    return BindingContext(binding_key_stack=[], scope_id=scoping.UNSCOPED)
 
 
 class BindingContext(object):
 
-    def __init__(self, binding_key_stack, in_scope):
+    def __init__(self, binding_key_stack, scope_id):
         self._binding_key_stack = binding_key_stack
-        self._in_scope = in_scope
+        self._scope_id = scope_id
 
-    def get_child(self, binding_key, scope):
+    def get_child(self, binding_key, scope_id):
         new_binding_key_stack = list(self._binding_key_stack)
         new_binding_key_stack.append(binding_key)
         if binding_key in self._binding_key_stack:
             raise errors.CyclicInjectionError(new_binding_key_stack)
-        return BindingContext(new_binding_key_stack, scope)
+        return BindingContext(new_binding_key_stack, scope_id)
 
     # TODO(kurts): this smells like a public attribute.  Maybe move
     # BindableScopes in here?
-    def does_scope_match(self, does_scope_match_fn):
-        return does_scope_match_fn(self._in_scope)
+    def does_scope_id_match(self, does_scope_id_match_fn):
+        return does_scope_id_match_fn(self._scope_id)
 
     def __str__(self):
-        return 'the scope "{0}"'.format(self._in_scope)
+        return 'the scope "{0}"'.format(self._scope_id)
 
 
 def default_get_arg_names_from_class_name(class_name):

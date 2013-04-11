@@ -14,12 +14,12 @@ a reasonably configured default `Injector`.
 
 {{{
 >>> class OuterClass(object):
-...   def __init__(self, inner_class):
-...     self.inner_class = inner_class
+...     def __init__(self, inner_class):
+...         self.inner_class = inner_class
 ...
 >>> class InnerClass(object):
-...   def __init__(self):
-...     self.forty_two = 42
+...     def __init__(self):
+...         self.forty_two = 42
 ...
 >>> injector = pinject.new_injector()
 >>> outer_class = injector.provide(OuterClass)
@@ -38,7 +38,7 @@ In the example above, Pinject created a binding between the arg name
 That was how Pinject knew that it should pass an instance of `InnerClass` as
 the value of the `inner_class` arg when instantiating `OuterClass`.
 
-== Implicit bindings ==
+== Implicit class bindings ==
 
 Pinject creates implicit bindings for classes.  The implicit bindings assume
 your code follows PEP8 conventions: your classes are named in `CamelCase`, and
@@ -63,15 +63,15 @@ behavior above by default but can be overridden.
 
 {{{
 >>> class OuterClass(object):
-...   def __init__(self, my_InnerClass):
-...     self.my_InnerClass = my_InnerClass
+...     def __init__(self, my_InnerClass):
+...         self.my_InnerClass = my_InnerClass
 ...
 >>> class InnerClass(object):
-...   def __init__(self):
-...     self.forty_two = 42
+...     def __init__(self):
+...         self.forty_two = 42
 ...
 >>> def custom_get_arg_names(class_name):
-...   return ['my_' + class_name]
+...     return ['my_' + class_name]
 ...
 >>> injector = pinject.new_injector(
 ...     get_arg_names_from_class_name=custom_get_arg_names)
@@ -97,11 +97,11 @@ implicit bindings for them.
 
 {{{
 >>> class SomeClass(object):
-...   def __init__(self, foo):
-...     self.foo = foo
+...     def __init__(self, foo):
+...         self.foo = foo
 ...
 >>> def new_foo():
-...   return 'some-foo'
+...     return 'some-foo'
 ...
 >>> injector = pinject.new_injector()
 >>> some_class = injector.provide(SomeClass)
@@ -120,19 +120,19 @@ You can override this default behavior by passing an arg named
 
 {{{
 >>> class SomeClass(object):
-...   def __init__(self, foo):
-...     self.foo = foo
+...     def __init__(self, foo):
+...         self.foo = foo
 ...
 >>> def gimme_some_foo():
-...   return 'some-foo'
+...     return 'some-foo'
 ...
 >>> def custom_get_arg_names(provider_fn_name):
-...   if provider_fn_name.startswith('gimme_some_'):
-...     return [provider_fn_name[len('gimme_some_'):]]
-...   else:
-...     return []
+...     if provider_fn_name.startswith('gimme_some_'):
+...         return [provider_fn_name[len('gimme_some_'):]]
+...     else:
+...         return []
 ...
->>> injector = injecting.new_injector(
+>>> injector = pinject.new_injector(
 ...     get_arg_names_from_provider_fn_name=custom_get_arg_names)
 >>> some_class = injector.provide(SomeClass)
 >>> some_class.foo
@@ -153,12 +153,12 @@ explicit provider function,
 
 {{{
 >>> class SomeClass(object):
-...   def __init__(self, foo):
-...     self.foo = foo
+...     def __init__(self, foo):
+...         self.foo = foo
 ...
 >>> @pinject.provides('foo')
 ... def spam_spam_spam():
-...   return 'spam-foo'
+...     return 'spam-foo'
 ...
 >>> injector = pinject.new_injector()
 >>> some_class = injector.provide(SomeClass)
@@ -172,11 +172,11 @@ instead of being module-level methods.
 
 {{{
 >>> class SomeClass(object):
-...   def __init__(self, foo):
-...     self.foo = foo
-...   @staticmethod
-...   def new_foo():
-...     return 'static-foo'
+...     def __init__(self, foo):
+...         self.foo = foo
+...     @staticmethod
+...     def new_foo():
+...         return 'static-foo'
 ...
 >>> injector = pinject.new_injector()
 >>> some_class = injector.provide(SomeClass)
@@ -190,14 +190,14 @@ calls the provider method.
 
 {{{
 >>> class SomeClass(object):
-...   def __init__(self, foo):
-...     self.foo = foo
+...     def __init__(self, foo):
+...         self.foo = foo
 ...
 >>> def new_foo(bar):
-...   return 'foo-' + bar
+...     return 'foo-' + bar
 ...
 >>> def new_bar():
-...   return 'bar'
+...     return 'bar'
 ...
 >>> injector = pinject.new_injector()
 >>> some_class = injector.provide(SomeClass)
@@ -208,42 +208,410 @@ calls the provider method.
 
 == Binding functions ==
 
-HERE
+Pinject creates implicit bindings for classes and provider functions, but
+sometimes the implicit bindings aren't what you want.  For instance, if you
+have `SomeReallyLongClassName`, you may not want to name your initializer args
+`some_really_long_class_name` but instead use something shorter like
+`long_name`, just for this class.  For such situations, you can create
+_explicit bindings_ using _binding functions_.
 
-== Finding classes and providers ==
+A binding function is a function that creates explicit bindings.  It takes a
+function `bind()` as an arg and calls that function to create explicit
+bindings.
 
-The `new_injector()` function takes three args, `modules`, `classes`, and
-`provider_fns`, that tell it what you want it to traverse when it creates
-implicit bindings.
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, long_name):
+...         self.long_name = long_name
+...
+>>> class SomeReallyLongClassName(object):
+...     def __init__(self):
+...         self.foo = 'foo'
+...
+>>> def my_binding_fn(bind):
+...     bind('long_name', to_class=SomeReallyLongClassName)
+...
+>>> injector = pinject.new_injector(binding_fns=[my_binding_fn])
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.long_name.foo
+'foo'
+>>>
+}}}
 
-If you specify `modules`, then Pinject will look in those (python) modules
-for:
+The `bind()` function passed to a binding function binds its first arg, which
+must be an arg name (as a `str`), to exactly one of three kinds of things.
 
-  * classes, for which it creates implicit bindings;
-  * explicit provider functions, for which it creates explicit bindings and implicit
-provider functions.
+  * Using `to_class` binds to a class.  Every time the binding is used, Pinject instantiates that class and injects the new instance.
+  * Using `to_instance` binds to an instance of some object.  Every time the binding is used, Pinject uses that instance.
+  * Using `to_provider` binds to a provider function.  Every time the binding is ues, Pinject calls the provider function and injects its return value.  As with provider functions above, Pinject will inject any args that the provider function has that have no default.
 
-If you specify `classes`, then Pinject will
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo, bar):
+...         self.foobar = foo + bar
+...
+>>> def my_binding_fn(bind):
+...     bind('foo', to_instance='foo-')
+...     bind('bar', to_provider=lambda: '-bar')
+...
+>>> injector = pinject.new_injector(binding_fns=[my_binding_fn])
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foobar
+'foo--bar'
+>>>
+}}}
 
-provider_fns
+== Finding classes and providers for implicit bindings ==
+
+So far, the examples have not told `new_injector()` what classes and provider
+functions to create implicit bindings for.  `new_injector()` by default looks
+in all imported (python) modules for classes, module-level provider functions,
+and static method provider functions.
+
+Sometimes, you may want to restrict what `new_injector()` creates implicit
+bindings for.  `new_injector()` has three args for this purpose.
+
+  * The `modules` arg specifies in which (python) modules to look for classes and provider functions to create implicit bindings for.
+  * The `classes` arg specifies which classes to create implicit bindings for and to search for static method provider functions.
+  * The `provider_fns` arg specifies provider functions to create implicit bindings for.
+
+Specifying any of these args when calling `new_injector()` turns off the
+default behavior of looking in all imported (python) modules and instead
+creates implicit bindings for the union of the specified modules, classes,
+and/or provider functions.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> def new_foo():
+...     return 'a-foo'
+...
+>>> injector = pinject.new_injector(classes=[SomeClass])
+>>> # injector.provide(SomeClass)  # would raise a NothingInjectableForArgError
+>>> injector = pinject.new_injector(classes=[SomeClass], provider_fns=[new_foo])
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'a-foo'
+>>>
+}}}
 
 == Binding precedence ==
 
-First explicit.
-Then implicit provider.
-Then implicit class.
+Bindings have precedence.  Explicit bindings take precedence over implicit
+bindings, and implicit provider functions take precedence over implicit class
+bindings.  So, the priority of each binding type is:
 
-== Annotations ==
+  # Explicit bindings, including bindings from
+    * binding functions,
+    * provider functions decorated with `@provides()`, and
+    * classes with initializers decorated with `@inject` (see below).
+  # Implicit provider bindings, for functions named like provider functions, e.g., `new_foo()`.
+  # Implicit class bindings.
 
-@annotate
+Pinject will use the highest precedence appropriate binding it has.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> class Foo(object):
+...     pass
+...
+>>> def new_foo():
+...     return 'a-foo'
+...
+>>> def my_binding_fn(bind):
+...     bind('foo', to_instance='foo-instance')
+...
+>>> injector = pinject.new_injector(binding_fns=[my_binding_fn])
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'foo-instance'
+>>>
+}}}
+
+Pinject may have two different (and thus conflicting) implicit bindings, and
+it will not complain unless you try to use those bindings.  Pinject _will_
+complain if you try to create different (and thus conflicting) explicit
+bindings, at the time that you try to create the second (conflicting) binding.
 
 == Safety ==
 
-only_use_explicit_bindings
-@inject
-allow_injecting_none
+Pinject tries to strike a balance between being helpful and being safe.
+Sometimes, you may want or need to change this balance.
+
+`new_injector()` creates implicit bindings by default.  If you worry that you
+may accidentally inject a class or use a provider function unintentionally,
+then you can turn off implicit bindings by setting
+`only_use_explicit_bindings=True`.  If you do so, then Pinject will only use
+explicit bindings.
+
+{{{
+>>> class SomeClass(object):
+...     @pinject.inject
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> @pinject.provides('foo')
+... def new_foo():
+...     return 'explicit-foo'
+...
+>>> injector = pinject.new_injector(only_use_explicit_bindings=True)
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'explicit-foo'
+>>>
+}}}
+
+As the example shows, if you want to mark a class as explicitly injectable and
+create an explicit binding for it, you can decorate its initializer with
+`@inject`.  Classes are also marked for explicit binding if their initializers
+are decorated with `@annotate()`, with or without `@inject` as well.
+
+On the opposite side of permissiveness, Pinject by default will complain if a
+provider function returns `None`.  If you really want to turn off this default
+behavior, you can pass `allow_injecting_none=True` to `new_injector()`.
+
+== Annotations ==
+
+Pinject _annotations_ let you have different objects injected for the same arg
+name.  For instance, you may have two classes in different parts of your
+codebase named the same thing, and you want to use the same arg name in
+different parts of your codebase.
+
+On the binding side, an annotation changes the binding so that the key of the
+binding includes the annotation object.  You can pass an `annotated_with` arg
+to `bind()` in a binding function, or to `@provides()` on a provider function,
+to specify the annotation object.
+
+On the arg side, an annotation tells Pinject only to inject using a binding
+whose binding key includes the annotation object.  You can use `@annotate()`
+on an initializer, or on a provider function, to specify the annotation
+object.
+
+{{{
+>>> class SomeClass(object):
+...     @pinject.annotate('foo', 'annot')
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> @pinject.provides('foo', annotated_with='annot')
+... def new_annot_foo():
+...     return 'foo-with-annot'
+...
+>>> @pinject.provides('foo', annotated_with=12345)
+... def new_12345_foo():
+...     return '12345-foo'
+...
+>>> injector = pinject.new_injector()
+>>> some_class = injector.provide(SomeClass)
+>>> some_class.foo
+'foo-with-annot'
+>>>
+}}}
+
+You can use any kind of object as an annotation object as long as it
+implements `__eq__()` and `__hash__()`.
 
 == Scopes ==
+
+By default, Pinject calls the appropriate provider function (either explicit
+or implicit) every time a binding is used.  This generally means that new
+instances are created each time.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> def new_foo():
+...     return object()
+...
+>>> injector = pinject.new_injector()
+>>> some_class_1 = injector.provide(SomeClass)
+>>> some_class_2 = injector.provide(SomeClass)
+>>> some_class_1.foo == some_class_2.foo
+False
+>>>
+}}}
+
+You may want instances reused, always or sometimes, instead of created anew
+each time they're injected.  If so, you want to use _scopes_.
+
+A scope controls memoization (i.e., caching).  A scope can choose to cache
+never, sometimes, or always.  Pinject has two built-in scopes.  _Prototype
+scope_ is the default and does no caching whatsoever.  _Singleton scope_ is
+the other built-in option and always caches.
+
+Every binding is associated with a scope.  You specify a scope for a binding
+by passing an `in_scope` arg to `@provides()` decorating a provider function,
+or to `bind()` in a binding function.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> @pinject.provides('foo', in_scope=pinject.SINGLETON)
+... def new_foo():
+...     return object()
+...
+>>> injector = pinject.new_injector()
+>>> some_class_1 = injector.provide(SomeClass)
+>>> some_class_2 = injector.provide(SomeClass)
+>>> some_class_1.foo == some_class_2.foo
+True
+>>>
+}}}
+
+If a binding specifies no scope explicitly, then it is in prototype scope.
+Implicit bindings are always in prototype scope.
+
+== Custom scopes ==
+
+If you want to, you can create your own custom scope.  A custom scope is
+useful when you have some objects that need to be reused (i.e., cached) but
+whose lifetime is shorter than the entire lifetime of your program.
+
+A custom scope is any class that implements the `Scope` interface.
+
+{{{
+class Scope(object):
+    def provide(self, binding_key, default_provider_fn):
+        raise NotImplementedError()
+}}}
+
+The `binding_key` passed to `provide()` is some object implementing `__eq__()`
+and `__hash__()`.  The binding key encapsulates the arg name and annotation
+(if any).  The `default_provider_fn` passed to `provide()` is a zero-arg
+function that, when called, provides an instance of whatever should be
+provided.
+
+The job of a scope's `provide()` function is to return a cached object if
+available and appropriate, otherwise to return (and possibly cache) the result
+of calling the default provider function.
+
+Scopes virtually always have other methods that control clearing the scope's
+cache.  For instance, a scope may have "enter scope" and "exit scope" methods,
+or a single direct "clear cache" method.  When passing a custom scope to
+Pinject, your code should keep a handle on the custom scope and clear its
+cache at the appropriate time.
+
+You can use one or more custom scopes by passing a map from _scope identifier_
+to scope as the `id_to_scope` arg of `new_injector()`.
+
+{{{
+>>> class MyScope(pinject.Scope):
+...     def __init__(self):
+...         self._cache = {}
+...     def provide(self, binding_key, default_provider_fn):
+...         if binding_key not in self._cache:
+...             self._cache[binding_key] = default_provider_fn()
+...         return self._cache[binding_key]
+...     def clear(self):
+...         self._cache = {}
+...
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> @pinject.provides('foo', in_scope='my custom scope')
+... def new_foo():
+...     return object()
+...
+>>> my_scope = MyScope()
+>>> injector = pinject.new_injector(
+...     id_to_scope={'my custom scope': my_scope})
+>>> some_class_1 = injector.provide(SomeClass)
+>>> some_class_2 = injector.provide(SomeClass)
+>>> my_scope.clear()
+>>> some_class_3 = injector.provide(SomeClass)
+>>> some_class_1.foo == some_class_2.foo
+True
+>>> some_class_2.foo == some_class_3.foo
+False
+>>>
+}}}
+
+A scope identifier can be any object implementing `__eq__()` and `__hash__()`.
+
+If you plan to use Pinject in a multi-threaded environment (and even if you
+don't plan to now but may some day), you should make your custom scope
+thread-safe.  The example custom scope above could be trivially (but more
+verbosely) rewritten to be thread-safe, as in the example below.
+
+{{{
+>>> class MyScope(pinject.Scope):
+...     def __init__(self):
+...         self._cache = {}
+...         self._lock = threading.Lock()
+...     def provide(self, binding_key, default_provider_fn):
+...         with self._lock:
+...             if binding_key not in self._cache:
+...                 self._cache[binding_key] = default_provider_fn()
+...             return self._cache[binding_key]
+...     def clear(self):
+...         with self._lock:
+...             self._cache = {}
+>>>
+}}}
+
+== Scope accessibility ==
+
+To prevent yourself from injecting objects where they don't belong, you may
+want to validate one object being injected into another w.r.t. scope.
+
+For instance, you may have created a custom scope for HTTP requests handled by
+your program.  Objects in request scope would be cached for the duration of a
+single HTTP request.  You may want to verify that objects in request scope
+never get injected into objects in singleton scope.  Such an injection is
+likely not to make semantic sense, since it would make something tied to one
+HTTP request be used for the duration of your program.
+
+Pinject lets you pass a validation function as the
+`is_scope_usable_from_scope` arg to `new_injector()`.  This function takes two
+scope identifiers and returns `True` iff an object in the first scope can be
+injected into an object of the second scope.
+
+{{{
+>>> class RequestScope(pinject.Scope):
+...     def start_request(self):
+...         self._cache = {}
+...     def provide(self, binding_key, default_provider_fn):
+...         if binding_key not in self._cache:
+...             self._cache[binding_key] = default_provider_fn()
+...         return self._cache[binding_key]
+...
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> @pinject.provides('foo', in_scope=pinject.SINGLETON)
+... def new_foo(bar):
+...     return 'foo-' + bar
+...
+>>> @pinject.provides('bar', in_scope='request scope')
+... def new_bar():
+...     return '-bar'
+...
+>>> def is_usable(scope_id_inner, scope_id_outer):
+...     return not (scope_id_inner == scoping.SINGLETON and
+...                 scope_id_outer == 'request scope')
+...
+>>> my_request_scope = RequestScope()
+>>> injector = injecting.new_injector(
+...     id_to_scope={'request scope': my_request_scope},
+...     is_scope_usable_from_scope=is_usable)
+>>> my_request_scope.start_request()
+>>> # injector.provide(SomeClass)  # would raise a BadDependencyScopeError
+>>>
+}}}
+
+The default scope accessibility validator allows objects from any scope to be
+injected into objects from any other scope.
 
 == Gotchas ==
 

@@ -69,8 +69,8 @@ class BindableScopes(object):
         self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
     def get_sub_scope(self, binding, binding_context):
-        is_scope_usable = lambda sid: self._is_scope_usable_from_scope_fn(binding.scope_id, sid)
-        if not binding_context.does_scope_match(is_scope_usable):
+        is_scope_id_usable = lambda sid: self._is_scope_usable_from_scope_fn(binding.scope_id, sid)
+        if not binding_context.does_scope_id_match(is_scope_id_usable):
             raise errors.BadDependencyScopeError(
                 binding.scope_id, binding.binding_key, binding_context)
         return self._id_to_scope[binding.scope_id]
