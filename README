@@ -167,6 +167,10 @@ explicit provider function,
 >>>
 }}}
 
+The `@provides` decoration will stack with itself, i.e., you can explicitly
+bind a single provider function to multiple arg names using multiple
+`@provides` decorators.
+
 Both explicit and implicit provider functions can be static methods of a class
 instead of being module-level methods.
 
@@ -598,11 +602,11 @@ injected into an object of the second scope.
 ...     return '-bar'
 ...
 >>> def is_usable(scope_id_inner, scope_id_outer):
-...     return not (scope_id_inner == scoping.SINGLETON and
-...                 scope_id_outer == 'request scope')
+...     return not (scope_id_inner == 'request scope' and
+...                 scope_id_outer == scoping.SINGLETON)
 ...
 >>> my_request_scope = RequestScope()
->>> injector = injecting.new_injector(
+>>> injector = pinject.new_injector(
 ...     id_to_scope={'request scope': my_request_scope},
 ...     is_scope_usable_from_scope=is_usable)
 >>> my_request_scope.start_request()
@@ -615,4 +619,21 @@ injected into objects from any other scope.
 
 == Gotchas ==
 
-singletons are per arg name, not per class instance
+Pinject has a few things to watch out for.
+
+Scoping is done per binding and therefore per arg name, not per class (or
+provider function).  For instance, suppose you have separate arg names bound
+to the same class (or provider function) with all bindings in singleton scope.
+
+{{{
+@pinject.provides('foo', in_scope=pinject.SINGLETON)
+@pinject.provides('bar', in_scope=pinject.SINGLETON)
+def new_foobar():
+  return object()
+}}}
+
+Injecting the same arg name (e.g., `foo`) multiple times will use the same
+(cached) instance, but injecting different arg names (e.g., `foo` and `bar`)
+will use different instances.
+
+That's it for gotchas, for now.
