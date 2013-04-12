@@ -1,4 +1,6 @@
 
+import threading
+
 import errors
 
 
@@ -33,14 +35,19 @@ class SingletonScope(object):
 
     def __init__(self):
         self._binding_key_to_instance = {}
+        self._providing_binding_keys = set()
+        # The lock is re-entrant so that default_provider_fn can provide
+        # something else in singleton scope.
+        self._rlock = threading.RLock()
 
     def provide(self, binding_key, default_provider_fn):
-        try:
-            return self._binding_key_to_instance[binding_key]
-        except KeyError:
-            instance = default_provider_fn()
-            self._binding_key_to_instance[binding_key] = instance
-            return instance
+        with self._rlock:
+            try:
+                return self._binding_key_to_instance[binding_key]
+            except KeyError:
+                instance = default_provider_fn()
+                self._binding_key_to_instance[binding_key] = instance
+                return instance
 
 
 class _UnscopedScopeId(object):

@@ -12,7 +12,6 @@ new_injector = injecting.new_injector
 # TODO:
 # - reasonable error messages for all exceptions
 # - raise exception if anything in provider_fns isn't a provider fn
-# - make singleton scope threadsafe
 
 # Maybe TODO:
 # - eager singletons

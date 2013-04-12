@@ -545,20 +545,22 @@ A scope identifier can be any object implementing `__eq__()` and `__hash__()`.
 If you plan to use Pinject in a multi-threaded environment (and even if you
 don't plan to now but may some day), you should make your custom scope
 thread-safe.  The example custom scope above could be trivially (but more
-verbosely) rewritten to be thread-safe, as in the example below.
+verbosely) rewritten to be thread-safe, as in the example below.  The lock is
+reentrant so that something in `MyScope` can be injected into something else
+in `MyScope`.
 
 {{{
 >>> class MyScope(pinject.Scope):
 ...     def __init__(self):
 ...         self._cache = {}
-...         self._lock = threading.Lock()
+...         self._rlock = threading.RLock()
 ...     def provide(self, binding_key, default_provider_fn):
-...         with self._lock:
+...         with self._rlock:
 ...             if binding_key not in self._cache:
 ...                 self._cache[binding_key] = default_provider_fn()
 ...             return self._cache[binding_key]
 ...     def clear(self):
-...         with self._lock:
+...         with self._rlock:
 ...             self._cache = {}
 >>>
 }}}

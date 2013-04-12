@@ -39,6 +39,13 @@ class SingletonScopeTest(unittest.TestCase):
             self.scope.provide(self.binding_key_one, self.provider_fn),
             self.scope.provide(self.binding_key_two, self.provider_fn))
 
+    def test_can_call_provider_fn_that_calls_back_to_singleton_scope(self):
+        def provide_from_singleton_scope():
+            return self.scope.provide(self.binding_key_two, lambda: 'provided')
+        self.assertEqual('provided',
+                         self.scope.provide(self.binding_key_one,
+                                            provide_from_singleton_scope))
+
 
 class GetIdToScopeWithDefaultsTest(unittest.TestCase):
 
