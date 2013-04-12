@@ -11,7 +11,6 @@ new_injector = injecting.new_injector
 
 # TODO:
 # - reasonable error messages for all exceptions
-# - raise exception if anything in provider_fns isn't a provider fn
 
 # Maybe TODO:
 # - eager singletons
@@ -51,13 +50,6 @@ new_injector = injecting.new_injector
 #     I'm not sure.  It makes some things awkward, like a special scope from
 #     which it's OK to inject objects from any scope.  Maybe the main
 #     _Injector method should be wrap() instead of provide_class()??
-# - It seems like Guice and others don't have a problem with object A from
-#     singleton scope getting injected with object B from prototype scope.  Is
-#     that because you may just need one of something, and it's immutable, so
-#     you can create them with impunity?  And: is it good to have a feature
-#     that limits what scopes are usable from what other scopes?  For
-#     instance, I'd want to make sure that I never created a singleton that
-#     included a request-scoped instance.
 # - Remove _Injector.wrap()?
 # - In safe mode, where initializers must have @inject to be injected, should
 #     that also apply to classes whose only initializer param is self?  It

@@ -53,6 +53,14 @@ class InvalidBindingTargetError(Error):
             ' {2}'.format(binding_key, binding_target, expected_type_str))
 
 
+class InvalidProviderFnError(Error):
+
+    def __init__(self, fn):
+        Error.__init__(
+            self, 'function {0} is not a provider function, though it was'
+            ' passed to new_injector() in provider_fns'.format(fn))
+
+
 class MultipleAnnotationsForSameArgError(Error):
 
     def __init__(self, arg_name):

@@ -413,3 +413,26 @@ class InjectorWrapTest(unittest.TestCase):
             return a + foo.b
         wrapped = injecting.new_injector(classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(2))
+
+
+class VerifyProviderFnsAreProviderFnsTest(unittest.TestCase):
+
+    def test_explicit_provider_fn_is_ok(self):
+        @wrapping.provides('foo')
+        def new_foo():
+            return 'a-foo'
+        injecting._verify_provider_fns_are_provider_fns([new_foo], lambda _: None)
+
+    def test_implicit_provider_fn_is_ok(self):
+        def new_foo():
+            return 'a-foo'
+        injecting._verify_provider_fns_are_provider_fns(
+            [new_foo], lambda _: ['foo'])
+
+    def test_non_provider_fn_raises_error(self):
+        def some_function():
+            pass
+        self.assertRaises(
+            errors.InvalidProviderFnError,
+            injecting._verify_provider_fns_are_provider_fns,
+            [some_function], lambda _: [])
