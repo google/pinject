@@ -141,8 +141,9 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
 
     def test_colliding_classes_calls_handler(self):
         was_called = threading.Event()
-        def handle_binding_collision_fn(binding_key, binding_key_to_binding,
+        def handle_binding_collision_fn(colliding_binding, binding_key_to_binding,
                                         collided_binding_key_to_bindings):
+            binding_key = colliding_binding.binding_key
             self.assertEqual(self.another_some_binding.binding_key, binding_key)
             self.assertEqual({self.some_binding_key: self.some_binding},
                              binding_key_to_binding)

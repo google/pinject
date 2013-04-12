@@ -33,13 +33,25 @@ def print_bad_dependency_scope_error():
         def __init__(self, foo):
             pass
     injector = injecting.new_injector(
-        classes=[Foo, Bar], is_scope_usable_from_scope_fn=lambda _1, _2: False)
+        classes=[Foo, Bar], is_scope_usable_from_scope=lambda _1, _2: False)
     try:
         _ = injector.provide(Bar)
         raise Exception('failed to raise')
     except errors.BadDependencyScopeError:
         traceback.print_exc()
 all_print_methods.append(print_bad_dependency_scope_error)
+
+
+def print_conflicting_bindings_error():
+    def binding_fn(bind):
+        bind('foo', to_instance=1)
+        bind('foo', to_instance=2)
+    try:
+        _ = injecting.new_injector(binding_fns=[binding_fn])
+        raise Exception('failed to raise')
+    except errors.ConflictingBindingsError:
+        traceback.print_exc()
+all_print_methods.append(print_conflicting_bindings_error)
 
 
 for print_method in all_print_methods:

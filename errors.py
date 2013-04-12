@@ -22,9 +22,10 @@ class BadDependencyScopeError(Error):
 
 class ConflictingBindingsError(Error):
 
-    def __init__(self, binding_key):
+    def __init__(self, colliding_bindings):
         Error.__init__(
-            self, 'multiple conflicting bindings for {0}'.format(binding_key))
+            self, 'multiple bindings for same arg name:\n{0}'.format(
+                '\n'.join('  {0}'.format(b) for b in colliding_bindings)))
 
 
 class CyclicInjectionError(Error):

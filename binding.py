@@ -58,6 +58,8 @@ def binds_to(arg_name, annotated_with=None):
     return get_pinject_decorated_class
 
 
+# TODO(kurts): if @binds_to is not removed, unify this with the attrs in
+# wrapping.py.
 def _get_any_class_binding_keys(cls):
     if hasattr(cls, _IS_DECORATED_ATTR):
         return getattr(cls, _BOUND_TO_BINDING_KEYS_ATTR)
@@ -133,18 +135,27 @@ class Binding(object):
 
     # TODO(kurts): remove the scope_id default; it's introducing bugs and
     # inconsistencies.
-    def __init__(self, binding_key, proviser_fn, scope_id=scoping.PROTOTYPE):
+    def __init__(self, binding_key, proviser_fn, scope_id=scoping.PROTOTYPE,
+                 desc='unknown'):
         self.binding_key = binding_key
         self.proviser_fn = proviser_fn
         self.scope_id = scope_id
+        self._desc = desc
+
+    def __str__(self):
+        return 'the binding from {0} to {1}'.format(self.binding_key, self._desc)
 
 
-def _handle_explicit_binding_collision(binding_key, *pargs):
-    raise errors.ConflictingBindingsError(binding_key)
+def _handle_explicit_binding_collision(
+        colliding_binding, binding_key_to_binding, *pargs):
+    other_binding = binding_key_to_binding[colliding_binding.binding_key]
+    raise errors.ConflictingBindingsError([colliding_binding, other_binding])
 
 
-def _handle_implicit_binding_collision(binding_key, binding_key_to_binding,
-                                      collided_binding_key_to_bindings):
+def _handle_implicit_binding_collision(
+        colliding_binding, binding_key_to_binding,
+        collided_binding_key_to_bindings):
+    binding_key = colliding_binding.binding_key
     bindings = collided_binding_key_to_bindings.setdefault(
         binding_key, set())
     bindings.add(binding_key_to_binding[binding_key])
@@ -158,7 +169,7 @@ def _get_binding_key_to_binding_maps(bindings, handle_binding_collision_fn):
         binding_key = binding_.binding_key
         if binding_key in binding_key_to_binding:
             handle_binding_collision_fn(
-                binding_key, binding_key_to_binding,
+                binding_, binding_key_to_binding,
                 collided_binding_key_to_bindings)
         if binding_key in collided_binding_key_to_bindings:
             collided_binding_key_to_bindings[binding_key].add(binding_)
@@ -271,10 +282,14 @@ def get_explicit_bindings(
         for binding_key in wrapping.get_any_class_binding_keys(
                 cls, get_arg_names_from_class_name):
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
-            explicit_bindings.append(Binding(binding_key, proviser_fn))
+            explicit_bindings.append(Binding(
+                binding_key, proviser_fn,
+                desc='the explicitly injectable class {0}'.format(cls)))
         for binding_key in _get_any_class_binding_keys(cls):
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
-            explicit_bindings.append(Binding(binding_key, proviser_fn))
+            explicit_bindings.append(Binding(
+                binding_key, proviser_fn,
+                desc='the explicitly @bound_to class {0}'.format(cls)))
         for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
             all_functions.append(fn)
     for fn in all_functions:
@@ -311,7 +326,9 @@ def get_implicit_provider_bindings(
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
-            implicit_provider_bindings.append(Binding(binding_key, proviser_fn))
+            implicit_provider_bindings.append(Binding(
+                binding_key, proviser_fn,
+                desc='the implicitly bound provider function {0}'.format(fn)))
     return implicit_provider_bindings
 
 
@@ -337,7 +354,9 @@ def get_implicit_class_bindings(
         for arg_name in arg_names:
             binding_key = BindingKeyWithoutAnnotation(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
-            implicit_bindings.append(Binding(binding_key, proviser_fn))
+            implicit_bindings.append(Binding(
+                binding_key, proviser_fn,
+                desc='the implicitly bound class {0}'.format(cls)))
     return implicit_bindings
 
 
@@ -357,7 +376,11 @@ class Binder(object):
         proviser_fn = create_proviser_fn(binding_key,
                                          to_class, to_instance, to_provider)
         with self._lock:
-            self._collected_bindings.append(Binding(binding_key, proviser_fn, in_scope))
+            back_frame = inspect.currentframe().f_back
+            self._collected_bindings.append(Binding(
+                binding_key, proviser_fn, in_scope,
+                desc='the explicit binding target at line {0} of {1}'.format(
+                    back_frame.f_lineno, back_frame.f_code.co_filename)))
 
 
 def create_proviser_fn(binding_key,
