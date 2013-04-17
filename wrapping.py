@@ -16,7 +16,7 @@ _PROVIDED_BINDINGS_ATTR = '_pinject_provided_bindings'
 
 
 def annotate(arg_name, annotation):
-    binding_key = binding.BindingKeyWithAnnotation(arg_name, annotation)
+    binding_key = binding.new_binding_key(arg_name, annotation)
     return _get_pinject_wrapper(arg_binding_key=binding_key)
 
 
@@ -55,13 +55,11 @@ def _get_pinject_wrapper(arg_binding_key=None,
         if arg_binding_key is not None:
             arg_names, unused_varargs, unused_keywords, unused_defaults = (
                 inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
-            if arg_binding_key.arg_name not in arg_names:
-                raise errors.NoSuchArgToInjectError(arg_binding_key.arg_name, fn)
-            bound_arg_names = [binding_key.arg_name
-                               for binding_key in getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)]
-            if arg_binding_key.arg_name in bound_arg_names:
-                raise errors.MultipleAnnotationsForSameArgError(
-                    arg_binding_key.arg_name)
+            if not arg_binding_key.can_apply_to_one_of_arg_names(arg_names):
+                raise errors.NoSuchArgToInjectError(arg_binding_key, fn)
+            if arg_binding_key.conflicts_with_any_binding_key(
+                    getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
+                raise errors.MultipleAnnotationsForSameArgError(arg_binding_key)
             getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(arg_binding_key)
         if provided_binding_key is not None:
             proviser_fn = binding.create_proviser_fn(
@@ -76,7 +74,7 @@ def _get_pinject_wrapper(arg_binding_key=None,
 
 def get_any_class_binding_keys(cls, get_arg_names_from_class_name):
     if (hasattr(cls, '__init__') and hasattr(cls.__init__, _IS_WRAPPER_ATTR)):
-        return [binding.BindingKeyWithoutAnnotation(arg_name)
+        return [binding.new_binding_key(arg_name)
                 for arg_name in get_arg_names_from_class_name(cls.__name__)]
     else:
         return []
@@ -85,12 +83,11 @@ def get_any_class_binding_keys(cls, get_arg_names_from_class_name):
 def get_arg_binding_keys_and_remaining_args(fn):
     if hasattr(fn, _IS_WRAPPER_ATTR):
         arg_binding_keys = getattr(fn, _ARG_BINDING_KEYS_ATTR)
-        prebound_arg_names = [binding_key.arg_name for binding_key in arg_binding_keys]
         arg_names, unused_varargs, unused_keywords, unused_defaults = (
             inspect.getargspec(getattr(fn, _ORIG_FN_ATTR)))
-        arg_names_to_inject = [
-            arg_name for arg_name in _remove_self_if_exists(arg_names)
-            if arg_name not in prebound_arg_names]
+        arg_names_to_inject = binding.get_unbound_arg_names(
+            [arg_name for arg_name in _remove_self_if_exists(arg_names)],
+            arg_binding_keys)
     else:
         arg_binding_keys = []
         arg_names, unused_varargs, unused_keywords, unused_defaults = (

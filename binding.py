@@ -67,68 +67,93 @@ def _get_any_class_binding_keys(cls):
         return []
 
 
-class BindingKey(object):
-    """The key for a binding.
+class Annotation(object):
 
-    Attributes:
-      arg_name: the name of the bound arg
+    def __init__(self, annotation_obj):
+        self._annotation_obj = annotation_obj
 
-    TODO(kurts): think about adding behavior to BindingKey to have it fill in
-    init_kwargs instead of making arg_name public.
-    """
-
-    def __repr__(self):
-        return '<{0}>'.format(self)
-
-
-def new_binding_key(arg_name, annotated_with=None):
-    if annotated_with is not None:
-        return BindingKeyWithAnnotation(arg_name, annotated_with)
-    else:
-        return BindingKeyWithoutAnnotation(arg_name)
-
-
-class BindingKeyWithoutAnnotation(BindingKey):
-    """A key with no annotation."""
-
-    def __init__(self, arg_name):
-        self.arg_name = arg_name
+    def as_adjective(self):
+        return 'annotated with "{0}"'.format(self._annotation_obj)
 
     def __eq__(self, other):
-        return (isinstance(other, BindingKeyWithoutAnnotation) and
-                self.arg_name == other.arg_name)
+        return (isinstance(other, Annotation) and
+                self._annotation_obj == other._annotation_obj)
 
     def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):
-        return hash(self.arg_name)
-
-    def __str__(self):
-        return 'the arg name "{0}"'.format(self.arg_name)
+        return hash(self._annotation_obj)
 
 
-class BindingKeyWithAnnotation(BindingKey):
-    """A key with an annotation."""
+class _NoAnnotation(object):
 
-    def __init__(self, arg_name, annotation):
-        self.arg_name = arg_name
-        self._annotation = annotation
+    def as_adjective(self):
+        return 'unannotated'
 
     def __eq__(self, other):
-        return (isinstance(other, BindingKeyWithAnnotation) and
-                self.arg_name == other.arg_name and
+        return isinstance(other, _NoAnnotation)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __hash__(self):
+        return 0
+
+
+_NO_ANNOTATION = _NoAnnotation()
+
+
+class BindingKey(object):
+    """The key for a binding."""
+
+    def __init__(self, arg_name, annotation):
+        self._arg_name = arg_name
+        self._annotation = annotation
+
+    def __repr__(self):
+        return '<{0}>'.format(self)
+
+    def __str__(self):
+        return 'the arg name "{0}" {1}'.format(
+            self._arg_name, self._annotation.as_adjective())
+
+    def __eq__(self, other):
+        return (isinstance(other, BindingKey) and
+                self._arg_name == other._arg_name and
                 self._annotation == other._annotation)
 
     def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):
-        return hash(self.arg_name) ^ hash(self._annotation)
+        return hash(self._arg_name) ^ hash(self._annotation)
 
-    def __str__(self):
-        return 'the arg name "{0}" annotated with "{1}"'.format(
-            self.arg_name, self._annotation)
+    def can_apply_to_one_of_arg_names(self, arg_names):
+        return self._arg_name in arg_names
+
+    def conflicts_with_any_binding_key(self, binding_keys):
+        return self._arg_name in [bk._arg_name for bk in binding_keys]
+
+    def put_provided_value_in_kwargs(self, value, kwargs):
+        kwargs[self._arg_name] = value
+
+
+# TODO(kurts): Get a second opinion on module-level methods operating on
+# internal state of classes.  In another language, this would be a static
+# member and so allowed access to internals.
+def get_unbound_arg_names(arg_names, arg_binding_keys):
+    bound_arg_names = [bk._arg_name for bk in arg_binding_keys]
+    return [arg_name for arg_name in arg_names
+            if arg_name not in bound_arg_names]
+
+
+def new_binding_key(arg_name, annotated_with=None):
+    if annotated_with is not None:
+        annotation = Annotation(annotated_with)
+    else:
+        annotation = _NO_ANNOTATION
+    return BindingKey(arg_name, annotation)
 
 
 class Binding(object):
@@ -324,7 +349,7 @@ def get_implicit_provider_bindings(
             continue  # it's already an explicit provider fn
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:
-            binding_key = BindingKeyWithoutAnnotation(arg_name)
+            binding_key = new_binding_key(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
             implicit_provider_bindings.append(Binding(
                 binding_key, proviser_fn,
@@ -352,7 +377,7 @@ def get_implicit_class_bindings(
             continue
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
-            binding_key = BindingKeyWithoutAnnotation(arg_name)
+            binding_key = new_binding_key(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
             implicit_bindings.append(Binding(
                 binding_key, proviser_fn,

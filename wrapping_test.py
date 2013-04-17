@@ -35,7 +35,7 @@ class AnnotateTest(unittest.TestCase):
         @wrapping.annotate('foo', 'an-annotation')
         def some_function(foo):
             return foo
-        self.assertEqual([binding.BindingKeyWithAnnotation('foo', 'an-annotation')],
+        self.assertEqual([binding.new_binding_key('foo', 'an-annotation')],
                          [binding_key for binding_key in getattr(some_function,
                                                                  wrapping._ARG_BINDING_KEYS_ATTR)])
 
@@ -74,7 +74,7 @@ class ProvidesTest(unittest.TestCase):
         def some_function():
             return 'a-foo'
         [provided_binding] = getattr(some_function, wrapping._PROVIDED_BINDINGS_ATTR)
-        self.assertEqual(binding.BindingKeyWithoutAnnotation('foo'),
+        self.assertEqual(binding.new_binding_key('foo'),
                          provided_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(provided_binding))
 
@@ -83,7 +83,7 @@ class ProvidesTest(unittest.TestCase):
         def some_function():
             return 'a-foo'
         [provided_binding] = getattr(some_function, wrapping._PROVIDED_BINDINGS_ATTR)
-        self.assertEqual(binding.BindingKeyWithAnnotation('foo', 'bar'),
+        self.assertEqual(binding.new_binding_key('foo', 'bar'),
                          provided_binding.binding_key)
         self.assertEqual('a-scope', provided_binding.scope_id)
 
@@ -108,8 +108,8 @@ class GetPinjectWrapperTest(unittest.TestCase):
         @wrapping.annotate('bar', 'an-annotation')
         def some_function(foo, bar):
             return foo + bar
-        self.assertEqual([binding.BindingKeyWithAnnotation('bar', 'an-annotation'),
-                          binding.BindingKeyWithAnnotation('foo', 'an-annotation')],
+        self.assertEqual([binding.new_binding_key('bar', 'an-annotation'),
+                          binding.new_binding_key('foo', 'an-annotation')],
                          [binding_key
                           for binding_key in getattr(some_function,
                                                      wrapping._ARG_BINDING_KEYS_ATTR)])
@@ -157,7 +157,7 @@ class GetAnyClassBindingKeys(unittest.TestCase):
             def __init__(self):
                 pass
         self.assertEqual(
-            [binding.BindingKeyWithoutAnnotation('foo')],
+            [binding.new_binding_key('foo')],
             wrapping.get_any_class_binding_keys(
                 SomeClass,
                 get_arg_names_from_class_name=lambda cls_name: ['foo']))
@@ -175,7 +175,7 @@ class GetAnyProviderBindingKeysTest(unittest.TestCase):
         def some_function():
             return 'an-arg-name'
         [provider_binding] = wrapping.get_any_provider_bindings(some_function)
-        self.assertEqual(binding.BindingKeyWithoutAnnotation('arg_name'),
+        self.assertEqual(binding.new_binding_key('arg_name'),
                          provider_binding.binding_key)
         self.assertEqual('an-arg-name', call_provisor_fn(provider_binding))
 

@@ -117,7 +117,7 @@ class _Injector(object):
                 kwargs = dict(kwargs)
                 for arg_name in injected_arg_names:
                     kwargs[arg_name] = self._provide_from_binding_key(
-                        binding.BindingKeyWithoutAnnotation(arg_name),
+                        binding.new_binding_key(arg_name),
                         binding.new_binding_context())
             return fn(*pargs, **kwargs)
         return WrappedFn
@@ -131,10 +131,11 @@ class _Injector(object):
         arg_binding_keys, arg_names_to_inject = (
             wrapping.get_arg_binding_keys_and_remaining_args(fn))
         for arg_binding_key in arg_binding_keys:
-            kwargs[arg_binding_key.arg_name] = self._provide_from_binding_key(
-                arg_binding_key, binding_context)
+            arg_binding_key.put_provided_value_in_kwargs(
+                self._provide_from_binding_key(arg_binding_key, binding_context),
+                kwargs)
         for arg_name in arg_names_to_inject:
-            binding_key = binding.BindingKeyWithoutAnnotation(arg_name)
+            binding_key = binding.new_binding_key(arg_name)
             kwargs[arg_name] = self._provide_from_binding_key(
                 binding_key, binding_context)
         return kwargs
