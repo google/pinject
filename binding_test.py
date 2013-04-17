@@ -2,6 +2,7 @@
 import threading
 import unittest
 
+import annotation
 import binding
 import errors
 import injecting
@@ -31,115 +32,80 @@ class BindsToTest(unittest.TestCase):
             getattr(SomeClass, binding._BOUND_TO_BINDING_KEYS_ATTR))
 
 
-class AnnotationTest(unittest.TestCase):
-
-    def test_as_correct_adjective(self):
-        self.assertEqual('annotated with "foo"',
-                         binding.Annotation('foo').as_adjective())
-
-    def test_equal(self):
-        self.assertEqual(binding.Annotation('foo'), binding.Annotation('foo'))
-        self.assertEqual(hash(binding.Annotation('foo')),
-                         hash(binding.Annotation('foo')))
-
-    def test_not_equal(self):
-        self.assertNotEqual(binding.Annotation('foo'),
-                            binding.Annotation('bar'))
-        self.assertNotEqual(hash(binding.Annotation('foo')),
-                            hash(binding.Annotation('bar')))
-
-
-class NoAnnotationTest(unittest.TestCase):
-
-    def test_as_correct_adjective(self):
-        self.assertEqual('unannotated', binding._NoAnnotation().as_adjective())
-
-    def test_equal(self):
-        self.assertEqual(binding._NoAnnotation(), binding._NoAnnotation())
-        self.assertEqual(hash(binding._NoAnnotation()),
-                         hash(binding._NoAnnotation()))
-
-    def test_not_equal(self):
-        self.assertNotEqual(binding._NoAnnotation(),
-                            binding.Annotation('bar'))
-        self.assertNotEqual(hash(binding._NoAnnotation()),
-                            hash(binding.Annotation('bar')))
-
-
 class BindingKeyTest(unittest.TestCase):
 
     def test_repr(self):
         binding_key = binding.BindingKey(
-            'an-arg-name', binding.Annotation('an-annotation'))
+            'an-arg-name', annotation.Annotation('an-annotation'))
         self.assertEqual('<the arg name "an-arg-name" annotated with "an-annotation">',
                          repr(binding_key))
 
     def test_str(self):
         binding_key = binding.BindingKey(
-            'an-arg-name', binding.Annotation('an-annotation'))
+            'an-arg-name', annotation.Annotation('an-annotation'))
         self.assertEqual('the arg name "an-arg-name" annotated with "an-annotation"',
                          str(binding_key))
 
     def test_equal_if_same_arg_name_and_annotation(self):
         binding_key_one = binding.BindingKey(
-            'an-arg-name', binding.Annotation('an-annotation'))
+            'an-arg-name', annotation.Annotation('an-annotation'))
         binding_key_two = binding.BindingKey(
-            'an-arg-name', binding.Annotation('an-annotation'))
+            'an-arg-name', annotation.Annotation('an-annotation'))
         self.assertEqual(binding_key_one, binding_key_two)
         self.assertEqual(hash(binding_key_one), hash(binding_key_two))
         self.assertEqual(str(binding_key_one), str(binding_key_two))
 
     def test_unequal_if_not_same_arg_name(self):
         binding_key_one = binding.BindingKey(
-            'arg-name-one', binding.Annotation('an-annotation'))
+            'arg-name-one', annotation.Annotation('an-annotation'))
         binding_key_two = binding.BindingKey(
-            'arg-name-two', binding.Annotation('an-annotation'))
+            'arg-name-two', annotation.Annotation('an-annotation'))
         self.assertNotEqual(binding_key_one, binding_key_two)
         self.assertNotEqual(hash(binding_key_one), hash(binding_key_two))
         self.assertNotEqual(str(binding_key_one), str(binding_key_two))
 
     def test_unequal_if_not_same_annotation(self):
         binding_key_one = binding.BindingKey(
-            'arg-name-one', binding.Annotation('an-annotation'))
+            'arg-name-one', annotation.Annotation('an-annotation'))
         binding_key_two = binding.BindingKey(
-            'arg-name-two', binding.Annotation('another-annotation'))
+            'arg-name-two', annotation.Annotation('another-annotation'))
         self.assertNotEqual(binding_key_one, binding_key_two)
         self.assertNotEqual(hash(binding_key_one), hash(binding_key_two))
         self.assertNotEqual(str(binding_key_one), str(binding_key_two))
 
     def test_can_apply_to_one_of_arg_names(self):
         binding_key = binding.BindingKey(
-            'an-arg-name', binding.Annotation('unused'))
+            'an-arg-name', annotation.Annotation('unused'))
         self.assertTrue(binding_key.can_apply_to_one_of_arg_names(
             ['foo', 'an-arg-name', 'bar']))
 
     def test_cannot_apply_to_one_of_arg_names(self):
         binding_key = binding.BindingKey(
-            'an-arg-name', binding.Annotation('unused'))
+            'an-arg-name', annotation.Annotation('unused'))
         self.assertFalse(binding_key.can_apply_to_one_of_arg_names(
             ['foo', 'other-arg-name', 'bar']))
 
     def test_conflicts_with_some_binding_key(self):
         binding_key = binding.BindingKey(
-            'an-arg-name', binding.Annotation('ann1'))
+            'an-arg-name', annotation.Annotation('ann1'))
         non_conflicting_binding_key = binding.BindingKey(
-            'other-arg-name', binding.Annotation('unused'))
+            'other-arg-name', annotation.Annotation('unused'))
         conflicting_binding_key = binding.BindingKey(
-            'an-arg-name', binding.Annotation('ann2'))
+            'an-arg-name', annotation.Annotation('ann2'))
         self.assertTrue(binding_key.conflicts_with_any_binding_key(
             [non_conflicting_binding_key, conflicting_binding_key]))
 
     def test_doesnt_conflict_with_any_binding_key(self):
         binding_key = binding.BindingKey(
-            'an-arg-name', binding.Annotation('ann1'))
+            'an-arg-name', annotation.Annotation('ann1'))
         non_conflicting_binding_key = binding.BindingKey(
-            'other-arg-name', binding.Annotation('unused'))
+            'other-arg-name', annotation.Annotation('unused'))
         self.assertFalse(binding_key.conflicts_with_any_binding_key(
             [non_conflicting_binding_key]))
 
     def test_puts_provided_value_in_kwargs(self):
         binding_key = binding.BindingKey(
-            'an-arg-name', binding.Annotation('unused'))
+            'an-arg-name', annotation.Annotation('unused'))
         kwargs = {}
         binding_key.put_provided_value_in_kwargs('a-value', kwargs)
         self.assertEqual({'an-arg-name': 'a-value'}, kwargs)
