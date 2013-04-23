@@ -24,16 +24,6 @@ class NewInjectorTest(unittest.TestCase):
         injector = injecting.new_injector(classes=[SomeClass])
         self.assertIsInstance(injector.provide(SomeClass), SomeClass)
 
-    def test_creates_injector_using_given_provider_fns(self):
-        def new_foo():
-            return 'a-foo'
-        class ClassWithFooInjected(object):
-            def __init__(self, foo):
-                self.foo = foo
-        injector = injecting.new_injector(
-            classes=[ClassWithFooInjected], provider_fns=[new_foo])
-        self.assertEqual('a-foo', injector.provide(ClassWithFooInjected).foo)
-
     def test_creates_injector_using_given_binding_fns(self):
         class ClassWithFooInjected(object):
             def __init__(self, foo):
@@ -240,12 +230,13 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassOne(object):
             def __init__(self, foo):
                 self.foo = foo
-        def new_foo(bar):
-            return 'a-foo with {0}'.format(bar)
-        def new_bar():
-            return 'a-bar'
-        injector = injecting.new_injector(
-            classes=[ClassOne], provider_fns=[new_foo, new_bar])
+            @staticmethod
+            def new_foo(bar):
+                return 'a-foo with {0}'.format(bar)
+            @staticmethod
+            def new_bar():
+                return 'a-bar'
+        injector = injecting.new_injector(classes=[ClassOne])
         class_one = injector.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
@@ -254,15 +245,16 @@ class InjectorProvideTest(unittest.TestCase):
             @wrapping.annotate('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
-        @wrapping.provides('foo', annotated_with='an-annotation')
-        @wrapping.annotate('bar', 'another-annotation')
-        def new_foo(bar):
-            return 'a-foo with {0}'.format(bar)
-        @wrapping.provides('bar', annotated_with='another-annotation')
-        def new_bar():
-            return 'a-bar'
-        injector = injecting.new_injector(
-            classes=[ClassOne], provider_fns=[new_foo, new_bar])
+            @staticmethod
+            @wrapping.provides('foo', annotated_with='an-annotation')
+            @wrapping.annotate('bar', 'another-annotation')
+            def new_foo(bar):
+                return 'a-foo with {0}'.format(bar)
+            @staticmethod
+            @wrapping.provides('bar', annotated_with='another-annotation')
+            def new_bar():
+                return 'a-bar'
+        injector = injecting.new_injector(classes=[ClassOne])
         class_one = injector.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
@@ -317,12 +309,12 @@ class InjectorProvideTest(unittest.TestCase):
             @wrapping.inject
             def __init__(self, class_two):
                 self.class_two = class_two
-        @wrapping.provides('class_two')
-        def new_class_two():
-            return 'a-class-two'
+            @staticmethod
+            @wrapping.provides('class_two')
+            def new_class_two():
+                return 'a-class-two'
         injector = injecting.new_injector(
-            classes=[ClassOne], provider_fns=[new_class_two],
-            only_use_explicit_bindings=True)
+            classes=[ClassOne], only_use_explicit_bindings=True)
         class_one = injector.provide(ClassOne)
         self.assertEqual('a-class-two', class_one.class_two)
 
@@ -413,26 +405,3 @@ class InjectorWrapTest(unittest.TestCase):
             return a + foo.b
         wrapped = injecting.new_injector(classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(2))
-
-
-class VerifyProviderFnsAreProviderFnsTest(unittest.TestCase):
-
-    def test_explicit_provider_fn_is_ok(self):
-        @wrapping.provides('foo')
-        def new_foo():
-            return 'a-foo'
-        injecting._verify_provider_fns_are_provider_fns([new_foo], lambda _: None)
-
-    def test_implicit_provider_fn_is_ok(self):
-        def new_foo():
-            return 'a-foo'
-        injecting._verify_provider_fns_are_provider_fns(
-            [new_foo], lambda _: ['foo'])
-
-    def test_non_provider_fn_raises_error(self):
-        def some_function():
-            pass
-        self.assertRaises(
-            errors.InvalidProviderFnError,
-            injecting._verify_provider_fns_are_provider_fns,
-            [some_function], lambda _: [])

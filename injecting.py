@@ -12,7 +12,7 @@ import wrapping
 
 
 def new_injector(
-        modules=None, classes=None, provider_fns=None,
+        modules=None, classes=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
         get_arg_names_from_class_name=(
             binding.default_get_arg_names_from_class_name),
@@ -26,12 +26,8 @@ def new_injector(
         id_to_scope, is_scope_usable_from_scope)
     known_scope_ids = id_to_scope.keys()
 
-    if provider_fns is not None:
-        _verify_provider_fns_are_provider_fns(
-            provider_fns, get_arg_names_from_provider_fn_name)
-
-    found_classes = finding.find_classes(modules, classes, provider_fns)
-    found_functions = finding.find_functions(modules, classes, provider_fns)
+    found_classes = finding.find_classes(modules, classes)
+    found_functions = finding.find_functions(modules, classes)
     if only_use_explicit_bindings:
         implicit_provider_bindings = []
         implicit_class_bindings = []
@@ -139,13 +135,3 @@ class _Injector(object):
             kwargs[arg_name] = self._provide_from_binding_key(
                 binding_key, binding_context)
         return kwargs
-
-
-def _verify_provider_fns_are_provider_fns(
-        provider_fns, get_arg_names_from_provider_fn_name):
-    for provider_fn in provider_fns:
-        if not hasattr(provider_fn, '__name__'):
-            raise errors.InvalidProviderFnError(provider_fn)
-        if (not wrapping.get_any_provider_bindings(provider_fn) and
-            not get_arg_names_from_provider_fn_name(provider_fn.__name__)):
-            raise errors.InvalidProviderFnError(provider_fn)

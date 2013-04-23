@@ -3,8 +3,8 @@ import inspect
 import sys
 
 
-def find_classes(modules=None, classes=None, provider_fns=None):
-    modules = _get_explicit_or_default_modules(modules, classes, provider_fns)
+def find_classes(modules=None, classes=None):
+    modules = _get_explicit_or_default_modules(modules, classes)
     if classes is not None:
         all_classes = set(classes)
     else:
@@ -16,8 +16,8 @@ def find_classes(modules=None, classes=None, provider_fns=None):
     return all_classes
 
 
-def _get_explicit_or_default_modules(modules=None, classes=None, provider_fns=None):
-    if modules is None and classes is None and provider_fns is None:
+def _get_explicit_or_default_modules(modules=None, classes=None):
+    if modules is None and classes is None:
         return sys.modules.values()
     elif modules is None:
         return []
@@ -33,12 +33,9 @@ def _find_classes_in_module(module):
     return classes
 
 
-def find_functions(modules=None, classes=None, provider_fns=None):
-    modules = _get_explicit_or_default_modules(modules, classes, provider_fns)
-    if provider_fns is not None:
-        functions = set(provider_fns)
-    else:
-        functions = set()
+def find_functions(modules=None, classes=None):
+    modules = _get_explicit_or_default_modules(modules, classes)
+    functions = set()
     for module in modules:
         # TODO(kurts): how is a module getting to be None??
         if module is not None:
