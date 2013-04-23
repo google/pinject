@@ -12,7 +12,7 @@ import wrapping
 
 
 def new_injector(
-        modules=None, classes=None,
+        modules=finding.ALL_IMPORTED_MODULES, classes=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
         get_arg_names_from_class_name=(
             binding.default_get_arg_names_from_class_name),
@@ -27,7 +27,7 @@ def new_injector(
     known_scope_ids = id_to_scope.keys()
 
     found_classes = finding.find_classes(modules, classes)
-    found_functions = finding.find_functions(modules, classes)
+    found_functions = finding.find_functions(modules)
     if only_use_explicit_bindings:
         implicit_provider_bindings = []
         implicit_class_bindings = []
