@@ -12,14 +12,13 @@ import wrapping
 
 
 def new_injector(
-        modules=finding.ALL_IMPORTED_MODULES, classes=None,
+        modules=finding.ALL_IMPORTED_MODULES, classes=None, binding_modules=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
         get_arg_names_from_class_name=(
             binding.default_get_arg_names_from_class_name),
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name),
-        binding_fns=None, id_to_scope=None,
-        is_scope_usable_from_scope=lambda _1, _2: True):
+        id_to_scope=None, is_scope_usable_from_scope=lambda _1, _2: True):
 
     id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
     bindable_scopes = scoping.BindableScopes(
@@ -27,27 +26,27 @@ def new_injector(
     known_scope_ids = id_to_scope.keys()
 
     found_classes = finding.find_classes(modules, classes)
-    found_functions = finding.find_functions(modules)
     if only_use_explicit_bindings:
-        implicit_provider_bindings = []
         implicit_class_bindings = []
     else:
-        implicit_provider_bindings = binding.get_implicit_provider_bindings(
-            found_classes, found_functions, get_arg_names_from_provider_fn_name)
         implicit_class_bindings = binding.get_implicit_class_bindings(
             found_classes, get_arg_names_from_class_name)
-    explicit_bindings = binding.get_explicit_bindings(
-        found_classes, found_functions, known_scope_ids,
-        get_arg_names_from_class_name)
+    explicit_bindings = binding.get_explicit_class_bindings(
+        found_classes, get_arg_names_from_class_name)
     binder = binding.Binder(explicit_bindings, known_scope_ids)
-    if binding_fns is not None:
-        for binding_fn in binding_fns:
-            binding_fn(bind=binder.bind)
+    if binding_modules is not None:
+        for binding_module in binding_modules:
+            # TODO(kurts): check that binding_module has at least a
+            # pinject_configure function or provider functions.
+            if (hasattr(binding_module, 'pinject_configure') and
+                callable(binding_module.pinject_configure)):
+                binding_module.pinject_configure(binder.bind)
+            explicit_bindings.extend(binding.get_provider_bindings(
+                binding_module, get_arg_names_from_provider_fn_name))
 
     binding_key_to_binding, collided_binding_key_to_bindings = (
         binding.get_overall_binding_key_to_binding_maps(
-            [implicit_class_bindings, implicit_provider_bindings,
-             explicit_bindings]))
+            [implicit_class_bindings, explicit_bindings]))
     binding_mapping = binding.BindingMapping(
         binding_key_to_binding, collided_binding_key_to_bindings)
 

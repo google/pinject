@@ -33,14 +33,3 @@ def _find_classes_in_module(module):
         if inspect.isclass(member) and not member_name == '__class__':
             classes.add(member)
     return classes
-
-
-def find_functions(modules):
-    functions = set()
-    for module in _get_explicit_or_default_modules(modules):
-        # TODO(kurts): how is a module getting to be None??
-        if module is not None:
-            for member_name, member in inspect.getmembers(module):
-                if inspect.isfunction(member):
-                    functions.add(member)
-    return functions

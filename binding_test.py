@@ -336,17 +336,16 @@ def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
 
 
-class GetExplicitBindingsTest(unittest.TestCase):
+class GetExplicitClassBindingsTest(unittest.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
-        self.assertEqual([], binding.get_explicit_bindings([], [], []))
+        self.assertEqual([], binding.get_explicit_class_bindings([], []))
 
     def test_returns_binding_for_input_explicitly_bound_class(self):
         @binding.binds_to('foo')
         class SomeClass(object):
             pass
-        [explicit_binding] = binding.get_explicit_bindings(
-            [SomeClass], [], scope_ids=[scoping.PROTOTYPE])
+        [explicit_binding] = binding.get_explicit_class_bindings([SomeClass])
         self.assertEqual(binding.new_binding_key('foo'),
                          explicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
@@ -356,95 +355,32 @@ class GetExplicitBindingsTest(unittest.TestCase):
             @wrapping.inject
             def __init__(self):
                 pass
-        [explicit_binding] = binding.get_explicit_bindings(
-            [SomeClass], [], scope_ids=[scoping.PROTOTYPE])
+        [explicit_binding] = binding.get_explicit_class_bindings([SomeClass])
         self.assertEqual(binding.new_binding_key('some_class'),
                          explicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
 
-    def test_returns_binding_for_input_provider_fn(self):
-        @wrapping.provides('foo')
-        def some_function():
-            return 'a-foo'
-        [explicit_binding] = binding.get_explicit_bindings(
-            [], [some_function], scope_ids=[scoping.PROTOTYPE])
-        self.assertEqual(binding.new_binding_key('foo'),
-                         explicit_binding.binding_key)
-        self.assertEqual('a-foo', call_provisor_fn(explicit_binding))
 
-    def test_returns_binding_for_provider_fn_on_input_class(self):
-        class SomeClass(object):
-            @staticmethod
-            @wrapping.provides('foo')
-            # TODO(kurts): figure out why the decorator order cannot be reversed.
-            def some_function():
-                return 'a-foo'
-        [explicit_binding] = binding.get_explicit_bindings(
-            [SomeClass], [], scope_ids=[scoping.PROTOTYPE])
-        self.assertEqual(binding.new_binding_key('foo'),
-                         explicit_binding.binding_key)
-        self.assertEqual('a-foo', call_provisor_fn(explicit_binding))
+class GetProviderBindingsTest(unittest.TestCase):
 
-    def test_returns_binding_in_known_scope(self):
-        @wrapping.provides('foo', in_scope='a-scope')
-        def some_function():
-            return 'a-foo'
-        [explicit_binding] = binding.get_explicit_bindings(
-            [], [some_function], scope_ids=['a-scope'])
-        self.assertEqual('a-scope', explicit_binding.scope_id)
-
-    def test_raises_error_for_binding_in_unknown_scope(self):
-        @wrapping.provides('foo', in_scope='unknown-scope')
-        def some_function():
-            return 'a-foo'
-        self.assertRaises(errors.UnknownScopeError,
-                          binding.get_explicit_bindings,
-                          [], [some_function], scope_ids=['known-scope'])
-
-
-class GetImplicitProviderBindingsTest(unittest.TestCase):
-
-    def test_returns_no_bindings_for_no_input(self):
-        self.assertEqual([], binding.get_implicit_provider_bindings([], []))
-
-    def test_returns_binding_for_input_provider_fn(self):
-        def new_foo():
-            return 'a-foo'
-        [implicit_binding] = binding.get_implicit_provider_bindings(
-            classes=[], functions=[new_foo])
-        self.assertEqual(binding.new_binding_key('foo'),
-                         implicit_binding.binding_key)
-        self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
-
-    def test_returns_no_binding_for_explicit_provider_fn(self):
-        @wrapping.provides('bar')
-        def new_foo():
-            return 'a-foo'
+    def test_returns_no_bindings_for_non_binding_module(self):
         self.assertEqual(
-            [], binding.get_implicit_provider_bindings(classes=[], functions=[new_foo]))
+            [], binding.get_provider_bindings(binding.FakeBindingModule()))
 
-    def test_returns_binding_for_staticmethod_provider_fn(self):
-        class SomeClass(object):
-            @staticmethod
-            def new_foo():
-                return 'a-foo'
-        [implicit_binding] = binding.get_implicit_provider_bindings(
-            classes=[SomeClass], functions=[])
+    def test_returns_binding_for_provider_fn(self):
+        def new_foo():
+            return 'a-foo'
+        [implicit_binding] = binding.get_provider_bindings(
+            binding.FakeBindingModule(new_foo))
         self.assertEqual(binding.new_binding_key('foo'),
                          implicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
-
-    def test_returns_no_binding_for_input_non_provider_fn(self):
-        def some_fn():
-            pass
-        self.assertEqual([], binding.get_implicit_provider_bindings(
-            classes=[], functions=[some_fn]))
 
     def test_uses_provided_fn_to_map_provider_fn_names_to_arg_names(self):
         def some_foo():
             return 'a-foo'
-        [implicit_binding] = binding.get_implicit_provider_bindings(
-            classes=[], functions=[some_foo],
+        [implicit_binding] = binding.get_provider_bindings(
+            binding.FakeBindingModule(some_foo),
             get_arg_names_from_provider_fn_name=lambda _: ['foo'])
         self.assertEqual(binding.new_binding_key('foo'),
                          implicit_binding.binding_key)

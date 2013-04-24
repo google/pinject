@@ -30,23 +30,3 @@ class FindClassesTest(unittest.TestCase):
             FindClassesTest,
             finding.find_classes(modules=finding.ALL_IMPORTED_MODULES,
                                  classes=None))
-
-
-def a_fn_to_find():
-    pass
-
-
-class FindFunctionsTest(unittest.TestCase):
-
-    def test_finds_functions_in_passed_in_modules(self):
-        this_module = sys.modules[FindFunctionsTest.__module__]
-        self.assertIn(a_fn_to_find, finding.find_functions([this_module]))
-
-    def test_returns_fn_once_even_if_passed_in_multiple_times(self):
-        this_module = sys.modules[FindFunctionsTest.__module__]
-        self.assertIn(a_fn_to_find,
-                      finding.find_functions([this_module, this_module]))
-
-    def test_reads_sys_modules_for_all_imported_modules(self):
-        self.assertIn(a_fn_to_find,
-                      finding.find_functions(finding.ALL_IMPORTED_MODULES))

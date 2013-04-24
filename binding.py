@@ -18,36 +18,7 @@ _IS_DECORATED_ATTR = '_pinject_is_decorated'
 _BOUND_TO_BINDING_KEYS_ATTR = '_pinject_bound_to_binding_keys'
 
 
-# TODO(kurts): I want to avoid conflicting bindings.  If I annotate SomeClass
-# as @binds_to('foo') and then, in a binding function, say bind('foo'
-# to_class=SomeClass, in_scope=SOME_SCOPE), that seems like a conflicting
-# binding (because the @binds_to is implicitly in whatever the default scope
-# is).
-#
-# Maybe that's OK?  Maybe I say that that will be a conflicting binding, and,
-# if you want to bind in a scope, you need to bind in a binding function
-# instead of using @binds_to?
-#
-# But that seems obtuse.  It seems arbitrary to say, hey, if you want to bind
-# a class to an arg name in the default scope, you can use @binds_to, but if
-# you want it in a *non-default* scope, well then, you have to use a binding
-# function.
-#
-# Maybe the solution is to allow bind(arg_name, in_scope) without specifying
-# what it's bound to.  This would use modify whatever binding arg_name has and
-# make it scoped.  On one hand, that seems like it's dividing binding
-# information in two places (e.g., @binds_to at the class definition,
-# bind(...) in the binding module).  On the other hand, you wouldn't have to
-# specifically say what arg_name is bound to when binding it in a scope.
-#
-# But why shouldn't you have to say what arg_name is bound to, when binding it
-# in a scope?  If you don't have to say what it's bound to, it may not be
-# clear what class you're putting in the scope, or the arg_name-to-class
-# binding could change later without you reconsidering whether the scope is
-# appropriate for the new bound-to class.
-#
-# So it seems like @binds_to has to go, or else allow scoping, and since I'm
-# putting scoping in only one place (the binding module), it has to go?
+# TODO(kurts): remove @binds_to and associated stuff.
 def binds_to(arg_name, annotated_with=None):
     def get_pinject_decorated_class(cls):
         if not hasattr(cls, _IS_DECORATED_ATTR):
@@ -262,11 +233,10 @@ def default_get_arg_names_from_class_name(class_name):
     return ['_'.join(part.lower() for part in parts)]
 
 
-def get_explicit_bindings(
-        classes, functions, scope_ids,
+def get_explicit_class_bindings(
+        classes,
         get_arg_names_from_class_name=default_get_arg_names_from_class_name):
     explicit_bindings = []
-    all_functions = list(functions)
     for cls in classes:
         for binding_key in wrapping.get_any_class_binding_keys(
                 cls, get_arg_names_from_class_name):
@@ -279,62 +249,34 @@ def get_explicit_bindings(
             explicit_bindings.append(Binding(
                 binding_key, proviser_fn,
                 desc='the explicitly @bound_to class {0}'.format(cls)))
-        for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
-            all_functions.append(fn)
-    for fn in all_functions:
-        for provider_binding in wrapping.get_any_provider_bindings(fn):
-            if provider_binding.scope_id not in scope_ids:
-                raise errors.UnknownScopeError(provider_binding.scope_id)
-            explicit_bindings.append(provider_binding)
     return explicit_bindings
 
 
-def get_implicit_provider_bindings(
-    classes, functions,
-    get_arg_names_from_provider_fn_name=(
-        providing.default_get_arg_names_from_provider_fn_name)):
-    """Creates a mapping from arg names to classes.
-
-    Args:
-      classes: an iterable of classes
-      get_arg_names_from_class_name: a function taking an (unqualified) class
-          name and returning a (possibly empty) iterable of the arg names that
-          would map to that class
-    Returns:
-      an _ArgNameClassMapping
-    """
-    all_functions = list(functions)
-    for cls in classes:
-        for _, fn in inspect.getmembers(cls, lambda x: type(x) == types.FunctionType):
-            all_functions.append(fn)
-    implicit_provider_bindings = []
-    for fn in all_functions:
-        if wrapping.get_any_provider_bindings(fn):
-            continue  # it's already an explicit provider fn
+def get_provider_bindings(
+        binding_module,
+        get_arg_names_from_provider_fn_name=(
+            providing.default_get_arg_names_from_provider_fn_name)):
+    provider_bindings = []
+    fns = inspect.getmembers(binding_module, lambda x: type(x) == types.FunctionType)
+    for _, fn in fns:
+        # TODO(kurts): remove @provides.
+        # TODO(kurts): allow annotating provider fn args.
+        # TODO(kurts): remove bind() arg to_provider.
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:
             binding_key = new_binding_key(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
-            implicit_provider_bindings.append(Binding(
+            provider_bindings.append(Binding(
                 binding_key, proviser_fn,
-                desc='the implicitly bound provider function {0}'.format(fn)))
-    return implicit_provider_bindings
+                desc='the provider function {0} from module {1}'.format(
+                    fn, binding_module)))
+    return provider_bindings
 
 
 def get_implicit_class_bindings(
-    classes,
-    get_arg_names_from_class_name=(
-        default_get_arg_names_from_class_name)):
-    """Creates a mapping from arg names to classes.
-
-    Args:
-      classes: an iterable of classes
-      get_arg_names_from_class_name: a function taking an (unqualified) class
-          name and returning a (possibly empty) iterable of the arg names that
-          would map to that class
-    Returns:
-      an _ArgNameClassMapping
-    """
+        classes,
+        get_arg_names_from_class_name=(
+            default_get_arg_names_from_class_name)):
     implicit_bindings = []
     for cls in classes:
         if _get_any_class_binding_keys(cls):
@@ -402,3 +344,9 @@ def create_proviser_fn(binding_key,
             to_provider, binding_context)
         proviser_fn._pinject_desc = 'the provider {0!r}'.format(to_provider)
     return proviser_fn
+
+
+class FakeBindingModule(object):
+
+    def __init__(self, *pargs):
+        self.__dict__.update({x.__name__: x for x in pargs})
