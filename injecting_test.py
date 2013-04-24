@@ -246,24 +246,23 @@ class InjectorProvideTest(unittest.TestCase):
         class_one = injector.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
-        # TODO(kurts): figure out how to enable this use case.
-    # def test_can_use_annotate_with_provides(self):
-    #     class ClassOne(object):
-    #         @wrapping.annotate('foo', 'an-annotation')
-    #         def __init__(self, foo):
-    #             self.foo = foo
-    #         @staticmethod
-    #         @wrapping.provides('foo', annotated_with='an-annotation')
-    #         @wrapping.annotate('bar', 'another-annotation')
-    #         def new_foo(bar):
-    #             return 'a-foo with {0}'.format(bar)
-    #         @staticmethod
-    #         @wrapping.provides('bar', annotated_with='another-annotation')
-    #         def new_bar():
-    #             return 'a-bar'
-    #     injector = injecting.new_injector(modules=None, classes=[ClassOne])
-    #     class_one = injector.provide(ClassOne)
-    #     self.assertEqual('a-foo with a-bar', class_one.foo)
+    def test_can_use_annotate_with_provides(self):
+        class ClassOne(object):
+            @wrapping.annotate('foo', 'an-annotation')
+            def __init__(self, foo):
+                self.foo = foo
+        @wrapping.annotated_with('an-annotation')
+        @wrapping.annotate('bar', 'another-annotation')
+        def new_foo(bar):
+            return 'a-foo with {0}'.format(bar)
+        @wrapping.annotated_with('another-annotation')
+        def new_bar():
+            return 'a-bar'
+        injector = injecting.new_injector(
+            modules=None, classes=[ClassOne],
+            binding_modules=[binding.FakeBindingModule(new_foo, new_bar)])
+        class_one = injector.provide(ClassOne)
+        self.assertEqual('a-foo with a-bar', class_one.foo)
 
     def test_inject_decorated_class_can_be_directly_provided(self):
         class SomeClass(object):

@@ -70,7 +70,7 @@ class Binding(object):
 
     # TODO(kurts): remove the scope_id default; it's introducing bugs and
     # inconsistencies.
-    def __init__(self, binding_key, proviser_fn, scope_id=scoping.PROTOTYPE,
+    def __init__(self, binding_key, proviser_fn, scope_id=scoping.DEFAULT_SCOPE,
                  desc='unknown'):
         self.binding_key = binding_key
         self.proviser_fn = proviser_fn
@@ -230,16 +230,11 @@ def get_provider_bindings(
     fns = inspect.getmembers(binding_module, lambda x: type(x) == types.FunctionType)
     for _, fn in fns:
         # TODO(kurts): remove @provides.
-        # TODO(kurts): allow annotating provider fn args.
         # TODO(kurts): remove bind() arg to_provider.
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:
-            binding_key = new_binding_key(arg_name)
-            proviser_fn = create_proviser_fn(binding_key, to_provider=fn)
-            provider_bindings.append(Binding(
-                binding_key, proviser_fn,
-                desc='the provider function {0} from module {1}'.format(
-                    fn, binding_module)))
+            provider_bindings.append(
+                wrapping.get_provider_fn_binding(fn, arg_name))
     return provider_bindings
 
 

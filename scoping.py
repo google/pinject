@@ -14,8 +14,10 @@ class _PrototypeScopeId(object):
     def __str__(self):
         return 'prototype scope'
 PROTOTYPE = _PrototypeScopeId()
+DEFAULT_SCOPE = PROTOTYPE
 
 
+# TODO(kurts): rename to _BUILTIN_SCOPES.
 _DEFAULT_SCOPES = [SINGLETON, PROTOTYPE]
 
 

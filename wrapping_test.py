@@ -4,6 +4,7 @@ import unittest
 
 import binding
 import errors
+import scoping
 import wrapping
 
 
@@ -67,25 +68,61 @@ class InjectTest(unittest.TestCase):
                           do_bad_inject)
 
 
-class ProvidesTest(unittest.TestCase):
+class AnnotatedWithTest(unittest.TestCase):
 
-    def test_adds_provided_binding_key_in_wrapped_fn(self):
-        @wrapping.provides('foo')
-        def some_function():
-            return 'a-foo'
-        [provided_binding] = getattr(some_function, wrapping._PROVIDED_BINDINGS_ATTR)
+    def test_sets_annotated_with(self):
+        @wrapping.annotated_with('an-annotation')
+        def new_foo():
+            pass
+        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        self.assertEqual(binding.new_binding_key('foo', 'an-annotation'),
+                         provider_fn_binding.binding_key)
+
+    def test_omitted_leaves_unannotated(self):
+        def new_foo():
+            pass
+        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
         self.assertEqual(binding.new_binding_key('foo'),
-                         provided_binding.binding_key)
-        self.assertEqual('a-foo', call_provisor_fn(provided_binding))
+                         provider_fn_binding.binding_key)
 
-    def test_adds_annotation_and_scope_to_wrapped_fn(self):
-        @wrapping.provides('foo', annotated_with='bar', in_scope='a-scope')
-        def some_function():
+
+class InScopeTest(unittest.TestCase):
+
+    def test_sets_in_scope_id(self):
+        @wrapping.in_scope('a-scope-id')
+        def new_foo():
+            pass
+        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
+
+    def test_omitted_leaves_unannotated(self):
+        def new_foo():
+            pass
+        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        self.assertEqual(scoping.PROTOTYPE, provider_fn_binding.scope_id)
+
+
+class GetProviderFnBindingTest(unittest.TestCase):
+
+    def test_proviser_calls_provider_fn(self):
+        def new_foo():
             return 'a-foo'
-        [provided_binding] = getattr(some_function, wrapping._PROVIDED_BINDINGS_ATTR)
-        self.assertEqual(binding.new_binding_key('foo', 'bar'),
-                         provided_binding.binding_key)
-        self.assertEqual('a-scope', provided_binding.scope_id)
+        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        self.assertEqual('a-foo', call_provisor_fn(provider_fn_binding))
+
+    # The rest of get_provider_fn_binding() is tested above in conjuction with
+    # @annotated_with() and @in_scope().
+
+
+class AnnotatedWithTest(unittest.TestCase):
+
+    def test_sets_annotated_with(self):
+        @wrapping.annotated_with('an-annotation')
+        def new_foo():
+            pass
+        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        self.assertEqual(binding.new_binding_key('foo', 'an-annotation'),
+                         provider_fn_binding.binding_key)
 
 
 class GetPinjectWrapperTest(unittest.TestCase):
@@ -166,27 +203,3 @@ class GetAnyClassBindingKeys(unittest.TestCase):
 class GetArgPrebindingsAndRemainingArgsTest(unittest.TestCase):
     # TODO(kurts)
     pass
-
-
-class GetAnyProviderBindingKeysTest(unittest.TestCase):
-
-    def test_gets_binding_keys_for_explicit_provider_fn(self):
-        @wrapping.provides('arg_name')
-        def some_function():
-            return 'an-arg-name'
-        [provider_binding] = wrapping.get_any_provider_bindings(some_function)
-        self.assertEqual(binding.new_binding_key('arg_name'),
-                         provider_binding.binding_key)
-        self.assertEqual('an-arg-name', call_provisor_fn(provider_binding))
-
-    def test_gets_no_binding_keys_for_implicit_provider_fn(self):
-        def new_arg_name():
-            pass
-        self.assertEqual(
-            [], wrapping.get_any_provider_bindings(new_arg_name))
-
-    def test_gets_no_binding_keys_for_arbitrary_fn(self):
-        def some_function():
-            pass
-        self.assertEqual(
-            [], wrapping.get_any_provider_bindings(some_function))
