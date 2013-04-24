@@ -40,7 +40,6 @@ new_injector = injecting.new_injector
 #     accidentally create multiple objects where I should have used just one
 #     more often, because the code will work, albeit slower (e.g., with RPC
 #     connections).
-# - TODO above @binds_to.
 # - Should I allow bind(arg_name, to_scope) without saying what it's bound to?
 # - Should I allow users to override the default scope?  (I'm assuming not.)
 # - How should I deal with someone wanting to instantiate a class in a scope,
@@ -54,11 +53,6 @@ new_injector = injecting.new_injector
 # - In safe mode, where initializers must have @inject to be injected, should
 #     that also apply to classes whose only initializer param is self?  It
 #     seems like Guice makes an exception in this case.  Why?
-# - Should @inject conflict with an explicit binding in a binding function?
-#     @inject creates a binding from the class's corresponding arg name(s) to
-#     the class, in the default scope.  But isn't that the same as @binds_to?
-#     Why is it OK to mark a class injectable with @inject?  Doesn't that make
-#     two places you have to look to see if a class is injectable?
 # - Why should @inject apply to __init__() rather than the class?
 # - How would eager singletons work?
 # - Should I do the same thing w.r.t. singletons that Guice does?

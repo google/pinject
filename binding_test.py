@@ -10,28 +10,6 @@ import scoping
 import wrapping
 
 
-class BindsToTest(unittest.TestCase):
-
-    def test_adds_binding_attrs(self):
-        @binding.binds_to('foo')
-        class SomeClass(object):
-            pass
-        self.assertTrue(getattr(SomeClass, binding._IS_DECORATED_ATTR))
-        self.assertEqual(
-            [binding.new_binding_key('foo')],
-            getattr(SomeClass, binding._BOUND_TO_BINDING_KEYS_ATTR))
-
-    def test_can_decorate_several_times(self):
-        @binding.binds_to('foo', annotated_with='an-annotation')
-        @binding.binds_to('bar')
-        class SomeClass(object):
-            pass
-        self.assertEqual(
-            [binding.new_binding_key('bar'),
-             binding.new_binding_key('foo', 'an-annotation')],
-            getattr(SomeClass, binding._BOUND_TO_BINDING_KEYS_ATTR))
-
-
 class BindingKeyTest(unittest.TestCase):
 
     def test_repr(self):
@@ -339,16 +317,7 @@ def call_provisor_fn(a_binding):
 class GetExplicitClassBindingsTest(unittest.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
-        self.assertEqual([], binding.get_explicit_class_bindings([], []))
-
-    def test_returns_binding_for_input_explicitly_bound_class(self):
-        @binding.binds_to('foo')
-        class SomeClass(object):
-            pass
-        [explicit_binding] = binding.get_explicit_class_bindings([SomeClass])
-        self.assertEqual(binding.new_binding_key('foo'),
-                         explicit_binding.binding_key)
-        self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
+        self.assertEqual([], binding.get_explicit_class_bindings([]))
 
     def test_returns_binding_for_input_explicitly_injected_class(self):
         class SomeClass(object):
@@ -359,6 +328,16 @@ class GetExplicitClassBindingsTest(unittest.TestCase):
         self.assertEqual(binding.new_binding_key('some_class'),
                          explicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
+
+    def test_uses_provided_fn_to_map_class_names_to_arg_names(self):
+        class SomeClass(object):
+            @wrapping.inject
+            def __init__(self):
+                pass
+        [explicit_binding] = binding.get_explicit_class_bindings(
+            [SomeClass], get_arg_names_from_class_name=lambda _: ['foo'])
+        self.assertEqual(binding.new_binding_key('foo'),
+                         explicit_binding.binding_key)
 
 
 class GetProviderBindingsTest(unittest.TestCase):
@@ -398,12 +377,6 @@ class GetImplicitClassBindingsTest(unittest.TestCase):
         self.assertEqual(binding.new_binding_key('some_class'),
                          implicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(implicit_binding))
-
-    def test_returns_no_binding_for_explicitly_bound_class(self):
-        @binding.binds_to('foo')
-        class SomeClass(object):
-            pass
-        self.assertEqual([], binding.get_implicit_class_bindings([SomeClass]))
 
     def test_returns_binding_for_correct_input_class(self):
         class ClassOne(object):

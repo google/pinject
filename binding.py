@@ -14,31 +14,6 @@ import providing
 import wrapping
 
 
-_IS_DECORATED_ATTR = '_pinject_is_decorated'
-_BOUND_TO_BINDING_KEYS_ATTR = '_pinject_bound_to_binding_keys'
-
-
-# TODO(kurts): remove @binds_to and associated stuff.
-def binds_to(arg_name, annotated_with=None):
-    def get_pinject_decorated_class(cls):
-        if not hasattr(cls, _IS_DECORATED_ATTR):
-            setattr(cls, _IS_DECORATED_ATTR, True)
-            setattr(cls, _BOUND_TO_BINDING_KEYS_ATTR, [])
-        getattr(cls, _BOUND_TO_BINDING_KEYS_ATTR).append(
-            new_binding_key(arg_name, annotated_with))
-        return cls
-    return get_pinject_decorated_class
-
-
-# TODO(kurts): if @binds_to is not removed, unify this with the attrs in
-# wrapping.py.
-def _get_any_class_binding_keys(cls):
-    if hasattr(cls, _IS_DECORATED_ATTR):
-        return getattr(cls, _BOUND_TO_BINDING_KEYS_ATTR)
-    else:
-        return []
-
-
 class BindingKey(object):
     """The key for a binding."""
 
@@ -244,11 +219,6 @@ def get_explicit_class_bindings(
             explicit_bindings.append(Binding(
                 binding_key, proviser_fn,
                 desc='the explicitly injectable class {0}'.format(cls)))
-        for binding_key in _get_any_class_binding_keys(cls):
-            proviser_fn = create_proviser_fn(binding_key, to_class=cls)
-            explicit_bindings.append(Binding(
-                binding_key, proviser_fn,
-                desc='the explicitly @bound_to class {0}'.format(cls)))
     return explicit_bindings
 
 
@@ -279,8 +249,6 @@ def get_implicit_class_bindings(
             default_get_arg_names_from_class_name)):
     implicit_bindings = []
     for cls in classes:
-        if _get_any_class_binding_keys(cls):
-            continue
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
             binding_key = new_binding_key(arg_name)
