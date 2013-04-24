@@ -17,8 +17,7 @@ PROTOTYPE = _PrototypeScopeId()
 DEFAULT_SCOPE = PROTOTYPE
 
 
-# TODO(kurts): rename to _BUILTIN_SCOPES.
-_DEFAULT_SCOPES = [SINGLETON, PROTOTYPE]
+_BUILTIN_SCOPES = [SINGLETON, PROTOTYPE]
 
 
 class Scope(object):
@@ -60,7 +59,7 @@ UNSCOPED = _UnscopedScopeId()
 
 def get_id_to_scope_with_defaults(id_to_scope=None):
     if id_to_scope is not None:
-        for scope_id in _DEFAULT_SCOPES:
+        for scope_id in _BUILTIN_SCOPES:
             if scope_id in id_to_scope:
                 raise errors.OverridingDefaultScopeError(scope_id)
         id_to_scope = dict(id_to_scope)

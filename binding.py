@@ -229,7 +229,6 @@ def get_provider_bindings(
     provider_bindings = []
     fns = inspect.getmembers(binding_module, lambda x: type(x) == types.FunctionType)
     for _, fn in fns:
-        # TODO(kurts): remove @provides.
         # TODO(kurts): remove bind() arg to_provider.
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:
