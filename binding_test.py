@@ -122,9 +122,9 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.some_binding_key = binding.new_binding_key('some_class')
-        self.some_binding = binding.Binding(
+        self.some_binding = binding.new_binding_in_default_scope(
             self.some_binding_key, 'a-proviser-fn')
-        self.another_some_binding = binding.Binding(
+        self.another_some_binding = binding.new_binding_in_default_scope(
             self.some_binding_key, 'another-proviser-fn')
 
     def assertBindingsReturnMaps(
@@ -178,9 +178,9 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.some_binding_key = binding.new_binding_key('some_class')
-        self.some_binding = binding.Binding(
+        self.some_binding = binding.new_binding_in_default_scope(
             self.some_binding_key, 'a-proviser-fn')
-        self.another_some_binding = binding.Binding(
+        self.another_some_binding = binding.new_binding_in_default_scope(
             self.some_binding_key, 'another-proviser-fn')
 
     def assertBindingsListsReturnMaps(
@@ -241,10 +241,10 @@ class BindingMappingTest(unittest.TestCase):
 
     def test_colliding_bindings_raises_error(self):
         binding_key = binding.new_binding_key('unused')
-        binding_one = binding.Binding(
+        binding_one = binding.new_binding_in_default_scope(
             binding_key,
             binding.create_proviser_fn(binding_key, to_instance='unused'))
-        binding_two = binding.Binding(
+        binding_two = binding.new_binding_in_default_scope(
             binding_key,
             binding.create_proviser_fn(binding_key, to_instance='unused'))
         binding_mapping = binding.BindingMapping(

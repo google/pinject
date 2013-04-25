@@ -83,7 +83,7 @@ class BindableScopesTest(unittest.TestCase):
     def test_get_sub_scope_successfully(self):
         usable_binding = binding.Binding(
             binding.new_binding_key('foo'),
-            'unused-proviser-fn', 'usable-scope-id')
+            'unused-proviser-fn', 'usable-scope-id', 'unused-desc')
         self.assertEqual(
             'usable-scope',
             self.bindable_scopes.get_sub_scope(
@@ -92,7 +92,7 @@ class BindableScopesTest(unittest.TestCase):
     def test_sub_scope_not_usable_from_scope_raises_error(self):
         unusable_binding = binding.Binding(
             binding.new_binding_key('foo'),
-            'unused-proviser-fn', 'unusable-scope-id')
+            'unused-proviser-fn', 'unusable-scope-id', 'unused-desc')
         self.assertRaises(errors.BadDependencyScopeError,
                           self.bindable_scopes.get_sub_scope, unusable_binding,
                           binding.new_binding_context())

@@ -10,8 +10,8 @@ import object_graph
 new_object_graph = object_graph.new_object_graph
 
 # TODO:
+# - remove new_ as a prefix for provider fns.
 # - reasonable error messages for all exceptions
-# - change the default scope to singleton.
 
 # Maybe TODO:
 # - eager singletons

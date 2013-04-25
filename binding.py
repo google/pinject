@@ -66,12 +66,13 @@ def new_binding_key(arg_name, annotated_with=None):
     return BindingKey(arg_name, annotation)
 
 
+def new_binding_in_default_scope(binding_key, proviser_fn):
+    return Binding(binding_key, proviser_fn, scoping.DEFAULT_SCOPE, desc='unknown')
+
+
 class Binding(object):
 
-    # TODO(kurts): remove the scope_id default; it's introducing bugs and
-    # inconsistencies.
-    def __init__(self, binding_key, proviser_fn, scope_id=scoping.DEFAULT_SCOPE,
-                 desc='unknown'):
+    def __init__(self, binding_key, proviser_fn, scope_id, desc):
         self.binding_key = binding_key
         self.proviser_fn = proviser_fn
         self.scope_id = scope_id
@@ -218,7 +219,7 @@ def get_explicit_class_bindings(
                 binding_key = new_binding_key(arg_name)
                 proviser_fn = create_proviser_fn(binding_key, to_class=cls)
                 explicit_bindings.append(Binding(
-                    binding_key, proviser_fn,
+                    binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
                     desc='the explicitly injectable class {0}'.format(cls)))
     return explicit_bindings
 
@@ -248,7 +249,7 @@ def get_implicit_class_bindings(
             binding_key = new_binding_key(arg_name)
             proviser_fn = create_proviser_fn(binding_key, to_class=cls)
             implicit_bindings.append(Binding(
-                binding_key, proviser_fn,
+                binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
                 desc='the implicitly bound class {0}'.format(cls)))
     return implicit_bindings
 
