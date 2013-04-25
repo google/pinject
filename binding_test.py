@@ -5,7 +5,6 @@ import unittest
 import annotation
 import binding
 import errors
-import injecting
 import scoping
 import wrapping
 

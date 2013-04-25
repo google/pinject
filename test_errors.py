@@ -3,7 +3,7 @@
 import traceback
 
 import errors
-import injecting
+import object_graph
 
 
 all_print_methods = []
@@ -17,7 +17,7 @@ def print_ambiguous_arg_name_error():
         pass
     class _Foo():
         pass
-    injector = injecting.new_injector(classes=[SomeClass, Foo, _Foo])
+    injector = object_graph.new_injector(classes=[SomeClass, Foo, _Foo])
     try:
         _ = injector.provide(SomeClass)
         raise Exception('failed to raise')
@@ -32,7 +32,7 @@ def print_bad_dependency_scope_error():
     class Bar(object):
         def __init__(self, foo):
             pass
-    injector = injecting.new_injector(
+    injector = object_graph.new_injector(
         classes=[Foo, Bar], is_scope_usable_from_scope=lambda _1, _2: False)
     try:
         _ = injector.provide(Bar)
@@ -47,7 +47,7 @@ def print_conflicting_bindings_error():
         bind('foo', to_instance=1)
         bind('foo', to_instance=2)
     try:
-        _ = injecting.new_injector(binding_fns=[binding_fn])
+        _ = object_graph.new_injector(binding_fns=[binding_fn])
         raise Exception('failed to raise')
     except errors.ConflictingBindingsError:
         traceback.print_exc()

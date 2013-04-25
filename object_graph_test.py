@@ -4,7 +4,7 @@ import unittest
 
 import binding
 import errors
-import injecting
+import object_graph
 import scoping
 import wrapping
 
@@ -12,17 +12,17 @@ import wrapping
 class NewInjectorTest(unittest.TestCase):
 
     def test_can_create_injector_with_all_defaults(self):
-        _ = injecting.new_injector()
+        _ = object_graph.new_injector()
 
     def test_creates_injector_using_given_modules(self):
-        injector = injecting.new_injector(modules=[errors])
+        injector = object_graph.new_injector(modules=[errors])
         self.assertIsInstance(injector.provide(errors.Error),
                               errors.Error)
 
     def test_creates_injector_using_given_classes(self):
         class SomeClass(object):
             pass
-        injector = injecting.new_injector(modules=None, classes=[SomeClass])
+        injector = object_graph.new_injector(modules=None, classes=[SomeClass])
         self.assertIsInstance(injector.provide(SomeClass), SomeClass)
 
     def test_creates_injector_using_given_binding_modules(self):
@@ -33,7 +33,7 @@ class NewInjectorTest(unittest.TestCase):
             pass
         def pinject_configure(bind):
             bind('foo', to_class=SomeClass)
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassWithFooInjected],
             binding_modules=[binding.FakeBindingModule(pinject_configure)])
         self.assertIsInstance(injector.provide(ClassWithFooInjected),
@@ -41,7 +41,7 @@ class NewInjectorTest(unittest.TestCase):
 
     def test_raises_error_if_binding_module_is_empty(self):
         self.assertRaises(errors.EmptyExplicitBindingModuleError,
-                          injecting.new_injector, modules=None, classes=None,
+                          object_graph.new_injector, modules=None, classes=None,
                           binding_modules=[binding.FakeBindingModule()])
 
     def test_creates_injector_using_given_scopes(self):
@@ -51,7 +51,7 @@ class NewInjectorTest(unittest.TestCase):
         @wrapping.in_scope('foo-scope')
         def new_foo():
             return object()
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[SomeClass],
             binding_modules=[binding.FakeBindingModule(new_foo)],
             id_to_scope={'foo-scope': scoping.SingletonScope()})
@@ -66,7 +66,7 @@ class InjectorProvideTest(unittest.TestCase):
         class ExampleClassWithInit(object):
             def __init__(self):
                 pass
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ExampleClassWithInit])
         self.assertTrue(isinstance(injector.provide(ExampleClassWithInit),
                                    ExampleClassWithInit))
@@ -74,7 +74,7 @@ class InjectorProvideTest(unittest.TestCase):
     def test_can_provide_class_without_own_init(self):
         class ExampleClassWithoutInit(object):
             pass
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ExampleClassWithoutInit])
         self.assertIsInstance(injector.provide(ExampleClassWithoutInit),
                               ExampleClassWithoutInit)
@@ -84,7 +84,7 @@ class InjectorProvideTest(unittest.TestCase):
             pass
         class CollidingExampleClass(object):
             pass
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None,
             classes=[_CollidingExampleClass, CollidingExampleClass])
         self.assertIsInstance(injector.provide(CollidingExampleClass),
@@ -96,7 +96,7 @@ class InjectorProvideTest(unittest.TestCase):
                 pass
         class ClassTwo(object):
             pass
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne, ClassTwo])
         self.assertIsInstance(injector.provide(ClassOne), ClassOne)
 
@@ -108,7 +108,7 @@ class InjectorProvideTest(unittest.TestCase):
         class AmbiguousParamClass(object):
             def __init__(self, colliding_example_class):
                 pass
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None,
             classes=[_CollidingExampleClass, CollidingExampleClass,
                      AmbiguousParamClass])
@@ -119,7 +119,7 @@ class InjectorProvideTest(unittest.TestCase):
         class UnknownParamClass(object):
             def __init__(self, unknown_class):
                 pass
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[UnknownParamClass])
         self.assertRaises(errors.NothingInjectableForArgError,
                           injector.provide, UnknownParamClass)
@@ -131,7 +131,7 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassTwo(object):
             def __init__(self, class_one):
                 pass
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne, ClassTwo])
         self.assertRaises(errors.CyclicInjectionError,
                           injector.provide, ClassOne)
@@ -145,7 +145,7 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassTwo(object):
             def __init__(self, foo):
                 self.foo = foo
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne, ClassTwo],
             binding_modules=[binding.FakeBindingModule(new_foo)])
         class_two = injector.provide(ClassTwo)
@@ -158,7 +158,7 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def pinject_configure(bind):
             bind('foo', annotated_with='an-annotation', to_instance='a-foo')
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(pinject_configure)])
         class_one = injector.provide(ClassOne)
@@ -179,7 +179,7 @@ class InjectorProvideTest(unittest.TestCase):
         @wrapping.in_scope(scoping.PROTOTYPE)
         def new_bar():
             return object()
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[SomeClass],
             binding_modules=[binding.FakeBindingModule(new_foo, new_bar)])
         class_one = injector.provide(SomeClass)
@@ -194,7 +194,7 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def pinject_configure(bind):
             bind('foo', annotated_with='other-annotation', to_instance='a-foo')
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(pinject_configure)])
         self.assertRaises(errors.NothingInjectableForArgError,
@@ -207,7 +207,7 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def pinject_configure(bind):
             bind('foo', to_instance='a-foo')
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(pinject_configure)])
         self.assertRaises(errors.NothingInjectableForArgError,
@@ -219,7 +219,7 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def new_foo():
             return 'a-foo'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(new_foo)])
         class_one = injector.provide(ClassOne)
@@ -233,7 +233,7 @@ class InjectorProvideTest(unittest.TestCase):
             pass
         def new_foo():
             return 'a-foo'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne, Foo],
             binding_modules=[binding.FakeBindingModule(new_foo)])
         class_one = injector.provide(ClassOne)
@@ -247,7 +247,7 @@ class InjectorProvideTest(unittest.TestCase):
             return 'a-foo with {0}'.format(bar)
         def new_bar():
             return 'a-bar'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(new_foo, new_bar)])
         class_one = injector.provide(ClassOne)
@@ -265,7 +265,7 @@ class InjectorProvideTest(unittest.TestCase):
         @wrapping.annotated_with('another-annotation')
         def new_bar():
             return 'a-bar'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(new_foo, new_bar)])
         class_one = injector.provide(ClassOne)
@@ -276,7 +276,7 @@ class InjectorProvideTest(unittest.TestCase):
             @wrapping.inject
             def __init__(self):
                 self.foo = 'a-foo'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[SomeClass], only_use_explicit_bindings=True)
         class_one = injector.provide(SomeClass)
         self.assertEqual('a-foo', class_one.foo)
@@ -285,7 +285,7 @@ class InjectorProvideTest(unittest.TestCase):
         class SomeClass(object):
             def __init__(self):
                 self.foo = 'a-foo'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[SomeClass], only_use_explicit_bindings=True)
         self.assertRaises(
             errors.NonExplicitlyBoundClassError, injector.provide, SomeClass)
@@ -299,7 +299,7 @@ class InjectorProvideTest(unittest.TestCase):
             @wrapping.inject
             def __init__(self):
                 self.foo = 'a-foo'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne, ClassTwo],
             only_use_explicit_bindings=True)
         class_one = injector.provide(ClassOne)
@@ -312,7 +312,7 @@ class InjectorProvideTest(unittest.TestCase):
                 self.class_two = class_two
         def pinject_configure(bind):
             bind('class_two', to_instance='a-class-two')
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(pinject_configure)],
             only_use_explicit_bindings=True)
@@ -326,7 +326,7 @@ class InjectorProvideTest(unittest.TestCase):
                 self.class_two = class_two
         def new_class_two():
             return 'a-class-two'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(new_class_two)],
             only_use_explicit_bindings=True)
@@ -341,7 +341,7 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassTwo(object):
             def __init__(self):
                 self.foo = 'a-foo'
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[ClassOne, ClassTwo],
             only_use_explicit_bindings=True)
         self.assertRaises(errors.NothingInjectableForArgError,
@@ -353,7 +353,7 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def new_foo():
             return None
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[SomeClass],
             binding_modules=[binding.FakeBindingModule(new_foo)],
             allow_injecting_none=True)
@@ -366,7 +366,7 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def new_foo():
             return None
-        injector = injecting.new_injector(
+        injector = object_graph.new_injector(
             modules=None, classes=[SomeClass],
             binding_modules=[binding.FakeBindingModule(new_foo)],
             allow_injecting_none=False)
@@ -379,32 +379,32 @@ class InjectorWrapTest(unittest.TestCase):
     def test_can_inject_nothing_into_fn_with_zero_params(self):
         def return_something():
             return 'something'
-        wrapped = injecting.new_injector(modules=None, classes=[]).wrap(
+        wrapped = object_graph.new_injector(modules=None, classes=[]).wrap(
             return_something)
         self.assertEqual('something', wrapped())
 
     def test_can_inject_nothing_into_fn_with_positional_passed_params(self):
         def add(a, b):
             return a + b
-        wrapped = injecting.new_injector(modules=None, classes=[]).wrap(add)
+        wrapped = object_graph.new_injector(modules=None, classes=[]).wrap(add)
         self.assertEqual(5, wrapped(2, 3))
 
     def test_can_inject_nothing_into_fn_with_keyword_passed_params(self):
         def add(a, b):
             return a + b
-        wrapped = injecting.new_injector(modules=None, classes=[]).wrap(add)
+        wrapped = object_graph.new_injector(modules=None, classes=[]).wrap(add)
         self.assertEqual(5, wrapped(a=2, b=3))
 
     def test_can_inject_nothing_into_fn_with_defaults(self):
         def add(a=2, b=3):
             return a + b
-        wrapped = injecting.new_injector(classes=[]).wrap(add)
+        wrapped = object_graph.new_injector(classes=[]).wrap(add)
         self.assertEqual(5, wrapped())
 
     def test_can_inject_nothing_into_fn_with_pargs_and_kwargs(self):
         def add(*pargs, **kwargs):
             return pargs[0] + kwargs['b']
-        wrapped = injecting.new_injector(modules=None, classes=[]).wrap(add)
+        wrapped = object_graph.new_injector(modules=None, classes=[]).wrap(add)
         self.assertEqual(5, wrapped(2, b=3))
 
     def test_can_inject_something_into_first_positional_param(self):
@@ -413,7 +413,7 @@ class InjectorWrapTest(unittest.TestCase):
                 self.a = 2
         def add(foo, b):
             return foo.a + b
-        wrapped = injecting.new_injector(modules=None, classes=[Foo]).wrap(add)
+        wrapped = object_graph.new_injector(modules=None, classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(b=3))
 
     def test_can_inject_something_into_non_first_positional_param(self):
@@ -422,5 +422,5 @@ class InjectorWrapTest(unittest.TestCase):
                 self.b = 3
         def add(a, foo):
             return a + foo.b
-        wrapped = injecting.new_injector(modules=None, classes=[Foo]).wrap(add)
+        wrapped = object_graph.new_injector(modules=None, classes=[Foo]).wrap(add)
         self.assertEqual(5, wrapped(2))
