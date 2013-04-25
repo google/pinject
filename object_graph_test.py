@@ -9,23 +9,23 @@ import scoping
 import wrapping
 
 
-class NewInjectorTest(unittest.TestCase):
+class NewObjectGraphTest(unittest.TestCase):
 
-    def test_can_create_injector_with_all_defaults(self):
+    def test_can_create_object_graph_with_all_defaults(self):
         _ = object_graph.new_object_graph()
 
-    def test_creates_injector_using_given_modules(self):
-        injector = object_graph.new_object_graph(modules=[errors])
-        self.assertIsInstance(injector.provide(errors.Error),
+    def test_creates_object_graph_using_given_modules(self):
+        obj_graph = object_graph.new_object_graph(modules=[errors])
+        self.assertIsInstance(obj_graph.provide(errors.Error),
                               errors.Error)
 
-    def test_creates_injector_using_given_classes(self):
+    def test_creates_object_graph_using_given_classes(self):
         class SomeClass(object):
             pass
-        injector = object_graph.new_object_graph(modules=None, classes=[SomeClass])
-        self.assertIsInstance(injector.provide(SomeClass), SomeClass)
+        obj_graph = object_graph.new_object_graph(modules=None, classes=[SomeClass])
+        self.assertIsInstance(obj_graph.provide(SomeClass), SomeClass)
 
-    def test_creates_injector_using_given_binding_modules(self):
+    def test_creates_object_graph_using_given_binding_modules(self):
         class ClassWithFooInjected(object):
             def __init__(self, foo):
                 pass
@@ -33,10 +33,10 @@ class NewInjectorTest(unittest.TestCase):
             pass
         def pinject_configure(bind):
             bind('foo', to_class=SomeClass)
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassWithFooInjected],
             binding_modules=[binding.FakeBindingModule(pinject_configure)])
-        self.assertIsInstance(injector.provide(ClassWithFooInjected),
+        self.assertIsInstance(obj_graph.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
 
     def test_raises_error_if_binding_module_is_empty(self):
@@ -44,39 +44,39 @@ class NewInjectorTest(unittest.TestCase):
                           object_graph.new_object_graph, modules=None, classes=None,
                           binding_modules=[binding.FakeBindingModule()])
 
-    def test_creates_injector_using_given_scopes(self):
+    def test_creates_object_graph_using_given_scopes(self):
         class SomeClass(object):
             def __init__(self, foo):
                 self.foo = foo
         @wrapping.in_scope('foo-scope')
         def new_foo():
             return object()
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[SomeClass],
             binding_modules=[binding.FakeBindingModule(new_foo)],
             id_to_scope={'foo-scope': scoping.SingletonScope()})
-        some_class_one = injector.provide(SomeClass)
-        some_class_two = injector.provide(SomeClass)
+        some_class_one = obj_graph.provide(SomeClass)
+        some_class_two = obj_graph.provide(SomeClass)
         self.assertIs(some_class_one.foo, some_class_two.foo)
 
 
-class InjectorProvideTest(unittest.TestCase):
+class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_can_provide_trivial_class(self):
         class ExampleClassWithInit(object):
             def __init__(self):
                 pass
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ExampleClassWithInit])
-        self.assertTrue(isinstance(injector.provide(ExampleClassWithInit),
+        self.assertTrue(isinstance(obj_graph.provide(ExampleClassWithInit),
                                    ExampleClassWithInit))
 
     def test_can_provide_class_without_own_init(self):
         class ExampleClassWithoutInit(object):
             pass
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ExampleClassWithoutInit])
-        self.assertIsInstance(injector.provide(ExampleClassWithoutInit),
+        self.assertIsInstance(obj_graph.provide(ExampleClassWithoutInit),
                               ExampleClassWithoutInit)
 
     def test_can_directly_provide_class_with_colliding_arg_name(self):
@@ -84,10 +84,10 @@ class InjectorProvideTest(unittest.TestCase):
             pass
         class CollidingExampleClass(object):
             pass
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None,
             classes=[_CollidingExampleClass, CollidingExampleClass])
-        self.assertIsInstance(injector.provide(CollidingExampleClass),
+        self.assertIsInstance(obj_graph.provide(CollidingExampleClass),
                               CollidingExampleClass)
 
     def test_can_provide_class_that_itself_requires_injection(self):
@@ -96,9 +96,9 @@ class InjectorProvideTest(unittest.TestCase):
                 pass
         class ClassTwo(object):
             pass
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne, ClassTwo])
-        self.assertIsInstance(injector.provide(ClassOne), ClassOne)
+        self.assertIsInstance(obj_graph.provide(ClassOne), ClassOne)
 
     def test_raises_error_if_arg_is_ambiguously_injectable(self):
         class _CollidingExampleClass(object):
@@ -108,21 +108,21 @@ class InjectorProvideTest(unittest.TestCase):
         class AmbiguousParamClass(object):
             def __init__(self, colliding_example_class):
                 pass
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None,
             classes=[_CollidingExampleClass, CollidingExampleClass,
                      AmbiguousParamClass])
         self.assertRaises(errors.AmbiguousArgNameError,
-                          injector.provide, AmbiguousParamClass)
+                          obj_graph.provide, AmbiguousParamClass)
 
     def test_raises_error_if_arg_refers_to_no_known_class(self):
         class UnknownParamClass(object):
             def __init__(self, unknown_class):
                 pass
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[UnknownParamClass])
         self.assertRaises(errors.NothingInjectableForArgError,
-                          injector.provide, UnknownParamClass)
+                          obj_graph.provide, UnknownParamClass)
 
     def test_raises_error_if_injection_cycle(self):
         class ClassOne(object):
@@ -131,10 +131,10 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassTwo(object):
             def __init__(self, class_one):
                 pass
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne, ClassTwo])
         self.assertRaises(errors.CyclicInjectionError,
-                          injector.provide, ClassOne)
+                          obj_graph.provide, ClassOne)
 
     def test_injects_args_of_provider_fns(self):
         class ClassOne(object):
@@ -145,10 +145,10 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassTwo(object):
             def __init__(self, foo):
                 self.foo = foo
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne, ClassTwo],
             binding_modules=[binding.FakeBindingModule(new_foo)])
-        class_two = injector.provide(ClassTwo)
+        class_two = obj_graph.provide(ClassTwo)
         self.assertEqual(3, class_two.foo.three)
 
     def test_can_provide_arg_with_annotation(self):
@@ -158,10 +158,10 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def pinject_configure(bind):
             bind('foo', annotated_with='an-annotation', to_instance='a-foo')
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(pinject_configure)])
-        class_one = injector.provide(ClassOne)
+        class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
     def test_annotated_arg_is_provided_in_correct_scope(self):
@@ -179,11 +179,11 @@ class InjectorProvideTest(unittest.TestCase):
         @wrapping.in_scope(scoping.PROTOTYPE)
         def new_bar():
             return object()
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[SomeClass],
             binding_modules=[binding.FakeBindingModule(new_foo, new_bar)])
-        class_one = injector.provide(SomeClass)
-        class_two = injector.provide(SomeClass)
+        class_one = obj_graph.provide(SomeClass)
+        class_two = obj_graph.provide(SomeClass)
         self.assertIs(class_one.foo, class_two.foo)
         self.assertIsNot(class_one.bar, class_two.bar)
 
@@ -194,11 +194,11 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def pinject_configure(bind):
             bind('foo', annotated_with='other-annotation', to_instance='a-foo')
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(pinject_configure)])
         self.assertRaises(errors.NothingInjectableForArgError,
-                          injector.provide, ClassOne)
+                          obj_graph.provide, ClassOne)
 
     def test_raises_error_if_only_binding_has_no_annotation(self):
         class ClassOne(object):
@@ -207,11 +207,11 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def pinject_configure(bind):
             bind('foo', to_instance='a-foo')
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(pinject_configure)])
         self.assertRaises(errors.NothingInjectableForArgError,
-                          injector.provide, ClassOne)
+                          obj_graph.provide, ClassOne)
 
     def test_can_provide_using_provider_fn(self):
         class ClassOne(object):
@@ -219,10 +219,10 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def new_foo():
             return 'a-foo'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(new_foo)])
-        class_one = injector.provide(ClassOne)
+        class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
     def test_provider_fn_overrides_implicit_class_binding(self):
@@ -233,10 +233,10 @@ class InjectorProvideTest(unittest.TestCase):
             pass
         def new_foo():
             return 'a-foo'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne, Foo],
             binding_modules=[binding.FakeBindingModule(new_foo)])
-        class_one = injector.provide(ClassOne)
+        class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
     def test_autoinjects_args_of_provider_fn(self):
@@ -247,10 +247,10 @@ class InjectorProvideTest(unittest.TestCase):
             return 'a-foo with {0}'.format(bar)
         def new_bar():
             return 'a-bar'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(new_foo, new_bar)])
-        class_one = injector.provide(ClassOne)
+        class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
     def test_can_use_annotate_with_provides(self):
@@ -265,10 +265,10 @@ class InjectorProvideTest(unittest.TestCase):
         @wrapping.annotated_with('another-annotation')
         def new_bar():
             return 'a-bar'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(new_foo, new_bar)])
-        class_one = injector.provide(ClassOne)
+        class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
     def test_inject_decorated_class_can_be_directly_provided(self):
@@ -276,19 +276,19 @@ class InjectorProvideTest(unittest.TestCase):
             @wrapping.inject
             def __init__(self):
                 self.foo = 'a-foo'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[SomeClass], only_use_explicit_bindings=True)
-        class_one = injector.provide(SomeClass)
+        class_one = obj_graph.provide(SomeClass)
         self.assertEqual('a-foo', class_one.foo)
 
     def test_non_inject_decorated_class_cannot_be_directly_provided(self):
         class SomeClass(object):
             def __init__(self):
                 self.foo = 'a-foo'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[SomeClass], only_use_explicit_bindings=True)
         self.assertRaises(
-            errors.NonExplicitlyBoundClassError, injector.provide, SomeClass)
+            errors.NonExplicitlyBoundClassError, obj_graph.provide, SomeClass)
 
     def test_inject_decorated_class_is_explicitly_bound(self):
         class ClassOne(object):
@@ -299,10 +299,10 @@ class InjectorProvideTest(unittest.TestCase):
             @wrapping.inject
             def __init__(self):
                 self.foo = 'a-foo'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne, ClassTwo],
             only_use_explicit_bindings=True)
-        class_one = injector.provide(ClassOne)
+        class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo', class_one.class_two.foo)
 
     def test_explicit_binding_is_explicitly_bound(self):
@@ -312,11 +312,11 @@ class InjectorProvideTest(unittest.TestCase):
                 self.class_two = class_two
         def pinject_configure(bind):
             bind('class_two', to_instance='a-class-two')
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(pinject_configure)],
             only_use_explicit_bindings=True)
-        class_one = injector.provide(ClassOne)
+        class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-class-two', class_one.class_two)
 
     def test_provider_fn_is_explicitly_bound(self):
@@ -326,11 +326,11 @@ class InjectorProvideTest(unittest.TestCase):
                 self.class_two = class_two
         def new_class_two():
             return 'a-class-two'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne],
             binding_modules=[binding.FakeBindingModule(new_class_two)],
             only_use_explicit_bindings=True)
-        class_one = injector.provide(ClassOne)
+        class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-class-two', class_one.class_two)
 
     def test_non_bound_non_decorated_class_is_not_explicitly_bound(self):
@@ -341,11 +341,11 @@ class InjectorProvideTest(unittest.TestCase):
         class ClassTwo(object):
             def __init__(self):
                 self.foo = 'a-foo'
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne, ClassTwo],
             only_use_explicit_bindings=True)
         self.assertRaises(errors.NothingInjectableForArgError,
-                          injector.provide, ClassOne)
+                          obj_graph.provide, ClassOne)
 
     def test_can_inject_none_when_allowing_injecting_none(self):
         class SomeClass(object):
@@ -353,11 +353,11 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def new_foo():
             return None
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[SomeClass],
             binding_modules=[binding.FakeBindingModule(new_foo)],
             allow_injecting_none=True)
-        some_class = injector.provide(SomeClass)
+        some_class = obj_graph.provide(SomeClass)
         self.assertIsNone(some_class.foo)
 
     def test_cannot_inject_none_when_disallowing_injecting_none(self):
@@ -366,15 +366,15 @@ class InjectorProvideTest(unittest.TestCase):
                 self.foo = foo
         def new_foo():
             return None
-        injector = object_graph.new_object_graph(
+        obj_graph = object_graph.new_object_graph(
             modules=None, classes=[SomeClass],
             binding_modules=[binding.FakeBindingModule(new_foo)],
             allow_injecting_none=False)
         self.assertRaises(errors.InjectingNoneDisallowedError,
-                          injector.provide, SomeClass)
+                          obj_graph.provide, SomeClass)
 
 
-class InjectorWrapTest(unittest.TestCase):
+class ObjectGraphWrapTest(unittest.TestCase):
 
     def test_can_inject_nothing_into_fn_with_zero_params(self):
         def return_something():

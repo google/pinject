@@ -47,8 +47,8 @@ def get_provider_fn_binding(provider_fn, arg_name):
         annotated_with = None
         in_scope_id = scoping.DEFAULT_SCOPE
     binding_key = binding.new_binding_key(arg_name, annotated_with)
-    # TODO(kurts): don't call private method of injector.
-    proviser_fn = lambda binding_context, injector: injector._call_with_injection(
+    # TODO(kurts): don't call private method of obj_graph.
+    proviser_fn = lambda binding_context, obj_graph: obj_graph._call_with_injection(
         provider_fn, binding_context)
     proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
     return binding.Binding(
