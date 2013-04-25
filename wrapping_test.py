@@ -41,31 +41,31 @@ class AnnotateTest(unittest.TestCase):
                                                                  wrapping._ARG_BINDING_KEYS_ATTR)])
 
 
-class InjectTest(unittest.TestCase):
+class InjectableTest(unittest.TestCase):
 
     def test_adds_wrapper_to_init(self):
         class SomeClass(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self, foo):
                 return foo
         self.assertTrue(hasattr(SomeClass.__init__, wrapping._IS_WRAPPER_ATTR))
 
     def test_cannot_be_applied_to_non_init_method(self):
-        def do_bad_inject():
+        def do_bad_injectable():
             class SomeClass(object):
-                @wrapping.inject
+                @wrapping.injectable
                 def regular_fn(self, foo):
                     return foo
-        self.assertRaises(errors.InjectDecoratorAppliedToNonInitError,
-                          do_bad_inject)
+        self.assertRaises(errors.InjectableDecoratorAppliedToNonInitError,
+                          do_bad_injectable)
 
     def test_cannot_be_applied_to_regular_function(self):
-        def do_bad_inject():
-            @wrapping.inject
+        def do_bad_injectable():
+            @wrapping.injectable
             def regular_fn(foo):
                 return foo
-        self.assertRaises(errors.InjectDecoratorAppliedToNonInitError,
-                          do_bad_inject)
+        self.assertRaises(errors.InjectableDecoratorAppliedToNonInitError,
+                          do_bad_injectable)
 
 
 class AnnotatedWithTest(unittest.TestCase):
@@ -187,7 +187,7 @@ class IsExplicitlyInjectableTest(unittest.TestCase):
 
     def test_injectable_class(self):
         class SomeClass(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self):
                 pass
         self.assertTrue(wrapping.is_explicitly_injectable(SomeClass))

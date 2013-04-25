@@ -21,11 +21,11 @@ def annotate(arg_name, with_annotation):
     return _get_pinject_wrapper(arg_binding_key=binding_key)
 
 
-def inject(fn):
+def injectable(fn):
     if not inspect.isfunction(fn):
-        raise errors.InjectDecoratorAppliedToNonInitError(fn)
+        raise errors.InjectableDecoratorAppliedToNonInitError(fn)
     if fn.__name__ != '__init__':
-        raise errors.InjectDecoratorAppliedToNonInitError(fn)
+        raise errors.InjectableDecoratorAppliedToNonInitError(fn)
     return _get_pinject_decorated_fn(fn)
 
 

@@ -623,6 +623,9 @@ injected into objects from any other scope.
 
 Pinject has a few things to watch out for.
 
+TODO(kurts): objects are in singleton scope by default, and singletons should
+be thread-safe.
+
 Scoping is done per binding and therefore per arg name, not per class (or
 provider function).  For instance, suppose you have separate arg names bound
 to the same class (or provider function) with all bindings in singleton scope.

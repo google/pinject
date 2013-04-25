@@ -320,7 +320,7 @@ class GetExplicitClassBindingsTest(unittest.TestCase):
 
     def test_returns_binding_for_input_explicitly_injected_class(self):
         class SomeClass(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self):
                 pass
         [explicit_binding] = binding.get_explicit_class_bindings([SomeClass])
@@ -330,7 +330,7 @@ class GetExplicitClassBindingsTest(unittest.TestCase):
 
     def test_uses_provided_fn_to_map_class_names_to_arg_names(self):
         class SomeClass(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self):
                 pass
         [explicit_binding] = binding.get_explicit_class_bindings(

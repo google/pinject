@@ -10,7 +10,6 @@ import object_graph
 new_object_graph = object_graph.new_object_graph
 
 # TODO:
-# - remove new_ as a prefix for provider fns.
 # - reasonable error messages for all exceptions
 
 # Maybe TODO:
@@ -32,11 +31,6 @@ new_object_graph = object_graph.new_object_graph
 # http://code.google.com/p/google-guice/source/browse/#git%2Fcore%2Fsrc%2Fcom%2Fgoogle%2Finject%253Fstate%253Dclosed
 
 # Questions:
-# - Should "singleton" be the default scope?  It's what I use most often.  And
-#     it seems like having "prototype" be the default scope means that I'll
-#     accidentally create multiple objects where I should have used just one
-#     more often, because the code will work, albeit slower (e.g., with RPC
-#     connections).
 # - How should I deal with someone wanting to instantiate a class in a scope,
 #     without using an arg name in between?  Scopes apply to binding keys,
 #     which are arg names, not classes.  Is it going to be harmful if you

@@ -273,7 +273,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_inject_decorated_class_can_be_directly_provided(self):
         class SomeClass(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self):
                 self.foo = 'a-foo'
         obj_graph = object_graph.new_object_graph(
@@ -292,11 +292,11 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_inject_decorated_class_is_explicitly_bound(self):
         class ClassOne(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         class ClassTwo(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self):
                 self.foo = 'a-foo'
         obj_graph = object_graph.new_object_graph(
@@ -307,7 +307,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_explicit_binding_is_explicitly_bound(self):
         class ClassOne(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         def pinject_configure(bind):
@@ -321,7 +321,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_provider_fn_is_explicitly_bound(self):
         class ClassOne(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         def provide_class_two():
@@ -335,7 +335,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_non_bound_non_decorated_class_is_not_explicitly_bound(self):
         class ClassOne(object):
-            @wrapping.inject
+            @wrapping.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         class ClassTwo(object):

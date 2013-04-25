@@ -41,11 +41,12 @@ class EmptyExplicitBindingModuleError(Error):
             ' functions'.format(binding_module))
 
 
-class InjectDecoratorAppliedToNonInitError(Error):
+class InjectableDecoratorAppliedToNonInitError(Error):
 
     def __init__(self, fn):
         Error.__init__(
-            self, '@inject cannot be applied to non-initializer {0}'.format(fn.__name__))
+            self, '@injectable cannot be applied to non-initializer {0}'.format(
+                fn.__name__))
 
 
 class InjectingNoneDisallowedError(Error):
