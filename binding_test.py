@@ -346,10 +346,10 @@ class GetProviderBindingsTest(unittest.TestCase):
             [], binding.get_provider_bindings(binding.FakeBindingModule()))
 
     def test_returns_binding_for_provider_fn(self):
-        def new_foo():
+        def provide_foo():
             return 'a-foo'
         [implicit_binding] = binding.get_provider_bindings(
-            binding.FakeBindingModule(new_foo))
+            binding.FakeBindingModule(provide_foo))
         self.assertEqual(binding.new_binding_key('foo'),
                          implicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(implicit_binding))

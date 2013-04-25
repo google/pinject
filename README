@@ -639,3 +639,5 @@ Injecting the same arg name (e.g., `foo`) multiple times will use the same
 will use different instances.
 
 That's it for gotchas, for now.
+
+TODO(kurts): note everywhere where leading underscores are ignored.
