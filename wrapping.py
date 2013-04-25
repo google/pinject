@@ -16,7 +16,7 @@ _PROVIDER_ANNOTATED_WITH_ATTR = '_pinject_provider_annotated_with'
 _PROVIDER_IN_SCOPE_ID_ATTR = '_pinject_in_scope_id'
 
 
-def annotate(arg_name, with_annotation):
+def annotate_arg(arg_name, with_annotation):
     binding_key = binding.new_binding_key(arg_name, with_annotation)
     return _get_pinject_wrapper(arg_binding_key=binding_key)
 
@@ -29,8 +29,6 @@ def injectable(fn):
     return _get_pinject_decorated_fn(fn)
 
 
-# TODO(kurts): this is too close to @annotate and would get confusing if used
-# together with it.
 def annotated_with(annotation):
     return _get_pinject_wrapper(provider_annotated_with=annotation)
 

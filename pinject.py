@@ -17,6 +17,7 @@ new_object_graph = object_graph.new_object_graph
 # - allow field injection
 #     (lack of field docstrings is OK because they're the appropriate instances of that type)
 #     (but get a second opinion on whether it decreases testability)
+# - require/allow declaration of entry points
 # - find modules on PYTHONPATH instead of having to import them
 # - automatically instantiate the concrete subclass of an interface?
 #     (it is possible to determine that something is abstract?)

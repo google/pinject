@@ -153,7 +153,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_can_provide_arg_with_annotation(self):
         class ClassOne(object):
-            @wrapping.annotate('foo', 'an-annotation')
+            @wrapping.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         def pinject_configure(bind):
@@ -166,8 +166,8 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_annotated_arg_is_provided_in_correct_scope(self):
         class SomeClass(object):
-            @wrapping.annotate('foo', 'specific-foo')
-            @wrapping.annotate('bar', 'specific-bar')
+            @wrapping.annotate_arg('foo', 'specific-foo')
+            @wrapping.annotate_arg('bar', 'specific-bar')
             def __init__(self, foo, bar):
                 self.foo = foo
                 self.bar = bar
@@ -189,7 +189,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_raises_error_if_only_binding_has_different_annotation(self):
         class ClassOne(object):
-            @wrapping.annotate('foo', 'an-annotation')
+            @wrapping.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         def pinject_configure(bind):
@@ -202,7 +202,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_raises_error_if_only_binding_has_no_annotation(self):
         class ClassOne(object):
-            @wrapping.annotate('foo', 'an-annotation')
+            @wrapping.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         def pinject_configure(bind):
@@ -255,11 +255,11 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_can_use_annotate_with_provides(self):
         class ClassOne(object):
-            @wrapping.annotate('foo', 'an-annotation')
+            @wrapping.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         @wrapping.annotated_with('an-annotation')
-        @wrapping.annotate('bar', 'another-annotation')
+        @wrapping.annotate_arg('bar', 'another-annotation')
         def provide_foo(bar):
             return 'a-foo with {0}'.format(bar)
         @wrapping.annotated_with('another-annotation')
