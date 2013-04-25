@@ -99,7 +99,7 @@ class InScopeTest(unittest.TestCase):
         def new_foo():
             pass
         provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
-        self.assertEqual(scoping.PROTOTYPE, provider_fn_binding.scope_id)
+        self.assertEqual(scoping.DEFAULT_SCOPE, provider_fn_binding.scope_id)
 
 
 class GetProviderFnBindingTest(unittest.TestCase):
