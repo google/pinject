@@ -274,11 +274,9 @@ class Binder(object):
                     back_frame.f_lineno, back_frame.f_code.co_filename)))
 
 
-def create_proviser_fn(binding_key,
-                       to_class=None, to_instance=None, to_provider=None):
+def create_proviser_fn(binding_key, to_class=None, to_instance=None):
     specified_to_params = ['to_class' if to_class is not None else None,
-                           'to_instance' if to_instance is not None else None,
-                           'to_provider' if to_provider is not None else None]
+                           'to_instance' if to_instance is not None else None]
     specified_to_params = [x for x in specified_to_params if x is not None]
     if not specified_to_params:
         raise errors.NoBindingTargetError(binding_key)
@@ -293,16 +291,9 @@ def create_proviser_fn(binding_key,
         proviser_fn = lambda binding_context, injector: injector._provide_class(
             to_class, binding_context)
         proviser_fn._pinject_desc = 'the class {0!r}'.format(to_class)
-    elif to_instance is not None:
+    else:  # to_instance is not None:
         proviser_fn = lambda binding_context, injector: to_instance
         proviser_fn._pinject_desc = 'the instance {0!r}'.format(to_instance)
-    else:  # to_provider is not None
-        if not callable(to_provider):
-            raise errors.InvalidBindingTargetError(
-                binding_key, to_provider, 'callable')
-        proviser_fn = lambda binding_context, injector: injector._call_with_injection(
-            to_provider, binding_context)
-        proviser_fn._pinject_desc = 'the provider {0!r}'.format(to_provider)
     return proviser_fn
 
 
