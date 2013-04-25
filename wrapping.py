@@ -96,13 +96,9 @@ def _get_pinject_wrapper(arg_binding_key=None,
     return get_pinject_decorated_fn_with_additions
 
 
-# TODO(kurts): make this function just return whether it's explicitly bound.
-def get_any_class_binding_keys(cls, get_arg_names_from_class_name):
-    if (hasattr(cls, '__init__') and hasattr(cls.__init__, _IS_WRAPPER_ATTR)):
-        return [binding.new_binding_key(arg_name)
-                for arg_name in get_arg_names_from_class_name(cls.__name__)]
-    else:
-        return []
+def is_explicitly_injectable(cls):
+    return (hasattr(cls, '__init__') and
+            hasattr(cls.__init__, _IS_WRAPPER_ATTR))
 
 
 def get_arg_binding_keys_and_remaining_args(fn):

@@ -55,8 +55,7 @@ def new_injector(
         binding_key_to_binding, collided_binding_key_to_bindings)
 
     is_injectable_fn = {
-        True: (lambda cls: bool(wrapping.get_any_class_binding_keys(
-            cls, get_arg_names_from_class_name))),
+        True: wrapping.is_explicitly_injectable,
         False: (lambda cls: True)
     }[only_use_explicit_bindings]
     injector = _Injector(binding_mapping, bindable_scopes, is_injectable_fn,

@@ -213,12 +213,13 @@ def get_explicit_class_bindings(
         get_arg_names_from_class_name=default_get_arg_names_from_class_name):
     explicit_bindings = []
     for cls in classes:
-        for binding_key in wrapping.get_any_class_binding_keys(
-                cls, get_arg_names_from_class_name):
-            proviser_fn = create_proviser_fn(binding_key, to_class=cls)
-            explicit_bindings.append(Binding(
-                binding_key, proviser_fn,
-                desc='the explicitly injectable class {0}'.format(cls)))
+        if wrapping.is_explicitly_injectable(cls):
+            for arg_name in get_arg_names_from_class_name(cls.__name__):
+                binding_key = new_binding_key(arg_name)
+                proviser_fn = create_proviser_fn(binding_key, to_class=cls)
+                explicit_bindings.append(Binding(
+                    binding_key, proviser_fn,
+                    desc='the explicitly injectable class {0}'.format(cls)))
     return explicit_bindings
 
 
