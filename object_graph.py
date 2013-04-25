@@ -11,7 +11,7 @@ import scoping
 import wrapping
 
 
-def new_injector(
+def new_object_graph(
         modules=finding.ALL_IMPORTED_MODULES, classes=None, binding_modules=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
         get_arg_names_from_class_name=(

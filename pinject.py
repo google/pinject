@@ -7,7 +7,7 @@ for thing in dir(errors):
         setattr(sys.modules(__name__), thing.__name__, thing)
 
 import object_graph
-new_injector = object_graph.new_injector
+new_object_graph = object_graph.new_object_graph
 
 # TODO:
 # - reasonable error messages for all exceptions

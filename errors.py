@@ -68,7 +68,7 @@ class InvalidProviderFnError(Error):
     def __init__(self, fn):
         Error.__init__(
             self, 'function {0} is not a provider function, though it was'
-            ' passed to new_injector() in provider_fns'.format(fn))
+            ' passed to new_object_graph() in provider_fns'.format(fn))
 
 
 class MultipleAnnotationsForSameArgError(Error):
