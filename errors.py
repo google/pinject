@@ -32,6 +32,15 @@ class CyclicInjectionError(Error):
     pass
 
 
+class EmptyExplicitBindingModuleError(Error):
+
+    def __init__(self, binding_module):
+        Error.__init__(
+            self, 'module {0} listed as explicit binding module, but it has'
+            ' neither a pinject_configure() function nor any provider'
+            ' functions'.format(binding_module))
+
+
 class InjectDecoratorAppliedToNonInitError(Error):
 
     def __init__(self, fn):

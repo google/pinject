@@ -39,6 +39,11 @@ class NewInjectorTest(unittest.TestCase):
         self.assertIsInstance(injector.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
 
+    def test_raises_error_if_binding_module_is_empty(self):
+        self.assertRaises(errors.EmptyExplicitBindingModuleError,
+                          injecting.new_injector, modules=None, classes=None,
+                          binding_modules=[binding.FakeBindingModule()])
+
     def test_creates_injector_using_given_scopes(self):
         class SomeClass(object):
             def __init__(self, foo):

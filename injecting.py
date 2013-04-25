@@ -36,13 +36,17 @@ def new_injector(
     binder = binding.Binder(explicit_bindings, known_scope_ids)
     if binding_modules is not None:
         for binding_module in binding_modules:
-            # TODO(kurts): check that binding_module has at least a
-            # pinject_configure function or provider functions.
             if (hasattr(binding_module, 'pinject_configure') and
                 callable(binding_module.pinject_configure)):
                 binding_module.pinject_configure(binder.bind)
-            explicit_bindings.extend(binding.get_provider_bindings(
-                binding_module, get_arg_names_from_provider_fn_name))
+                has_pinject_configure = True
+            else:
+                has_pinject_configure = False
+            provider_bindings = binding.get_provider_bindings(
+                binding_module, get_arg_names_from_provider_fn_name)
+            if not has_pinject_configure and not provider_bindings:
+                raise errors.EmptyExplicitBindingModuleError(binding_module)
+            explicit_bindings.extend(provider_bindings)
 
     binding_key_to_binding, collided_binding_key_to_bindings = (
         binding.get_overall_binding_key_to_binding_maps(
