@@ -58,12 +58,12 @@ def new_object_graph(
         True: wrapping.is_explicitly_injectable,
         False: (lambda cls: True)
     }[only_use_explicit_bindings]
-    injector = _Injector(binding_mapping, bindable_scopes, is_injectable_fn,
-                         allow_injecting_none)
+    injector = _ObjectGraph(binding_mapping, bindable_scopes, is_injectable_fn,
+                            allow_injecting_none)
     return injector
 
 
-class _Injector(object):
+class _ObjectGraph(object):
 
     def __init__(self, binding_mapping, bindable_scopes, is_injectable_fn,
                  allow_injecting_none):
