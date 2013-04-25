@@ -43,11 +43,12 @@ class NewInjectorTest(unittest.TestCase):
         class SomeClass(object):
             def __init__(self, foo):
                 self.foo = foo
-        def pinject_configure(bind):
-            bind('foo', to_provider=lambda: object(), in_scope='foo-scope')
+        @wrapping.in_scope('foo-scope')
+        def new_foo():
+            return object()
         injector = injecting.new_injector(
             modules=None, classes=[SomeClass],
-            binding_modules=[binding.FakeBindingModule(pinject_configure)],
+            binding_modules=[binding.FakeBindingModule(new_foo)],
             id_to_scope={'foo-scope': scoping.SingletonScope()})
         some_class_one = injector.provide(SomeClass)
         some_class_two = injector.provide(SomeClass)
@@ -133,17 +134,15 @@ class InjectorProvideTest(unittest.TestCase):
     def test_injects_args_of_provider_fns(self):
         class ClassOne(object):
             pass
-        def provides_class_one(class_one):
+        def new_foo(class_one):
             class_one.three = 3
             return class_one
         class ClassTwo(object):
             def __init__(self, foo):
                 self.foo = foo
-        def pinject_configure(bind):
-            bind('foo', to_provider=provides_class_one)
         injector = injecting.new_injector(
             modules=None, classes=[ClassOne, ClassTwo],
-            binding_modules=[binding.FakeBindingModule(pinject_configure)])
+            binding_modules=[binding.FakeBindingModule(new_foo)])
         class_two = injector.provide(ClassTwo)
         self.assertEqual(3, class_two.foo.three)
 
@@ -167,14 +166,17 @@ class InjectorProvideTest(unittest.TestCase):
             def __init__(self, foo, bar):
                 self.foo = foo
                 self.bar = bar
-        def pinject_configure(bind):
-            bind('foo', annotated_with='specific-foo', to_provider=lambda: object(),
-                 in_scope=scoping.SINGLETON)
-            bind('bar', annotated_with='specific-bar', to_provider=lambda: object(),
-                 in_scope=scoping.PROTOTYPE)
+        @wrapping.annotated_with('specific-foo')
+        @wrapping.in_scope(scoping.SINGLETON)
+        def new_foo():
+            return object()
+        @wrapping.annotated_with('specific-bar')
+        @wrapping.in_scope(scoping.PROTOTYPE)
+        def new_bar():
+            return object()
         injector = injecting.new_injector(
             modules=None, classes=[SomeClass],
-            binding_modules=[binding.FakeBindingModule(pinject_configure)])
+            binding_modules=[binding.FakeBindingModule(new_foo, new_bar)])
         class_one = injector.provide(SomeClass)
         class_two = injector.provide(SomeClass)
         self.assertIs(class_one.foo, class_two.foo)
@@ -344,11 +346,11 @@ class InjectorProvideTest(unittest.TestCase):
         class SomeClass(object):
             def __init__(self, foo):
                 self.foo = foo
-        def pinject_configure(bind):
-            bind('foo', to_provider=lambda: None)
+        def new_foo():
+            return None
         injector = injecting.new_injector(
             modules=None, classes=[SomeClass],
-            binding_modules=[binding.FakeBindingModule(pinject_configure)],
+            binding_modules=[binding.FakeBindingModule(new_foo)],
             allow_injecting_none=True)
         some_class = injector.provide(SomeClass)
         self.assertIsNone(some_class.foo)
@@ -357,11 +359,11 @@ class InjectorProvideTest(unittest.TestCase):
         class SomeClass(object):
             def __init__(self, foo):
                 self.foo = foo
-        def pinject_configure(bind):
-            bind('foo', to_provider=lambda: None)
+        def new_foo():
+            return None
         injector = injecting.new_injector(
             modules=None, classes=[SomeClass],
-            binding_modules=[binding.FakeBindingModule(pinject_configure)],
+            binding_modules=[binding.FakeBindingModule(new_foo)],
             allow_injecting_none=False)
         self.assertRaises(errors.InjectingNoneDisallowedError,
                           injector.provide, SomeClass)

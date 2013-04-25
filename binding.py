@@ -261,13 +261,11 @@ class Binder(object):
         self._lock = threading.Lock()
 
     def bind(self, arg_name, annotated_with=None,
-             to_class=None, to_instance=None, to_provider=None,
-             in_scope=scoping.PROTOTYPE):
+             to_class=None, to_instance=None, in_scope=scoping.PROTOTYPE):
         if in_scope not in self._scope_ids:
             raise errors.UnknownScopeError(in_scope)
         binding_key = new_binding_key(arg_name, annotated_with)
-        proviser_fn = create_proviser_fn(binding_key,
-                                         to_class, to_instance, to_provider)
+        proviser_fn = create_proviser_fn(binding_key, to_class, to_instance)
         with self._lock:
             back_frame = inspect.currentframe().f_back
             self._collected_bindings.append(Binding(
