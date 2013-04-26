@@ -38,6 +38,9 @@ new_object_graph = object_graph.new_object_graph
 #     can't instantiate a class directly in a scope?  I don't think so, but
 #     I'm not sure.  It makes some things awkward, like a special scope from
 #     which it's OK to inject objects from any scope.  Maybe the main
-#     _ObjectGraph method should be wrap() instead of provide_class()??
-# - Remove _ObjectGraph.wrap()?
+#     ObjectGraph method should be wrap() instead of provide_class()??
+# - Remove ObjectGraph.wrap()?
 # - Why should @inject apply to __init__() rather than the class?
+# - What's the advantage of making the user list entry points in order to
+#     validate the object graph, instead of, say, doing it the Guice way with
+#     require()?

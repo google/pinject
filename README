@@ -5,12 +5,12 @@ Pinject is a dependency injection framework for python.
 The primary goal of Pinject is to help you assemble objects into graphs in
 an easy, maintainable way.
 
-== Basic injection ==
+== Basic dependency injection ==
 
-The most important function in the `pinject` module is `new_injector()`.  This
-creates an `Injector`, which you can use to instantiate objects using
-dependency injection.  If you pass no args to `new_injector()`, it will return
-a reasonably configured default `Injector`.
+The most important function in the `pinject` module is `new_object_graph()`.
+This creates an `ObjectGraph`, which you can use to instantiate objects using
+dependency injection.  If you pass no args to `new_object_graph()`, it will
+return a reasonably configured default `ObjectGraph`.
 
 {{{
 >>> class OuterClass(object):
@@ -21,28 +21,29 @@ a reasonably configured default `Injector`.
 ...     def __init__(self):
 ...         self.forty_two = 42
 ...
->>> injector = pinject.new_injector()
->>> outer_class = injector.provide(OuterClass)
+>>> obj_graph = pinject.new_object_graph()
+>>> outer_class = obj_graph.provide(OuterClass)
 >>> outer_class.inner_class.forty_two
 42
 >>>
 }}}
 
 As you can see, you don't need to tell Pinject how to construct its
-`Injector`, and you don't even need to put decorators in your code.  Pinject
-has reasonable defaults that allow it to work out of the box.
+`ObjectGraph`, and you don't even need to put decorators in your code.
+Pinject has reasonable defaults that allow it to work out of the box.
 
 A Pinject _binding_ is an association between an _arg name_ and a _provider_.
 In the example above, Pinject created a binding between the arg name
 `inner_class` and an implicitly created provider for the class `InnerClass`.
-That was how Pinject knew that it should pass an instance of `InnerClass` as
-the value of the `inner_class` arg when instantiating `OuterClass`.
+The binding it had created was how Pinject knew that it should pass an
+instance of `InnerClass` as the value of the `inner_class` arg when
+instantiating `OuterClass`.
 
 == Implicit class bindings ==
 
 Pinject creates implicit bindings for classes.  The implicit bindings assume
 your code follows PEP8 conventions: your classes are named in `CamelCase`, and
-your args are named with lower_with_underscores.  Pinject transforms class
+your args are named with `lower_with_underscores`.  Pinject transforms class
 names to injectable arg names by lowercasing words and connecting them with
 underscores.  It will also ignore any leading underscore on the class name.
 
@@ -56,7 +57,7 @@ If two classes map to the same arg name, whether in the same module or
 different modules, Pinject will not create an implicit binding for that arg
 name (though it will not raise an error).
 
-`new_injector()` takes a `get_arg_names_from_class_name` arg.  This is a
+`new_object_graph()` takes a `get_arg_names_from_class_name` arg.  This is a
 function that takes in a class name (e.g., `FooBar`) and returns the arg names
 to which that class should be implicitly bound (e.g., `foo_bar`).  It has the
 behavior above by default but can be overridden.
@@ -73,9 +74,9 @@ behavior above by default but can be overridden.
 >>> def custom_get_arg_names(class_name):
 ...     return ['my_' + class_name]
 ...
->>> injector = pinject.new_injector(
+>>> obj_graph = pinject.new_object_graph(
 ...     get_arg_names_from_class_name=custom_get_arg_names)
->>> outer_class = injector.provide(OuterClass)
+>>> outer_class = obj_graph.provide(OuterClass)
 >>> outer_class.my_InnerClass.forty_two
 42
 >>>
@@ -83,7 +84,31 @@ behavior above by default but can be overridden.
 
 The function passed as the `get_arg_names_from_class_name` arg can return as
 many or as few arg names as it wants.  If it always returns the empty list
-(i.e., is `lambda _: []`), then that disables implicit class bindings.
+(i.e., if it is `lambda _: []`), then that disables implicit class bindings
+(though it's easier and clearer to pass in `modules=None`; see below).
+
+== Binding modules ==
+
+To create any bindings more complex than the implicit class bindings described
+above, you use a _binding module_.  A binding module is a python module that
+has a `pinject HERE
+
+TODO(kurts): The current binding module mechanism makes you specify all
+binding modules explicitly, no transitivity, which is bad.  Also bad is that
+it needs to be a python module; that means a new file for each binding module,
+regardless of how trivial, and difficult to show examples in this README.
+Also bad is that pinject_configure() isn't required, but there's otherwise no
+way to identify a binding module if I wanted to pick them out automatically.
+(Do I want to pick them out automatically?  I guess not, since if I did, then
+I couldn't allow conflicting--i.e., alternative--binding specs in the same
+file.)  So, it looks like binding modules should actually be classes,
+inheriting from some vacuous base class to identify them as binding modules,
+and they actually should be called binding specs, and they need some mechanism
+to include other binding specs.  And probably a mechanism like require(), to
+make sure that their requirements are met?  Or just entry points?
+
+TODO(kurts): recommend putting binding specs in `bindings.py` or at least
+`..._bindings.py`.
 
 == Provider functions ==
 
@@ -103,8 +128,8 @@ implicit bindings for them.
 >>> def new_foo():
 ...     return 'some-foo'
 ...
->>> injector = pinject.new_injector()
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph()
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'some-foo'
 >>>
@@ -116,7 +141,7 @@ rest of the function name is.  For instance, Pinject assumes that the function
 `new_foo_bar()` is a provider function for the arg name `foo_bar`.
 
 You can override this default behavior by passing an arg named
-`get_arg_names_from_provider_fn_name` to `new_injector()`.
+`get_arg_names_from_provider_fn_name` to `new_object_graph()`.
 
 {{{
 >>> class SomeClass(object):
@@ -132,16 +157,16 @@ You can override this default behavior by passing an arg named
 ...     else:
 ...         return []
 ...
->>> injector = pinject.new_injector(
+>>> obj_graph = pinject.new_object_graph(
 ...     get_arg_names_from_provider_fn_name=custom_get_arg_names)
->>> some_class = injector.provide(SomeClass)
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'some-foo'
 >>>
 }}}
 
 A function passed as the `get_arg_names_from_provider_fn_name` arg to
-`new_injector()` takes the name of a potential provider function and returns
+`new_object_graph()` takes the name of a potential provider function and returns
 the arg names for which that provider function is a provider (and an empty
 list if it does not seem to name a provider function).  If it always returns
 the empty list (i.e., is `lambda _: []`), then that disables implicit provider
@@ -160,8 +185,8 @@ explicit provider function,
 ... def spam_spam_spam():
 ...     return 'spam-foo'
 ...
->>> injector = pinject.new_injector()
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph()
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'spam-foo'
 >>>
@@ -182,8 +207,8 @@ instead of being module-level methods.
 ...     def new_foo():
 ...         return 'static-foo'
 ...
->>> injector = pinject.new_injector()
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph()
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'static-foo'
 >>>
@@ -203,8 +228,8 @@ calls the provider method.
 >>> def new_bar():
 ...     return 'bar'
 ...
->>> injector = pinject.new_injector()
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph()
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'foo-bar'
 >>>
@@ -235,8 +260,8 @@ bindings.
 >>> def my_binding_fn(bind):
 ...     bind('long_name', to_class=SomeReallyLongClassName)
 ...
->>> injector = pinject.new_injector(binding_fns=[my_binding_fn])
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph(binding_fns=[my_binding_fn])
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.long_name.foo
 'foo'
 >>>
@@ -258,8 +283,8 @@ must be an arg name (as a `str`), to exactly one of three kinds of things.
 ...     bind('foo', to_instance='foo-')
 ...     bind('bar', to_provider=lambda: '-bar')
 ...
->>> injector = pinject.new_injector(binding_fns=[my_binding_fn])
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph(binding_fns=[my_binding_fn])
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foobar
 'foo--bar'
 >>>
@@ -267,19 +292,19 @@ must be an arg name (as a `str`), to exactly one of three kinds of things.
 
 == Finding classes and providers for implicit bindings ==
 
-So far, the examples have not told `new_injector()` what classes and provider
-functions to create implicit bindings for.  `new_injector()` by default looks
+So far, the examples have not told `new_object_graph()` what classes and provider
+functions to create implicit bindings for.  `new_object_graph()` by default looks
 in all imported (python) modules for classes, module-level provider functions,
 and static method provider functions.
 
-Sometimes, you may want to restrict what `new_injector()` creates implicit
-bindings for.  `new_injector()` has three args for this purpose.
+Sometimes, you may want to restrict what `new_object_graph()` creates implicit
+bindings for.  `new_object_graph()` has three args for this purpose.
 
   * The `modules` arg specifies in which (python) modules to look for classes and provider functions to create implicit bindings for.
   * The `classes` arg specifies which classes to create implicit bindings for and to search for static method provider functions.
   * The `provider_fns` arg specifies provider functions to create implicit bindings for.
 
-Specifying any of these args when calling `new_injector()` turns off the
+Specifying any of these args when calling `new_object_graph()` turns off the
 default behavior of looking in all imported (python) modules and instead
 creates implicit bindings for the union of the specified modules, classes,
 and/or provider functions.
@@ -292,10 +317,10 @@ and/or provider functions.
 >>> def new_foo():
 ...     return 'a-foo'
 ...
->>> injector = pinject.new_injector(classes=[SomeClass])
->>> # injector.provide(SomeClass)  # would raise a NothingInjectableForArgError
->>> injector = pinject.new_injector(classes=[SomeClass], provider_fns=[new_foo])
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph(classes=[SomeClass])
+>>> # obj_graph.provide(SomeClass)  # would raise a NothingInjectableForArgError
+>>> obj_graph = pinject.new_object_graph(classes=[SomeClass], provider_fns=[new_foo])
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'a-foo'
 >>>
@@ -330,8 +355,8 @@ Pinject will use the highest precedence appropriate binding it has.
 >>> def my_binding_fn(bind):
 ...     bind('foo', to_instance='foo-instance')
 ...
->>> injector = pinject.new_injector(binding_fns=[my_binding_fn])
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph(binding_fns=[my_binding_fn])
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'foo-instance'
 >>>
@@ -347,7 +372,7 @@ bindings, at the time that you try to create the second (conflicting) binding.
 Pinject tries to strike a balance between being helpful and being safe.
 Sometimes, you may want or need to change this balance.
 
-`new_injector()` creates implicit bindings by default.  If you worry that you
+`new_object_graph()` creates implicit bindings by default.  If you worry that you
 may accidentally inject a class or use a provider function unintentionally,
 then you can turn off implicit bindings by setting
 `only_use_explicit_bindings=True`.  If you do so, then Pinject will only use
@@ -363,8 +388,8 @@ explicit bindings.
 ... def new_foo():
 ...     return 'explicit-foo'
 ...
->>> injector = pinject.new_injector(only_use_explicit_bindings=True)
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph(only_use_explicit_bindings=True)
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'explicit-foo'
 >>>
@@ -377,7 +402,7 @@ are decorated with `@annotate()`, with or without `@inject` as well.
 
 On the opposite side of permissiveness, Pinject by default will complain if a
 provider function returns `None`.  If you really want to turn off this default
-behavior, you can pass `allow_injecting_none=True` to `new_injector()`.
+behavior, you can pass `allow_injecting_none=True` to `new_object_graph()`.
 
 == Annotations ==
 
@@ -410,8 +435,8 @@ object.
 ... def new_12345_foo():
 ...     return '12345-foo'
 ...
->>> injector = pinject.new_injector()
->>> some_class = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph()
+>>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'foo-with-annot'
 >>>
@@ -434,9 +459,9 @@ instances are created each time.
 >>> def new_foo():
 ...     return object()
 ...
->>> injector = pinject.new_injector()
->>> some_class_1 = injector.provide(SomeClass)
->>> some_class_2 = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph()
+>>> some_class_1 = obj_graph.provide(SomeClass)
+>>> some_class_2 = obj_graph.provide(SomeClass)
 >>> some_class_1.foo == some_class_2.foo
 False
 >>>
@@ -463,9 +488,9 @@ or to `bind()` in a binding function.
 ... def new_foo():
 ...     return object()
 ...
->>> injector = pinject.new_injector()
->>> some_class_1 = injector.provide(SomeClass)
->>> some_class_2 = injector.provide(SomeClass)
+>>> obj_graph = pinject.new_object_graph()
+>>> some_class_1 = obj_graph.provide(SomeClass)
+>>> some_class_2 = obj_graph.provide(SomeClass)
 >>> some_class_1.foo == some_class_2.foo
 True
 >>>
@@ -505,7 +530,7 @@ Pinject, your code should keep a handle on the custom scope and clear its
 cache at the appropriate time.
 
 You can use one or more custom scopes by passing a map from _scope identifier_
-to scope as the `id_to_scope` arg of `new_injector()`.
+to scope as the `id_to_scope` arg of `new_object_graph()`.
 
 {{{
 >>> class MyScope(pinject.Scope):
@@ -527,12 +552,12 @@ to scope as the `id_to_scope` arg of `new_injector()`.
 ...     return object()
 ...
 >>> my_scope = MyScope()
->>> injector = pinject.new_injector(
+>>> obj_graph = pinject.new_object_graph(
 ...     id_to_scope={'my custom scope': my_scope})
->>> some_class_1 = injector.provide(SomeClass)
->>> some_class_2 = injector.provide(SomeClass)
+>>> some_class_1 = obj_graph.provide(SomeClass)
+>>> some_class_2 = obj_graph.provide(SomeClass)
 >>> my_scope.clear()
->>> some_class_3 = injector.provide(SomeClass)
+>>> some_class_3 = obj_graph.provide(SomeClass)
 >>> some_class_1.foo == some_class_2.foo
 True
 >>> some_class_2.foo == some_class_3.foo
@@ -578,7 +603,7 @@ likely not to make semantic sense, since it would make something tied to one
 HTTP request be used for the duration of your program.
 
 Pinject lets you pass a validation function as the
-`is_scope_usable_from_scope` arg to `new_injector()`.  This function takes two
+`is_scope_usable_from_scope` arg to `new_object_graph()`.  This function takes two
 scope identifiers and returns `True` iff an object in the first scope can be
 injected into an object of the second scope.
 
@@ -608,11 +633,11 @@ injected into an object of the second scope.
 ...                 scope_id_outer == scoping.SINGLETON)
 ...
 >>> my_request_scope = RequestScope()
->>> injector = pinject.new_injector(
+>>> obj_graph = pinject.new_object_graph(
 ...     id_to_scope={'request scope': my_request_scope},
 ...     is_scope_usable_from_scope=is_usable)
 >>> my_request_scope.start_request()
->>> # injector.provide(SomeClass)  # would raise a BadDependencyScopeError
+>>> # obj_graph.provide(SomeClass)  # would raise a BadDependencyScopeError
 >>>
 }}}
 
