@@ -11,6 +11,7 @@ new_object_graph = object_graph.new_object_graph
 
 # TODO:
 # - reasonable error messages for all exceptions
+# - validate python types of all input
 
 # Maybe TODO:
 # - eager singletons

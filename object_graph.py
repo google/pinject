@@ -12,7 +12,7 @@ import wrapping
 
 
 def new_object_graph(
-        modules=finding.ALL_IMPORTED_MODULES, classes=None, binding_modules=None,
+        modules=finding.ALL_IMPORTED_MODULES, classes=None, binding_specs=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
         get_arg_names_from_class_name=(
             binding.default_get_arg_names_from_class_name),
@@ -34,18 +34,19 @@ def new_object_graph(
     explicit_bindings = binding.get_explicit_class_bindings(
         found_classes, get_arg_names_from_class_name)
     binder = binding.Binder(explicit_bindings, known_scope_ids)
-    if binding_modules is not None:
-        for binding_module in binding_modules:
-            if (hasattr(binding_module, 'pinject_configure') and
-                callable(binding_module.pinject_configure)):
-                binding_module.pinject_configure(binder.bind)
+    if binding_specs is not None:
+        for binding_spec_cls in binding_specs:
+            binding_spec = binding_spec_cls()
+            if (hasattr(binding_spec, 'configure') and
+                callable(binding_spec.configure)):
+                binding_spec.configure(binder.bind)
                 has_pinject_configure = True
             else:
                 has_pinject_configure = False
             provider_bindings = binding.get_provider_bindings(
-                binding_module, get_arg_names_from_provider_fn_name)
+                binding_spec, get_arg_names_from_provider_fn_name)
             if not has_pinject_configure and not provider_bindings:
-                raise errors.EmptyExplicitBindingModuleError(binding_module)
+                raise errors.EmptyExplicitBindingSpecError(binding_spec)
             explicit_bindings.extend(provider_bindings)
 
     binding_key_to_binding, collided_binding_key_to_bindings = (
@@ -54,10 +55,8 @@ def new_object_graph(
     binding_mapping = binding.BindingMapping(
         binding_key_to_binding, collided_binding_key_to_bindings)
 
-    is_injectable_fn = {
-        True: wrapping.is_explicitly_injectable,
-        False: (lambda cls: True)
-    }[only_use_explicit_bindings]
+    is_injectable_fn = {True: wrapping.is_explicitly_injectable,
+                        False: (lambda cls: True)}[only_use_explicit_bindings]
     obj_graph = ObjectGraph(binding_mapping, bindable_scopes, is_injectable_fn,
                             allow_injecting_none)
     return obj_graph

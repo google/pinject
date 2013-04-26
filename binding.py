@@ -225,11 +225,11 @@ def get_explicit_class_bindings(
 
 
 def get_provider_bindings(
-        binding_module,
+        binding_spec,
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name)):
     provider_bindings = []
-    fns = inspect.getmembers(binding_module, lambda x: type(x) == types.FunctionType)
+    fns = inspect.getmembers(binding_spec, lambda x: type(x) == types.MethodType)
     for _, fn in fns:
         arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         for arg_name in arg_names:
@@ -299,7 +299,5 @@ def create_proviser_fn(binding_key, to_class=None, to_instance=None):
     return proviser_fn
 
 
-class FakeBindingModule(object):
-
-    def __init__(self, *pargs):
-        self.__dict__.update({x.__name__: x for x in pargs})
+class BindingSpec(object):
+    pass

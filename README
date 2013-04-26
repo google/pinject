@@ -93,20 +93,9 @@ To create any bindings more complex than the implicit class bindings described
 above, you use a _binding module_.  A binding module is a python module that
 has a `pinject HERE
 
-TODO(kurts): The current binding module mechanism makes you specify all
-binding modules explicitly, no transitivity, which is bad.  Also bad is that
-it needs to be a python module; that means a new file for each binding module,
-regardless of how trivial, and difficult to show examples in this README.
-Also bad is that pinject_configure() isn't required, but there's otherwise no
-way to identify a binding module if I wanted to pick them out automatically.
-(Do I want to pick them out automatically?  I guess not, since if I did, then
-I couldn't allow conflicting--i.e., alternative--binding specs in the same
-file.)  So, it looks like binding modules should actually be classes,
-inheriting from some vacuous base class to identify them as binding modules,
-and they actually should be called binding specs, and they need some mechanism
-to include other binding specs.  And probably a mechanism like require(), to
+TODO(kurts): allow binding specs explicitly to include others.
+TODO(kurts): possibly add a binding spec mechanism like require(), to
 make sure that their requirements are met?  Or just entry points?
-
 TODO(kurts): recommend putting binding specs in `bindings.py` or at least
 `..._bindings.py`.
 

@@ -341,24 +341,27 @@ class GetExplicitClassBindingsTest(unittest.TestCase):
 
 class GetProviderBindingsTest(unittest.TestCase):
 
-    def test_returns_no_bindings_for_non_binding_module(self):
+    def test_returns_no_bindings_for_non_binding_spec(self):
+        class SomeClass(object):
+            pass
         self.assertEqual(
-            [], binding.get_provider_bindings(binding.FakeBindingModule()))
+            [], binding.get_provider_bindings(SomeClass()))
 
     def test_returns_binding_for_provider_fn(self):
-        def provide_foo():
-            return 'a-foo'
-        [implicit_binding] = binding.get_provider_bindings(
-            binding.FakeBindingModule(provide_foo))
+        class SomeBindingSpec(binding.BindingSpec):
+            def provide_foo(self):
+                return 'a-foo'
+        [implicit_binding] = binding.get_provider_bindings(SomeBindingSpec())
         self.assertEqual(binding.new_binding_key('foo'),
                          implicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
 
     def test_uses_provided_fn_to_map_provider_fn_names_to_arg_names(self):
-        def some_foo():
-            return 'a-foo'
+        class SomeBindingSpec(binding.BindingSpec):
+            def some_foo():
+                return 'a-foo'
         [implicit_binding] = binding.get_provider_bindings(
-            binding.FakeBindingModule(some_foo),
+            SomeBindingSpec(),
             get_arg_names_from_provider_fn_name=lambda _: ['foo'])
         self.assertEqual(binding.new_binding_key('foo'),
                          implicit_binding.binding_key)
