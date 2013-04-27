@@ -360,9 +360,11 @@ class GetProviderBindingsTest(unittest.TestCase):
         class SomeBindingSpec(binding.BindingSpec):
             def some_foo():
                 return 'a-foo'
+        def get_arg_names(fn_name):
+            return ['foo'] if fn_name == 'some_foo' else []
         [implicit_binding] = binding.get_provider_bindings(
             SomeBindingSpec(),
-            get_arg_names_from_provider_fn_name=lambda _: ['foo'])
+            get_arg_names_from_provider_fn_name=get_arg_names)
         self.assertEqual(binding.new_binding_key('foo'),
                          implicit_binding.binding_key)
 

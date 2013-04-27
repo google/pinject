@@ -300,4 +300,9 @@ def create_proviser_fn(binding_key, to_class=None, to_instance=None):
 
 
 class BindingSpec(object):
-    pass
+
+    def configure(self, bind):
+        raise NotImplementedError()
+
+    def dependencies(self):
+        return []

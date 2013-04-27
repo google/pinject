@@ -32,13 +32,13 @@ class CyclicInjectionError(Error):
     pass
 
 
-class EmptyExplicitBindingSpecError(Error):
+class EmptyBindingSpecError(Error):
 
     def __init__(self, binding_spec):
         Error.__init__(
-            self, '{0} listed as explicit binding spec, but it has'
-            ' neither a configure() function nor any provider'
-            ' functions'.format(binding_spec))
+            self, '{0} listed as a binding spec, but it has neither a'
+            ' configure() method nor any provider methods'.format(
+                binding_spec))
 
 
 class InjectableDecoratorAppliedToNonInitError(Error):

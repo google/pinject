@@ -40,12 +40,29 @@ class NewObjectGraphTest(unittest.TestCase):
         self.assertIsInstance(obj_graph.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
 
+    def test_uses_binding_spec_dependencies(self):
+        class BindingSpecOne(binding.BindingSpec):
+            def configure(self, bind):
+                bind('foo', to_instance='a-foo')
+        class BindingSpecTwo(binding.BindingSpec):
+            def configure(self, bind):
+                bind('bar', to_instance='a-bar')
+            def dependencies(self):
+                return [BindingSpecOne()]
+        class SomeClass(object):
+            def __init__(self, foo, bar):
+                self.foobar = '{0}{1}'.format(foo, bar)
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass], binding_specs=[BindingSpecTwo()])
+        some_class = obj_graph.provide(SomeClass)
+        self.assertEqual('a-fooa-bar', some_class.foobar)
+
     def test_raises_error_if_binding_spec_is_empty(self):
         class EmptyBindingSpec(binding.BindingSpec):
             pass
-        self.assertRaises(errors.EmptyExplicitBindingSpecError,
+        self.assertRaises(errors.EmptyBindingSpecError,
                           object_graph.new_object_graph, modules=None, classes=None,
-                          binding_specs=[EmptyBindingSpec])
+                          binding_specs=[EmptyBindingSpec()])
 
     def test_creates_object_graph_using_given_scopes(self):
         class SomeClass(object):
