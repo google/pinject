@@ -429,52 +429,24 @@ annotation object.
 You can use any kind of object as an annotation object as long as it
 implements `__eq__()` and `__hash__()`.
 
-HERE
-
 == Scopes ==
 
-By default, Pinject calls the appropriate provider function (either explicit
-or implicit) every time a binding is used.  This generally means that new
-instances are created each time.
+By default, Pinject remembers the object it injected into a (possibly
+annotated) arg, so that it can inject the same object into other args with the
+same name.  This means that, for each arg name, a single instance of the
+bound-to class, or a single instance returned by a provider method, is created
+by default.
 
 {{{
 >>> class SomeClass(object):
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
->>> def provide_foo():
-...     return object()
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     def provide_foo(self):
+...         return object()
 ...
->>> obj_graph = pinject.new_object_graph()
->>> some_class_1 = obj_graph.provide(SomeClass)
->>> some_class_2 = obj_graph.provide(SomeClass)
->>> some_class_1.foo == some_class_2.foo
-False
->>>
-}}}
-
-You may want instances reused, always or sometimes, instead of created anew
-each time they're injected.  If so, you want to use _scopes_.
-
-A scope controls memoization (i.e., caching).  A scope can choose to cache
-never, sometimes, or always.  Pinject has two built-in scopes.  _Prototype
-scope_ is the default and does no caching whatsoever.  _Singleton scope_ is
-the other built-in option and always caches.
-
-Every binding is associated with a scope.  You specify a scope for a binding
-by passing an `in_scope` arg to `@provides()` decorating a provider function,
-or to `bind()` in a binding function.
-
-{{{
->>> class SomeClass(object):
-...     def __init__(self, foo):
-...         self.foo = foo
-...
->>> @pinject.provides('foo', in_scope=pinject.SINGLETON)
-... def provide_foo():
-...     return object()
-...
->>> obj_graph = pinject.new_object_graph()
+>>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class_1 = obj_graph.provide(SomeClass)
 >>> some_class_2 = obj_graph.provide(SomeClass)
 >>> some_class_1.foo == some_class_2.foo
@@ -482,8 +454,39 @@ True
 >>>
 }}}
 
-If a binding specifies no scope explicitly, then it is in prototype scope.
-Implicit bindings are always in prototype scope.
+In some cases, you may want to create new instances, always or sometimes,
+instead of reusing them each time they're injected.  If so, you want to use
+_scopes_.
+
+A scope controls memoization (i.e., caching).  A scope can choose to cache
+never, sometimes, or always.  Pinject has two built-in scopes.  _Singleton
+scope_ (`SINGLETON`) is the default and always caches.  _Prototype scope_
+(`PROTOTYPE`) is the other built-in option and does no caching whatsoever.
+
+Every binding is associated with a scope.  You can specify a scope for a
+binding by decorating a provider method with `@in_scope()`, or by passing an
+`in_scope` arg to `bind()` in a binding spec's `configure()` method.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     @pinject.in_scope(pinject.PROTOTYPE)
+...     def provide_foo(self):
+...         return object()
+...
+>>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
+>>> some_class_1 = obj_graph.provide(SomeClass)
+>>> some_class_2 = obj_graph.provide(SomeClass)
+>>> some_class_1.foo == some_class_2.foo
+False
+>>>
+}}}
+
+If a binding specifies no scope explicitly, then it is in singleton scope.
+Implicit class bindings are always in singleton scope.
 
 == Custom scopes ==
 
@@ -499,21 +502,21 @@ class Scope(object):
         raise NotImplementedError()
 }}}
 
-The `binding_key` passed to `provide()` is some object implementing `__eq__()`
-and `__hash__()`.  The binding key encapsulates the arg name and annotation
-(if any).  The `default_provider_fn` passed to `provide()` is a zero-arg
-function that, when called, provides an instance of whatever should be
-provided.
+The `binding_key` passed to `provide()` will be an object implementing
+`__eq__()` and `__hash__()` but otherwise opaque (you shouldn't need to
+introspect it).  The binding key encapsulates the arg name and annotation (if
+any).  The `default_provider_fn` passed to `provide()` is a zero-arg function
+that, when called, provides an instance of whatever should be provided.
 
 The job of a scope's `provide()` function is to return a cached object if
 available and appropriate, otherwise to return (and possibly cache) the result
 of calling the default provider function.
 
-Scopes virtually always have other methods that control clearing the scope's
+Scopes almost always have other methods that control clearing the scope's
 cache.  For instance, a scope may have "enter scope" and "exit scope" methods,
 or a single direct "clear cache" method.  When passing a custom scope to
-Pinject, your code should keep a handle on the custom scope and clear its
-cache at the appropriate time.
+Pinject, your code should keep a handle to the custom scope and use that
+handle to clear the scope's cache at the appropriate time.
 
 You can use one or more custom scopes by passing a map from _scope identifier_
 to scope as the `id_to_scope` arg of `new_object_graph()`.
@@ -533,12 +536,14 @@ to scope as the `id_to_scope` arg of `new_object_graph()`.
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
->>> @pinject.provides('foo', in_scope='my custom scope')
-... def provide_foo():
-...     return object()
+>>> class SomeBindingSpec(pinject.BindingSpec)
+...     @pinject.in_scope('my custom scope')
+...     def provide_foo():
+...         return object()
 ...
 >>> my_scope = MyScope()
 >>> obj_graph = pinject.new_object_graph(
+...     binding_specs=[SomeBindingSpec()],
 ...     id_to_scope={'my custom scope': my_scope})
 >>> some_class_1 = obj_graph.provide(SomeClass)
 >>> some_class_2 = obj_graph.provide(SomeClass)
@@ -589,9 +594,9 @@ likely not to make semantic sense, since it would make something tied to one
 HTTP request be used for the duration of your program.
 
 Pinject lets you pass a validation function as the
-`is_scope_usable_from_scope` arg to `new_object_graph()`.  This function takes two
-scope identifiers and returns `True` iff an object in the first scope can be
-injected into an object of the second scope.
+`is_scope_usable_from_scope` arg to `new_object_graph()`.  This function takes
+two scope identifiers and returns `True` iff an object in the first scope can
+be injected into an object of the second scope.
 
 {{{
 >>> class RequestScope(pinject.Scope):
@@ -606,13 +611,13 @@ injected into an object of the second scope.
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
->>> @pinject.provides('foo', in_scope=pinject.SINGLETON)
-... def provide_foo(bar):
-...     return 'foo-' + bar
-...
->>> @pinject.provides('bar', in_scope='request scope')
-... def provide_bar():
-...     return '-bar'
+>>> class SomeBindingSpec(pinject.BindingSpec)
+...     @pinject.in_scope(pinject.SINGLETON)
+...     def provide_foo(bar):
+...         return 'foo-' + bar
+...     @pinject.in_scope('request scope')
+...     def provide_bar():
+...         return '-bar'
 ...
 >>> def is_usable(scope_id_inner, scope_id_outer):
 ...     return not (scope_id_inner == 'request scope' and
@@ -620,6 +625,7 @@ injected into an object of the second scope.
 ...
 >>> my_request_scope = RequestScope()
 >>> obj_graph = pinject.new_object_graph(
+...     binding_specs=[SomeBindingSpec()],
 ...     id_to_scope={'request scope': my_request_scope},
 ...     is_scope_usable_from_scope=is_usable)
 >>> my_request_scope.start_request()
@@ -634,8 +640,23 @@ injected into objects from any other scope.
 
 Pinject has a few things to watch out for.
 
-TODO(kurts): objects are in singleton scope by default, and singletons should
-be thread-safe.
+=== Thread safety ===
+
+Pinject's default scope is `SINGLETON`.  If you have a multi-threaded program,
+it's likely that some or all of the things that Pinject provides from
+singleton scope will be used in multiple threads.  So, it's important that you
+ensure that such classes are thread-safe.
+
+Similarly, it's important that your custom scope classes are thread-safe.
+Even if the objects they provide are only used in a single thread, it may be
+that the object graph (and therefore the scope itself) will be used
+simultaneously in multiple threads.
+
+Remember to make locks re-entrant on your custom scope classes, or otherwise
+deal with one object in your custom scope trying to inject another object in
+your custom scope.
+
+=== Singleton only by arg name, not by class ===
 
 Scoping is done per binding and therefore per arg name, not per class (or
 provider function).  For instance, suppose you have separate arg names bound
@@ -653,5 +674,3 @@ Injecting the same arg name (e.g., `foo`) multiple times will use the same
 will use different instances.
 
 That's it for gotchas, for now.
-
-TODO(kurts): note everywhere where leading underscores are ignored.

@@ -10,11 +10,15 @@ import object_graph
 new_object_graph = object_graph.new_object_graph
 
 # TODO:
+# - singleton means by class, not by arg name
 # - reasonable error messages for all exceptions
 # - validate python types of all input
 # - either allow binding specs to declare required bindings, or else declare
 #     all entry points up front
 # - disallow annotations that conflict
+# - don't allow leading underscores on provider methods
+# - standard tests for scopes (reentrant? thread-safe?), annotations (eq?
+#      hash?), etc.
 
 # Maybe TODO:
 # - eager singletons

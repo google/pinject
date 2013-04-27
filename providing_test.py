@@ -20,8 +20,3 @@ class DefaultGetArgNamesFromProviderFnNameTest(unittest.TestCase):
         self.assertEqual(
             ['foo_bar'],
             providing.default_get_arg_names_from_provider_fn_name('provide_foo_bar'))
-
-    def test_provider_fn_name_can_start_with_underscore(self):
-        self.assertEqual(
-            ['foo'],
-            providing.default_get_arg_names_from_provider_fn_name('_provide_foo'))
