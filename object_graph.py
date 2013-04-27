@@ -35,17 +35,16 @@ def new_object_graph(
         found_classes, get_arg_names_from_class_name)
     binder = binding.Binder(explicit_bindings, known_scope_ids)
     if binding_specs is not None:
-        for binding_spec_cls in binding_specs:
-            binding_spec = binding_spec_cls()
+        for binding_spec in binding_specs:
             if (hasattr(binding_spec, 'configure') and
                 callable(binding_spec.configure)):
                 binding_spec.configure(binder.bind)
-                has_pinject_configure = True
+                has_configure = True
             else:
-                has_pinject_configure = False
+                has_configure = False
             provider_bindings = binding.get_provider_bindings(
                 binding_spec, get_arg_names_from_provider_fn_name)
-            if not has_pinject_configure and not provider_bindings:
+            if not has_configure and not provider_bindings:
                 raise errors.EmptyExplicitBindingSpecError(binding_spec)
             explicit_bindings.extend(provider_bindings)
 

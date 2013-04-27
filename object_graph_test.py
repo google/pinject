@@ -36,7 +36,7 @@ class NewObjectGraphTest(unittest.TestCase):
                 bind('foo', to_class=SomeClass)
         obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassWithFooInjected],
-            binding_specs=[SomeBindingSpec])
+            binding_specs=[SomeBindingSpec()])
         self.assertIsInstance(obj_graph.provide(ClassWithFooInjected),
                               ClassWithFooInjected)
 
@@ -56,7 +56,7 @@ class NewObjectGraphTest(unittest.TestCase):
             def provide_foo(self):
                 return object()
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec],
+            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()],
             id_to_scope={'foo-scope': scoping.SingletonScope()})
         some_class_one = obj_graph.provide(SomeClass)
         some_class_two = obj_graph.provide(SomeClass)
@@ -151,7 +151,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
                 self.foo = foo
         obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne, ClassTwo],
-            binding_specs=[SomeBindingSpec])
+            binding_specs=[SomeBindingSpec()])
         class_two = obj_graph.provide(ClassTwo)
         self.assertEqual(3, class_two.foo.three)
 
@@ -164,7 +164,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def configure(self, bind):
                 bind('foo', annotated_with='an-annotation', to_instance='a-foo')
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec])
+            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()])
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
@@ -185,7 +185,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_bar(self):
                 return object()
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec])
+            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()])
         class_one = obj_graph.provide(SomeClass)
         class_two = obj_graph.provide(SomeClass)
         self.assertIs(class_one.foo, class_two.foo)
@@ -200,7 +200,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def configure(self, bind):
                 bind('foo', annotated_with='other-annotation', to_instance='a-foo')
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec])
+            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()])
         self.assertRaises(errors.NothingInjectableForArgError,
                           obj_graph.provide, ClassOne)
 
@@ -213,7 +213,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def configure(self, bind):
                 bind('foo', to_instance='a-foo')
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec])
+            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()])
         self.assertRaises(errors.NothingInjectableForArgError,
                           obj_graph.provide, ClassOne)
 
@@ -225,7 +225,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_foo(self):
                 return 'a-foo'
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec])
+            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()])
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
@@ -240,7 +240,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
                 return 'a-foo'
         obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne, Foo],
-            binding_specs=[SomeBindingSpec])
+            binding_specs=[SomeBindingSpec()])
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
@@ -254,7 +254,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_bar(self):
                 return 'a-bar'
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec])
+            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()])
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
@@ -272,7 +272,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_bar(self):
                 return 'a-bar'
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec])
+            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()])
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
@@ -319,7 +319,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def configure(self, bind):
                 bind('class_two', to_instance='a-class-two')
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec],
+            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()],
             only_use_explicit_bindings=True)
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-class-two', class_one.class_two)
@@ -333,7 +333,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_class_two(self):
                 return 'a-class-two'
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec],
+            modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()],
             only_use_explicit_bindings=True)
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-class-two', class_one.class_two)
@@ -360,7 +360,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_foo(self):
                 return None
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec],
+            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()],
             allow_injecting_none=True)
         some_class = obj_graph.provide(SomeClass)
         self.assertIsNone(some_class.foo)
@@ -373,7 +373,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_foo(self):
                 return None
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec],
+            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()],
             allow_injecting_none=False)
         self.assertRaises(errors.InjectingNoneDisallowedError,
                           obj_graph.provide, SomeClass)
