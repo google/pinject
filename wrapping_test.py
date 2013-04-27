@@ -193,6 +193,33 @@ class IsExplicitlyInjectableTest(unittest.TestCase):
         self.assertTrue(wrapping.is_explicitly_injectable(SomeClass))
 
 
-class GetArgPrebindingsAndRemainingArgsTest(unittest.TestCase):
-    # TODO(kurts)
-    pass
+class GetInjectableArgBindingKeysTest(unittest.TestCase):
+
+    def assert_fn_has_injectable_arg_binding_keys(self, fn, arg_binding_keys):
+        self.assertEqual(
+            arg_binding_keys, wrapping.get_injectable_arg_binding_keys(fn))
+
+    def test_fn_with_no_args_returns_nothing(self):
+        self.assert_fn_has_injectable_arg_binding_keys(lambda: None, [])
+
+    def test_fn_with_unannotated_arg_returns_unannotated_binding_key(self):
+        self.assert_fn_has_injectable_arg_binding_keys(
+            lambda foo: None, [binding.new_binding_key('foo')])
+
+    def test_fn_with_annotated_arg_returns_annotated_binding_key(self):
+        @wrapping.annotate_arg('foo', 'an-annotation')
+        def fn(foo):
+            pass
+        self.assert_fn_has_injectable_arg_binding_keys(
+            fn, [binding.new_binding_key('foo', 'an-annotation')])
+
+    def test_fn_with_arg_with_default_returns_nothing(self):
+        self.assert_fn_has_injectable_arg_binding_keys(lambda foo=42: None, [])
+
+    def test_fn_with_mixed_args_returns_mixed_binding_keys(self):
+        @wrapping.annotate_arg('foo', 'an-annotation')
+        def fn(foo, bar, baz='baz'):
+            pass
+        self.assert_fn_has_injectable_arg_binding_keys(
+            fn, [binding.new_binding_key('foo', 'an-annotation'),
+                 binding.new_binding_key('bar')])

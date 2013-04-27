@@ -99,20 +99,27 @@ def is_explicitly_injectable(cls):
             hasattr(cls.__init__, _IS_WRAPPER_ATTR))
 
 
-def get_arg_binding_keys_and_remaining_args(fn):
+def get_injectable_arg_binding_keys(fn):
     if hasattr(fn, _IS_WRAPPER_ATTR):
         arg_binding_keys = getattr(fn, _ARG_BINDING_KEYS_ATTR)
-        arg_names, unused_varargs, unused_keywords, unused_defaults = (
+        arg_names, unused_varargs, unused_keywords, defaults = (
             inspect.getargspec(getattr(fn, _ORIG_FN_ATTR)))
-        arg_names_to_inject = binding.get_unbound_arg_names(
+        num_to_keep = (len(arg_names) - len(defaults)) if defaults else len(arg_names)
+        arg_names = arg_names[:num_to_keep]
+        unbound_arg_names = binding.get_unbound_arg_names(
             [arg_name for arg_name in _remove_self_if_exists(arg_names)],
             arg_binding_keys)
     else:
         arg_binding_keys = []
-        arg_names, unused_varargs, unused_keywords, unused_defaults = (
+        arg_names, unused_varargs, unused_keywords, defaults = (
             inspect.getargspec(fn))
-        arg_names_to_inject = _remove_self_if_exists(arg_names)
-    return arg_binding_keys, arg_names_to_inject
+        num_to_keep = (len(arg_names) - len(defaults)) if defaults else len(arg_names)
+        arg_names = arg_names[:num_to_keep]
+        unbound_arg_names = _remove_self_if_exists(arg_names)
+    all_arg_binding_keys = list(arg_binding_keys)
+    all_arg_binding_keys.extend([binding.new_binding_key(arg_name)
+                                 for arg_name in unbound_arg_names])
+    return all_arg_binding_keys
 
 
 # TODO(kurts): this feels icky.  Is there no way around this, because

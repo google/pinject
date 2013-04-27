@@ -127,14 +127,9 @@ class ObjectGraph(object):
 
     def _get_injection_kwargs(self, fn, binding_context):
         kwargs = {}
-        arg_binding_keys, arg_names_to_inject = (
-            wrapping.get_arg_binding_keys_and_remaining_args(fn))
+        arg_binding_keys = wrapping.get_injectable_arg_binding_keys(fn)
         for arg_binding_key in arg_binding_keys:
             arg_binding_key.put_provided_value_in_kwargs(
                 self._provide_from_binding_key(arg_binding_key, binding_context),
                 kwargs)
-        for arg_name in arg_names_to_inject:
-            binding_key = binding.new_binding_key(arg_name)
-            kwargs[arg_name] = self._provide_from_binding_key(
-                binding_key, binding_context)
         return kwargs
