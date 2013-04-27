@@ -87,6 +87,32 @@ many or as few arg names as it wants.  If it always returns the empty list
 (i.e., if it is `lambda _: []`), then that disables implicit class bindings
 (though it's easier and clearer to pass in `modules=None`; see below).
 
+== Finding classes and providers for implicit bindings ==
+
+So far, the examples have not told `new_object_graph()` for which classes it
+should create implicit bindings.  `new_object_graph()` by default looks in all
+imported modules, but you may sometimes want to restrict the classes for which
+`new_object_graph()` creates implicit bindings.  `new_object_graph()` has two
+args for this purpose.
+
+  * The `modules` arg specifies in which (python) modules to look; this defaults to `ALL_IMPORTED_MODULES`.
+  * The `classes` arg specifies a exact list of classes.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> class Foo(object):
+...     pass
+...
+>>> obj_graph = pinject.new_object_graph(modules=None, classes=[SomeClass])
+>>> # obj_graph.provide(SomeClass)  # would raise a NothingInjectableForArgError
+>>> obj_graph = pinject.new_object_graph(modules=None, classes=[SomeClass, Foo])
+>>> some_class = obj_graph.provide(SomeClass)
+>>>
+}}}
+
 == Binding specs ==
 
 To create any bindings more complex than the implicit class bindings described
@@ -289,56 +315,15 @@ calls the provider method.
 
 HERE
 
-== Finding classes and providers for implicit bindings ==
-
-So far, the examples have not told `new_object_graph()` what classes and provider
-functions to create implicit bindings for.  `new_object_graph()` by default looks
-in all imported (python) modules for classes, module-level provider functions,
-and static method provider functions.
-
-Sometimes, you may want to restrict what `new_object_graph()` creates implicit
-bindings for.  `new_object_graph()` has three args for this purpose.
-
-  * The `modules` arg specifies in which (python) modules to look for classes and provider functions to create implicit bindings for.
-  * The `classes` arg specifies which classes to create implicit bindings for and to search for static method provider functions.
-  * The `provider_fns` arg specifies provider functions to create implicit bindings for.
-
-Specifying any of these args when calling `new_object_graph()` turns off the
-default behavior of looking in all imported (python) modules and instead
-creates implicit bindings for the union of the specified modules, classes,
-and/or provider functions.
-
-{{{
->>> class SomeClass(object):
-...     def __init__(self, foo):
-...         self.foo = foo
-...
->>> def provide_foo():
-...     return 'a-foo'
-...
->>> obj_graph = pinject.new_object_graph(classes=[SomeClass])
->>> # obj_graph.provide(SomeClass)  # would raise a NothingInjectableForArgError
->>> obj_graph = pinject.new_object_graph(classes=[SomeClass], provider_fns=[provide_foo])
->>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
-'a-foo'
->>>
-}}}
-
 == Binding precedence ==
 
-Bindings have precedence.  Explicit bindings take precedence over implicit
-bindings, and implicit provider functions take precedence over implicit class
-bindings.  So, the priority of each binding type is:
+Bindings have precedence: explicit bindings take precedence over implicit
+bindings.
 
-  # Explicit bindings, including bindings from
-    * binding functions,
-    * provider functions decorated with `@provides()`, and
-    * classes with initializers decorated with `@inject` (see below).
-  # Implicit provider bindings, for functions named like provider functions, e.g., `provide_foo()`.
-  # Implicit class bindings.
+  * Explicit bindings are the bindings that come from binding specs.
+  * Implicit bindings are the bindings created for classes in the `modules` and `classes` args passed to `new_object_graph()`.
 
-Pinject will use the highest precedence appropriate binding it has.
+Pinject will prefer an explicit to an implicit binding.
 
 {{{
 >>> class SomeClass(object):
@@ -348,23 +333,21 @@ Pinject will use the highest precedence appropriate binding it has.
 >>> class Foo(object):
 ...     pass
 ...
->>> def provide_foo():
-...     return 'a-foo'
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     def configure(self, bind):
+...         bind('foo', to_instance='foo-instance')
 ...
->>> def my_binding_fn(bind):
-...     bind('foo', to_instance='foo-instance')
-...
->>> obj_graph = pinject.new_object_graph(binding_fns=[my_binding_fn])
+>>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'foo-instance'
 >>>
 }}}
 
-Pinject may have two different (and thus conflicting) implicit bindings, and
-it will not complain unless you try to use those bindings.  Pinject _will_
-complain if you try to create different (and thus conflicting) explicit
-bindings, at the time that you try to create the second (conflicting) binding.
+If you have two classes named the same thing, Pinject will have two different
+(and thus conflicting) implicit bindings.  But Pinject will not complain
+unless you try to use those bindings.  Pinject _will_ complain if you try to
+create different (and thus conflicting) explicit bindings.
 
 == Safety ==
 
@@ -377,30 +360,31 @@ then you can turn off implicit bindings by setting
 `only_use_explicit_bindings=True`.  If you do so, then Pinject will only use
 explicit bindings.
 
+You can mark a class as explicitly injectable, without having to create a
+binding spec for it, by annotating it with `@injectable`.  Classes are also
+marked for explicit binding if their initializers are decorated with
+`@annotate_arg()` (see below), with or without `@injectable` as well.
+
 {{{
 >>> class SomeClass(object):
-...     @pinject.inject
+...     @pinject.injectable
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
->>> @pinject.provides('foo')
-... def provide_foo():
-...     return 'explicit-foo'
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     def configure(self, bind):
+...         bind('foo', to_instance='explicit-foo')
 ...
->>> obj_graph = pinject.new_object_graph(only_use_explicit_bindings=True)
+>>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()],
+...     only_use_explicit_bindings=True)
 >>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'explicit-foo'
 >>>
 }}}
 
-As the example shows, if you want to mark a class as explicitly injectable and
-create an explicit binding for it, you can decorate its initializer with
-`@inject`.  Classes are also marked for explicit binding if their initializers
-are decorated with `@annotate()`, with or without `@inject` as well.
-
 On the opposite side of permissiveness, Pinject by default will complain if a
-provider function returns `None`.  If you really want to turn off this default
+provider method returns `None`.  If you really want to turn off this default
 behavior, you can pass `allow_injecting_none=True` to `new_object_graph()`.
 
 == Annotations ==
@@ -411,14 +395,15 @@ codebase named the same thing, and you want to use the same arg name in
 different parts of your codebase.
 
 On the binding side, an annotation changes the binding so that the key of the
-binding includes the annotation object.  You can pass an `annotated_with` arg
-to `bind()` in a binding function, or to `@provides()` on a provider function,
-to specify the annotation object.
+binding includes the annotation object.  When using `bind()` in a binding
+spec's `configure()` method, you can pass an `annotated_with` arg to specify
+the annotation object.  When defining a provider method, you can use the
+`@annotated_with()` decorator to specify the annotation object
 
 On the arg side, an annotation tells Pinject only to inject using a binding
-whose binding key includes the annotation object.  You can use `@annotate()`
-on an initializer, or on a provider function, to specify the annotation
-object.
+whose binding key includes the annotation object.  You can use
+`@annotate_arg()` on an initializer, or on a provider method, to specify the
+annotation object.
 
 {{{
 >>> class SomeClass(object):
@@ -426,15 +411,15 @@ object.
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
->>> @pinject.provides('foo', annotated_with='annot')
-... def provide_annot_foo():
-...     return 'foo-with-annot'
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     @pinject.annotated_with('annot')
+...     def provide_annot_foo():
+...         return 'foo-with-annot'
+...     @pinject.annotated_with(12345)
+...     def provide_12345_foo():
+...         return '12345-foo'
 ...
->>> @pinject.provides('foo', annotated_with=12345)
-... def provide_12345_foo():
-...     return '12345-foo'
-...
->>> obj_graph = pinject.new_object_graph()
+>>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'foo-with-annot'
@@ -443,6 +428,8 @@ object.
 
 You can use any kind of object as an annotation object as long as it
 implements `__eq__()` and `__hash__()`.
+
+HERE
 
 == Scopes ==
 
