@@ -87,155 +87,40 @@ many or as few arg names as it wants.  If it always returns the empty list
 (i.e., if it is `lambda _: []`), then that disables implicit class bindings
 (though it's easier and clearer to pass in `modules=None`; see below).
 
-== Binding modules ==
+== Binding specs ==
 
 To create any bindings more complex than the implicit class bindings described
-above, you use a _binding module_.  A binding module is a python module that
-has a `pinject HERE
+above, you use a _binding spec_.  A binding spec is any python class that
+inherits from `BindingSpec`.  A binding spec can do three things:
 
-TODO(kurts): allow binding specs explicitly to include others.
-TODO(kurts): possibly add a binding spec mechanism like require(), to
-make sure that their requirements are met?  Or just entry points?
-TODO(kurts): recommend putting binding specs in `bindings.py` or at least
-`..._bindings.py`.
+  * Its `configure()` method can create explicit bindings to classes or instances.
+  * Its `dependencies()` method can return depended-on binding specs.
+  * It can have provider methods.
 
-== Provider functions ==
+The `new_object_graph()` function takes a sequence of binding spec instances
+as its `binding_specs` arg.  `new_object_graph()` takes binding spec
+instances, rather than binding spec classes, so that you can manually inject
+any initial dependencies into the binding specs as needed.
 
-If it takes more to instantiate a class than calling its initializer and
-injecting initializer args, then you can write a _provider function_ for it.
-Pinject uses provider functions to instantiate the objects used to inject as
-the values of other args.
+Binding specs should generally live in files named `binding_specs.py`, where
+each file is named in the plural even if there is exactly one binding spec in
+it.  Ideally, a directory's worth of functionality should be coverable with a
+single binding spec.  If not, you can create multiple binding specs in the
+same `binding_specs.py` file.  If you have so many binding specs that you need
+to split them into multiple files, you should name them each with a
+`_binding_specs.py` suffix.
 
-Pinject looks for functions named like provider functions and then creates
-implicit bindings for them.
+=== Binding spec `configure()` methods ===
 
-{{{
->>> class SomeClass(object):
-...     def __init__(self, foo):
-...         self.foo = foo
-...
->>> def new_foo():
-...     return 'some-foo'
-...
->>> obj_graph = pinject.new_object_graph()
->>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
-'some-foo'
->>>
-}}}
-
-By default, Pinject looks for functions whose names start with `new_` or
-`provide_`, and it assumes that the function is a provider for whatever the
-rest of the function name is.  For instance, Pinject assumes that the function
-`new_foo_bar()` is a provider function for the arg name `foo_bar`.
-
-You can override this default behavior by passing an arg named
-`get_arg_names_from_provider_fn_name` to `new_object_graph()`.
-
-{{{
->>> class SomeClass(object):
-...     def __init__(self, foo):
-...         self.foo = foo
-...
->>> def gimme_some_foo():
-...     return 'some-foo'
-...
->>> def custom_get_arg_names(provider_fn_name):
-...     if provider_fn_name.startswith('gimme_some_'):
-...         return [provider_fn_name[len('gimme_some_'):]]
-...     else:
-...         return []
-...
->>> obj_graph = pinject.new_object_graph(
-...     get_arg_names_from_provider_fn_name=custom_get_arg_names)
->>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
-'some-foo'
->>>
-}}}
-
-A function passed as the `get_arg_names_from_provider_fn_name` arg to
-`new_object_graph()` takes the name of a potential provider function and returns
-the arg names for which that provider function is a provider (and an empty
-list if it does not seem to name a provider function).  If it always returns
-the empty list (i.e., is `lambda _: []`), then that disables implicit provider
-bindings.
-
-If you want a function to be a provider function but don't want to (or can't)
-name it according to the default convention, you can decorate it as an
-explicit provider function,
-
-{{{
->>> class SomeClass(object):
-...     def __init__(self, foo):
-...         self.foo = foo
-...
->>> @pinject.provides('foo')
-... def spam_spam_spam():
-...     return 'spam-foo'
-...
->>> obj_graph = pinject.new_object_graph()
->>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
-'spam-foo'
->>>
-}}}
-
-The `@provides` decoration will stack with itself, i.e., you can explicitly
-bind a single provider function to multiple arg names using multiple
-`@provides` decorators.
-
-Both explicit and implicit provider functions can be static methods of a class
-instead of being module-level methods.
-
-{{{
->>> class SomeClass(object):
-...     def __init__(self, foo):
-...         self.foo = foo
-...     @staticmethod
-...     def new_foo():
-...         return 'static-foo'
-...
->>> obj_graph = pinject.new_object_graph()
->>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
-'static-foo'
->>>
-}}}
-
-Pinject injects all args of provider methods that have no default when it
-calls the provider method.
-
-{{{
->>> class SomeClass(object):
-...     def __init__(self, foo):
-...         self.foo = foo
-...
->>> def new_foo(bar):
-...     return 'foo-' + bar
-...
->>> def new_bar():
-...     return 'bar'
-...
->>> obj_graph = pinject.new_object_graph()
->>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
-'foo-bar'
->>>
-}}}
-
-== Binding functions ==
-
-Pinject creates implicit bindings for classes and provider functions, but
-sometimes the implicit bindings aren't what you want.  For instance, if you
-have `SomeReallyLongClassName`, you may not want to name your initializer args
+Pinject creates implicit bindings for classes, but sometimes the implicit
+bindings aren't what you want.  For instance, if you have
+`SomeReallyLongClassName`, you may not want to name your initializer args
 `some_really_long_class_name` but instead use something shorter like
-`long_name`, just for this class.  For such situations, you can create
-_explicit bindings_ using _binding functions_.
+`long_name`, just for this class.
 
-A binding function is a function that creates explicit bindings.  It takes a
-function `bind()` as an arg and calls that function to create explicit
-bindings.
+For such situations, you can create explicit bindings using the `configure()`
+method of a binding spec.  The `configure()` method takes a function `bind()`
+as an arg and calls that function to create explicit bindings.
 
 {{{
 >>> class SomeClass(object):
@@ -246,10 +131,11 @@ bindings.
 ...     def __init__(self):
 ...         self.foo = 'foo'
 ...
->>> def my_binding_fn(bind):
-...     bind('long_name', to_class=SomeReallyLongClassName)
+>>> class MyBindingSpec(pinject.BindingSpec):
+...     def configure(self, bind):
+...         bind('long_name', to_class=SomeReallyLongClassName)
 ...
->>> obj_graph = pinject.new_object_graph(binding_fns=[my_binding_fn])
+>>> obj_graph = pinject.new_object_graph(binding_specs=[MyBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.long_name.foo
 'foo'
@@ -257,27 +143,151 @@ bindings.
 }}}
 
 The `bind()` function passed to a binding function binds its first arg, which
-must be an arg name (as a `str`), to exactly one of three kinds of things.
+must be an arg name (as a `str`), to exactly one of two kinds of things.
 
-  * Using `to_class` binds to a class.  Every time the binding is used, Pinject instantiates that class and injects the new instance.
+  * Using `to_class` binds to a class.  When the binding is used, Pinject injects an instance of the class.
   * Using `to_instance` binds to an instance of some object.  Every time the binding is used, Pinject uses that instance.
-  * Using `to_provider` binds to a provider function.  Every time the binding is ues, Pinject calls the provider function and injects its return value.  As with provider functions above, Pinject will inject any args that the provider function has that have no default.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> class MyBindingSpec(pinject.BindingSpec):
+...     def configure(self, bind):
+...         bind('foo', to_instance='a-foo')
+...
+>>> obj_graph = pinject.new_object_graph(binding_specs=[MyBindingSpec()])
+>>> some_class = obj_graph.provide(SomeClass)
+>>> some_class.foo
+'a-foo'
+>>>
+}}}
+
+=== Binding spec dependencies ===
+
+Binding specs can declare dependencies.  A binding spec declares its
+dependencies by returning a sequence of instances of the dependent binding
+specs from its `dependencies()` method.
 
 {{{
 >>> class SomeClass(object):
 ...     def __init__(self, foo, bar):
 ...         self.foobar = foo + bar
 ...
->>> def my_binding_fn(bind):
-...     bind('foo', to_instance='foo-')
-...     bind('bar', to_provider=lambda: '-bar')
+>>> class BindingSpecOne(pinject.BindingSpec):
+...     def configure(self, bind):
+...         bind('foo', to_instance='foo-')
 ...
->>> obj_graph = pinject.new_object_graph(binding_fns=[my_binding_fn])
+>>> class BindingSpecTwo(pinject.BindingSpec):
+...     def configure(self, bind):
+...         bind('bar', to_instance='-bar')
+...     def dependencies(self):
+...         return [BindingSpecOne()]
+...
+>>> obj_graph = pinject.new_object_graph(binding_specs=[BindingSpecTwo()])
 >>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foobar
 'foo--bar'
 >>>
 }}}
+
+If classes from module A are injected as collaborators into classes from
+module B, then you should consider having the binding spec for module B depend
+on the binding spec for module A.  In this way, you can build a graph of
+binding spec dependencies that mirrors the graph of collaborator dependencies.
+
+Since explicit bindings cannot conflict (see the section below on binding
+precedence), a binding spec should only have dependencies that there will
+never be a choice about using.  If there may be a choice, then it is better to
+list the binding specs separately and explicitly when calling
+`new_object_graph()`.
+
+=== Provider methods ===
+
+If it takes more to instantiate a class than calling its initializer and
+injecting initializer args, then you can write a _provider method_ for it.
+Pinject can use provider methods to instantiate objects used to inject as the
+values of other args.
+
+Pinject looks on binding specs for methods named like provider methods and
+then creates explicit bindings for them.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     def provide_foo(self):
+...         return 'some-complex-foo'
+...
+>>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
+>>> some_class = obj_graph.provide(SomeClass)
+>>> some_class.foo
+'some-complex-foo'
+>>>
+}}}
+
+By default, Pinject looks for methods whose names start with `provide_`, and
+it assumes that the methods are providers for whatever the rest of their
+method names are.  For instance, Pinject assumes that the method
+`provide_foo_bar()` is a provider method for the arg name `foo_bar`.
+
+You can override this default behavior by passing an arg named
+`get_arg_names_from_provider_fn_name` to `new_object_graph()`.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     def gimme_some_foo(self):
+...         return 'some-foo'
+...
+>>> def custom_get_arg_names(provider_fn_name):
+...     if provider_fn_name.startswith('gimme_some_'):
+...         return [provider_fn_name[len('gimme_some_'):]]
+...     else:
+...         return []
+...
+>>> obj_graph = pinject.new_object_graph(
+...     binding_specs=[SomeBindingSpec()],
+...     get_arg_names_from_provider_fn_name=custom_get_arg_names)
+>>> some_class = obj_graph.provide(SomeClass)
+>>> some_class.foo
+'some-foo'
+>>>
+}}}
+
+A function passed as the `get_arg_names_from_provider_fn_name` arg to
+`new_object_graph()` takes the name of a potential provider method and returns
+the arg names for which that provider method is a provider (and an empty list
+if it does not seem to name a provider method).
+
+Pinject injects all args of provider methods that have no default when it
+calls the provider method.
+
+{{{
+>>> class SomeClass(object):
+...     def __init__(self, foobar):
+...         self.foobar = foobar
+...
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     def provide_foobar(self, bar, hyphen='-'):
+...         return 'foo' + hyphen + bar
+...     def provide_bar(self):
+...         return 'bar'
+...
+>>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
+>>> some_class = obj_graph.provide(SomeClass)
+>>> some_class.foobar
+'foo-bar'
+>>>
+}}}
+
+HERE
 
 == Finding classes and providers for implicit bindings ==
 
@@ -303,12 +313,12 @@ and/or provider functions.
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
->>> def new_foo():
+>>> def provide_foo():
 ...     return 'a-foo'
 ...
 >>> obj_graph = pinject.new_object_graph(classes=[SomeClass])
 >>> # obj_graph.provide(SomeClass)  # would raise a NothingInjectableForArgError
->>> obj_graph = pinject.new_object_graph(classes=[SomeClass], provider_fns=[new_foo])
+>>> obj_graph = pinject.new_object_graph(classes=[SomeClass], provider_fns=[provide_foo])
 >>> some_class = obj_graph.provide(SomeClass)
 >>> some_class.foo
 'a-foo'
@@ -325,7 +335,7 @@ bindings.  So, the priority of each binding type is:
     * binding functions,
     * provider functions decorated with `@provides()`, and
     * classes with initializers decorated with `@inject` (see below).
-  # Implicit provider bindings, for functions named like provider functions, e.g., `new_foo()`.
+  # Implicit provider bindings, for functions named like provider functions, e.g., `provide_foo()`.
   # Implicit class bindings.
 
 Pinject will use the highest precedence appropriate binding it has.
@@ -338,7 +348,7 @@ Pinject will use the highest precedence appropriate binding it has.
 >>> class Foo(object):
 ...     pass
 ...
->>> def new_foo():
+>>> def provide_foo():
 ...     return 'a-foo'
 ...
 >>> def my_binding_fn(bind):
@@ -374,7 +384,7 @@ explicit bindings.
 ...         self.foo = foo
 ...
 >>> @pinject.provides('foo')
-... def new_foo():
+... def provide_foo():
 ...     return 'explicit-foo'
 ...
 >>> obj_graph = pinject.new_object_graph(only_use_explicit_bindings=True)
@@ -417,11 +427,11 @@ object.
 ...         self.foo = foo
 ...
 >>> @pinject.provides('foo', annotated_with='annot')
-... def new_annot_foo():
+... def provide_annot_foo():
 ...     return 'foo-with-annot'
 ...
 >>> @pinject.provides('foo', annotated_with=12345)
-... def new_12345_foo():
+... def provide_12345_foo():
 ...     return '12345-foo'
 ...
 >>> obj_graph = pinject.new_object_graph()
@@ -445,7 +455,7 @@ instances are created each time.
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
->>> def new_foo():
+>>> def provide_foo():
 ...     return object()
 ...
 >>> obj_graph = pinject.new_object_graph()
@@ -474,7 +484,7 @@ or to `bind()` in a binding function.
 ...         self.foo = foo
 ...
 >>> @pinject.provides('foo', in_scope=pinject.SINGLETON)
-... def new_foo():
+... def provide_foo():
 ...     return object()
 ...
 >>> obj_graph = pinject.new_object_graph()
@@ -537,7 +547,7 @@ to scope as the `id_to_scope` arg of `new_object_graph()`.
 ...         self.foo = foo
 ...
 >>> @pinject.provides('foo', in_scope='my custom scope')
-... def new_foo():
+... def provide_foo():
 ...     return object()
 ...
 >>> my_scope = MyScope()
@@ -610,11 +620,11 @@ injected into an object of the second scope.
 ...         self.foo = foo
 ...
 >>> @pinject.provides('foo', in_scope=pinject.SINGLETON)
-... def new_foo(bar):
+... def provide_foo(bar):
 ...     return 'foo-' + bar
 ...
 >>> @pinject.provides('bar', in_scope='request scope')
-... def new_bar():
+... def provide_bar():
 ...     return '-bar'
 ...
 >>> def is_usable(scope_id_inner, scope_id_outer):
@@ -647,7 +657,7 @@ to the same class (or provider function) with all bindings in singleton scope.
 {{{
 @pinject.provides('foo', in_scope=pinject.SINGLETON)
 @pinject.provides('bar', in_scope=pinject.SINGLETON)
-def new_foobar():
+def provide_foobar():
   return object()
 }}}
 

@@ -12,6 +12,9 @@ new_object_graph = object_graph.new_object_graph
 # TODO:
 # - reasonable error messages for all exceptions
 # - validate python types of all input
+# - either allow binding specs to declare required bindings, or else declare
+#     all entry points up front
+# - disallow annotations that conflict
 
 # Maybe TODO:
 # - eager singletons
