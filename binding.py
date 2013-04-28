@@ -217,7 +217,7 @@ def get_explicit_class_bindings(
         if wrapping.is_explicitly_injectable(cls):
             for arg_name in get_arg_names_from_class_name(cls.__name__):
                 binding_key = new_binding_key(arg_name)
-                proviser_fn = create_proviser_fn(binding_key, to_class=cls)
+                proviser_fn = create_class_proviser_fn(binding_key, cls)
                 explicit_bindings.append(Binding(
                     binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
                     desc='the explicitly injectable class {0}'.format(cls)))
@@ -247,7 +247,7 @@ def get_implicit_class_bindings(
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
             binding_key = new_binding_key(arg_name)
-            proviser_fn = create_proviser_fn(binding_key, to_class=cls)
+            proviser_fn = create_class_proviser_fn(binding_key, cls)
             implicit_bindings.append(Binding(
                 binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
                 desc='the implicitly bound class {0}'.format(cls)))
@@ -283,38 +283,39 @@ class Binder(object):
             @wrapping.annotated_with(annotated_with)
             def provide_it(_pinject_class):
                 return _pinject_class
-            self._collected_bindings.append(wrapping.get_provider_fn_binding(
-                provide_it, arg_name))
-            if (to_class, in_scope) not in self._class_bindings_created:
-                self._collected_bindings.append(Binding(
-                    new_binding_key('_pinject_class', (to_class, in_scope)),
-                    create_proviser_fn(binding_key, to_class, to_instance=None),
-                    in_scope, desc='TODO(kurts)'))
-                self._class_bindings_created.append((to_class, in_scope))
-            return
-
-        proviser_fn = create_proviser_fn(binding_key, to_class, to_instance)
-        with self._lock:
+            with self._lock:
+                self._collected_bindings.append(wrapping.get_provider_fn_binding(
+                    provide_it, arg_name))
+                if (to_class, in_scope) not in self._class_bindings_created:
+                    self._collected_bindings.append(Binding(
+                        new_binding_key('_pinject_class', (to_class, in_scope)),
+                        create_class_proviser_fn(binding_key, to_class),
+                        in_scope, desc='TODO(kurts)'))
+                    self._class_bindings_created.append((to_class, in_scope))
+        else:
+            proviser_fn = create_instance_proviser_fn(binding_key, to_instance)
             back_frame = inspect.currentframe().f_back
-            self._collected_bindings.append(Binding(
-                binding_key, proviser_fn, in_scope,
-                desc='the explicit binding target at line {0} of {1}'.format(
-                    back_frame.f_lineno, back_frame.f_code.co_filename)))
+            with self._lock:
+                self._collected_bindings.append(Binding(
+                    binding_key, proviser_fn, in_scope,
+                    desc='the explicit binding target at line {0} of {1}'.format(
+                        back_frame.f_lineno, back_frame.f_code.co_filename)))
 
 
-# TODO(kurts): split this into class and instance functions.
-def create_proviser_fn(binding_key, to_class=None, to_instance=None):
-    if to_class is not None:
-        if not inspect.isclass(to_class):
-            raise errors.InvalidBindingTargetError(
-                binding_key, to_class, 'class')
-        # TODO(kurts): don't call private method of obj_graph.
-        proviser_fn = lambda binding_context, obj_graph: obj_graph._provide_class(
-            to_class, binding_context)
-        proviser_fn._pinject_desc = 'the class {0!r}'.format(to_class)
-    else:  # to_instance is not None:
-        proviser_fn = lambda binding_context, obj_graph: to_instance
-        proviser_fn._pinject_desc = 'the instance {0!r}'.format(to_instance)
+def create_class_proviser_fn(binding_key, to_class):
+    if not inspect.isclass(to_class):
+        raise errors.InvalidBindingTargetError(
+            binding_key, to_class, 'class')
+    # TODO(kurts): don't call private method of obj_graph.
+    proviser_fn = lambda binding_context, obj_graph: obj_graph._provide_class(
+        to_class, binding_context)
+    proviser_fn._pinject_desc = 'the class {0!r}'.format(to_class)
+    return proviser_fn
+
+
+def create_instance_proviser_fn(binding_key, to_instance):
+    proviser_fn = lambda binding_context, obj_graph: to_instance
+    proviser_fn._pinject_desc = 'the instance {0!r}'.format(to_instance)
     return proviser_fn
 
 

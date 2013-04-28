@@ -243,10 +243,10 @@ class BindingMappingTest(unittest.TestCase):
         binding_key = binding.new_binding_key('unused')
         binding_one = binding.new_binding_in_default_scope(
             binding_key,
-            binding.create_proviser_fn(binding_key, to_instance='unused'))
+            binding.create_instance_proviser_fn(binding_key, 'unused'))
         binding_two = binding.new_binding_in_default_scope(
             binding_key,
-            binding.create_proviser_fn(binding_key, to_instance='unused'))
+            binding.create_instance_proviser_fn(binding_key, 'unused'))
         binding_mapping = binding.BindingMapping(
             {}, {'colliding-binding-key': [binding_one, binding_two]})
         self.assertRaises(errors.AmbiguousArgNameError,
