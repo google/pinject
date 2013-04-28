@@ -95,7 +95,7 @@ imported modules, but you may sometimes want to restrict the classes for which
 `new_object_graph()` creates implicit bindings.  `new_object_graph()` has two
 args for this purpose.
 
-  * The `modules` arg specifies in which (python) modules to look; this defaults to `ALL_IMPORTED_MODULES`.
+  * The `modules` arg specifies in which (python) modules to look for classes; this defaults to `ALL_IMPORTED_MODULES`.
   * The `classes` arg specifies a exact list of classes.
 
 {{{
@@ -313,8 +313,6 @@ calls the provider method.
 >>>
 }}}
 
-HERE
-
 == Binding precedence ==
 
 Bindings have precedence: explicit bindings take precedence over implicit
@@ -449,7 +447,7 @@ by default.
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class_1 = obj_graph.provide(SomeClass)
 >>> some_class_2 = obj_graph.provide(SomeClass)
->>> some_class_1.foo == some_class_2.foo
+>>> some_class_1.foo is some_class_2.foo
 True
 >>>
 }}}
@@ -459,9 +457,11 @@ instead of reusing them each time they're injected.  If so, you want to use
 _scopes_.
 
 A scope controls memoization (i.e., caching).  A scope can choose to cache
-never, sometimes, or always.  Pinject has two built-in scopes.  _Singleton
-scope_ (`SINGLETON`) is the default and always caches.  _Prototype scope_
-(`PROTOTYPE`) is the other built-in option and does no caching whatsoever.
+never, sometimes, or always.
+
+Pinject has two built-in scopes.  _Singleton scope_ (`SINGLETON`) is the
+default and always caches.  _Prototype scope_ (`PROTOTYPE`) is the other
+built-in option and does no caching whatsoever.
 
 Every binding is associated with a scope.  You can specify a scope for a
 binding by decorating a provider method with `@in_scope()`, or by passing an
@@ -480,13 +480,46 @@ binding by decorating a provider method with `@in_scope()`, or by passing an
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class_1 = obj_graph.provide(SomeClass)
 >>> some_class_2 = obj_graph.provide(SomeClass)
->>> some_class_1.foo == some_class_2.foo
+>>> some_class_1.foo is some_class_2.foo
 False
 >>>
 }}}
 
 If a binding specifies no scope explicitly, then it is in singleton scope.
 Implicit class bindings are always in singleton scope.
+
+Memoization of class bindings works at the class level, not at the binding key
+level.  This means that, if you bind two arg names (or the same arg name with
+two different annotations) to the same class, and the class is in a memoizing
+scope, then the same class instance will be provided when you inject the
+different arg names.
+
+{{{
+>>> class InjectedClass(object):
+...     pass
+...
+>>> class SomeObject(object):
+...     def __init__(self, foo, bar):
+...         self.foo = foo
+...         self.bar = bar
+...
+>>> class SomeBindingSpec(binding.BindingSpec):
+...     def configure(self, bind):
+...         bind('foo', to_class=InjectedClass)
+...         bind('bar', to_class=InjectedClass)
+...
+>>> obj_graph = object_graph.new_object_graph(
+...     binding_specs=[SomeBindingSpec()])
+>>> some_object = obj_graph.provide(SomeObject)
+>>> some_object.foo is some_object.bar
+True
+>>>
+}}}
+
+Pinject memoizes class bindings this way because this is more likely to be
+what you mean if you bind two different arg names to the same class in
+singleton scope: you want only one instance of the class, even though it may
+be injected in multiple places.
 
 == Custom scopes ==
 
@@ -504,9 +537,10 @@ class Scope(object):
 
 The `binding_key` passed to `provide()` will be an object implementing
 `__eq__()` and `__hash__()` but otherwise opaque (you shouldn't need to
-introspect it).  The binding key encapsulates the arg name and annotation (if
-any).  The `default_provider_fn` passed to `provide()` is a zero-arg function
-that, when called, provides an instance of whatever should be provided.
+introspect it).  You can think of the binding key roughly as encapsulating the
+arg name and annotation (if any).  The `default_provider_fn` passed to
+`provide()` is a zero-arg function that, when called, provides an instance of
+whatever should be provided.
 
 The job of a scope's `provide()` function is to return a cached object if
 available and appropriate, otherwise to return (and possibly cache) the result
@@ -549,9 +583,9 @@ to scope as the `id_to_scope` arg of `new_object_graph()`.
 >>> some_class_2 = obj_graph.provide(SomeClass)
 >>> my_scope.clear()
 >>> some_class_3 = obj_graph.provide(SomeClass)
->>> some_class_1.foo == some_class_2.foo
+>>> some_class_1.foo is some_class_2.foo
 True
->>> some_class_2.foo == some_class_3.foo
+>>> some_class_2.foo is some_class_3.foo
 False
 >>>
 }}}
@@ -655,22 +689,5 @@ simultaneously in multiple threads.
 Remember to make locks re-entrant on your custom scope classes, or otherwise
 deal with one object in your custom scope trying to inject another object in
 your custom scope.
-
-=== Singleton only by arg name, not by class ===
-
-Scoping is done per binding and therefore per arg name, not per class (or
-provider function).  For instance, suppose you have separate arg names bound
-to the same class (or provider function) with all bindings in singleton scope.
-
-{{{
-@pinject.provides('foo', in_scope=pinject.SINGLETON)
-@pinject.provides('bar', in_scope=pinject.SINGLETON)
-def provide_foobar():
-  return object()
-}}}
-
-Injecting the same arg name (e.g., `foo`) multiple times will use the same
-(cached) instance, but injecting different arg names (e.g., `foo` and `bar`)
-will use different instances.
 
 That's it for gotchas, for now.

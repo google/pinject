@@ -41,6 +41,8 @@ def get_provider_fn_binding(provider_fn, arg_name):
     if hasattr(provider_fn, _IS_WRAPPER_ATTR):
         annotated_with = getattr(provider_fn, _PROVIDER_ANNOTATED_WITH_ATTR)
         in_scope_id = getattr(provider_fn, _PROVIDER_IN_SCOPE_ID_ATTR)
+        if in_scope_id is None:
+            in_scope_id = scoping.DEFAULT_SCOPE
     else:
         annotated_with = None
         in_scope_id = scoping.DEFAULT_SCOPE
@@ -66,8 +68,7 @@ def _get_pinject_decorated_fn(fn):
         setattr(pinject_decorated_fn, _IS_WRAPPER_ATTR, True)
         setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
         setattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR, None)
-        setattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR,
-                scoping.DEFAULT_SCOPE)
+        setattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR, None)
     return pinject_decorated_fn
 
 
@@ -85,9 +86,15 @@ def _get_pinject_wrapper(arg_binding_key=None,
                 raise errors.MultipleAnnotationsForSameArgError(arg_binding_key)
             getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(arg_binding_key)
         if provider_annotated_with is not None:
+            if getattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR) is not None:
+                raise errors.DuplicateDecoratorError(
+                    '@annotated_with', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
             setattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR,
                     provider_annotated_with)
         if provider_in_scope_id is not None:
+            if getattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR) is not None:
+                raise errors.DuplicateDecoratorError(
+                    '@in_scope', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
             setattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR,
                     provider_in_scope_id)
         return pinject_decorated_fn

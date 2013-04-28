@@ -32,6 +32,13 @@ class CyclicInjectionError(Error):
     pass
 
 
+class DuplicateDecoratorError(Error):
+
+    def __init__(self, decorator_name, fn):
+        Error.__init__(
+            self, '{0} applied twice to {1}'.format(decorator_name, fn))
+
+
 class EmptyBindingSpecError(Error):
 
     def __init__(self, binding_spec):

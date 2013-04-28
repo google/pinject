@@ -72,16 +72,25 @@ class AnnotatedWithTest(unittest.TestCase):
 
     def test_sets_annotated_with(self):
         @wrapping.annotated_with('an-annotation')
-        def new_foo():
+        def provide_foo():
             pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
         self.assertEqual(binding.new_binding_key('foo', 'an-annotation'),
                          provider_fn_binding.binding_key)
 
+    def test_cannot_be_applied_twice(self):
+        def do_bad_annotated_with():
+            @wrapping.annotated_with('an-annotation')
+            @wrapping.annotated_with('an-annotation')
+            def provide_foo():
+                pass
+        self.assertRaises(errors.DuplicateDecoratorError,
+                          do_bad_annotated_with)
+
     def test_omitted_leaves_unannotated(self):
-        def new_foo():
+        def provide_foo():
             pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
         self.assertEqual(binding.new_binding_key('foo'),
                          provider_fn_binding.binding_key)
 
@@ -90,39 +99,36 @@ class InScopeTest(unittest.TestCase):
 
     def test_sets_in_scope_id(self):
         @wrapping.in_scope('a-scope-id')
-        def new_foo():
+        def provide_foo():
             pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
         self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
 
+    def test_cannot_be_applied_twice(self):
+        def do_bad_in_scope():
+            @wrapping.in_scope('a-scope')
+            @wrapping.in_scope('a-scope')
+            def provide_foo():
+                pass
+        self.assertRaises(errors.DuplicateDecoratorError, do_bad_in_scope)
+
     def test_omitted_leaves_unannotated(self):
-        def new_foo():
+        def provide_foo():
             pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
         self.assertEqual(scoping.DEFAULT_SCOPE, provider_fn_binding.scope_id)
 
 
 class GetProviderFnBindingTest(unittest.TestCase):
 
     def test_proviser_calls_provider_fn(self):
-        def new_foo():
+        def provide_foo():
             return 'a-foo'
-        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
+        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
         self.assertEqual('a-foo', call_provisor_fn(provider_fn_binding))
 
     # The rest of get_provider_fn_binding() is tested above in conjuction with
     # @annotated_with() and @in_scope().
-
-
-class AnnotatedWithTest(unittest.TestCase):
-
-    def test_sets_annotated_with(self):
-        @wrapping.annotated_with('an-annotation')
-        def new_foo():
-            pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(new_foo, 'foo')
-        self.assertEqual(binding.new_binding_key('foo', 'an-annotation'),
-                         provider_fn_binding.binding_key)
 
 
 class GetPinjectWrapperTest(unittest.TestCase):
