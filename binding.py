@@ -260,12 +260,39 @@ class Binder(object):
         self._collected_bindings = collected_bindings
         self._scope_ids = scope_ids
         self._lock = threading.Lock()
+        self._class_bindings_created = []
 
     def bind(self, arg_name, annotated_with=None,
              to_class=None, to_instance=None, in_scope=scoping.DEFAULT_SCOPE):
         if in_scope not in self._scope_ids:
             raise errors.UnknownScopeError(in_scope)
         binding_key = new_binding_key(arg_name, annotated_with)
+        specified_to_params = ['to_class' if to_class is not None else None,
+                               'to_instance' if to_instance is not None else None]
+        specified_to_params = [x for x in specified_to_params if x is not None]
+        if not specified_to_params:
+            raise errors.NoBindingTargetError(binding_key)
+        elif len(specified_to_params) > 1:
+            raise errors.MultipleBindingTargetsError(
+                binding_key, specified_to_params)
+
+        # TODO(kurts): this is such a hack; isn't there a better way?
+        if to_class is not None:
+            @wrapping.annotate_arg('_pinject_class', (to_class, in_scope))
+            @wrapping.in_scope(in_scope)
+            @wrapping.annotated_with(annotated_with)
+            def provide_it(_pinject_class):
+                return _pinject_class
+            self._collected_bindings.append(wrapping.get_provider_fn_binding(
+                provide_it, arg_name))
+            if (to_class, in_scope) not in self._class_bindings_created:
+                self._collected_bindings.append(Binding(
+                    new_binding_key('_pinject_class', (to_class, in_scope)),
+                    create_proviser_fn(binding_key, to_class, to_instance=None),
+                    in_scope, desc='TODO(kurts)'))
+                self._class_bindings_created.append((to_class, in_scope))
+            return
+
         proviser_fn = create_proviser_fn(binding_key, to_class, to_instance)
         with self._lock:
             back_frame = inspect.currentframe().f_back
@@ -275,16 +302,8 @@ class Binder(object):
                     back_frame.f_lineno, back_frame.f_code.co_filename)))
 
 
+# TODO(kurts): split this into class and instance functions.
 def create_proviser_fn(binding_key, to_class=None, to_instance=None):
-    specified_to_params = ['to_class' if to_class is not None else None,
-                           'to_instance' if to_instance is not None else None]
-    specified_to_params = [x for x in specified_to_params if x is not None]
-    if not specified_to_params:
-        raise errors.NoBindingTargetError(binding_key)
-    elif len(specified_to_params) > 1:
-        raise errors.MultipleBindingTargetsError(
-            binding_key, specified_to_params)
-
     if to_class is not None:
         if not inspect.isclass(to_class):
             raise errors.InvalidBindingTargetError(

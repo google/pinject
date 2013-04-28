@@ -421,10 +421,10 @@ class BinderTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.binder.bind('an-arg-name', to_class=SomeClass)
-        [only_binding] = self.collected_bindings
-        self.assertEqual(binding.new_binding_key('an-arg-name'),
-                         only_binding.binding_key)
-        self.assertEqual('a-provided-SomeClass', call_provisor_fn(only_binding))
+        [expected_binding] = [b for b in self.collected_bindings
+                              if b.binding_key == binding.new_binding_key('an-arg-name')]
+        # TODO(kurts): test the proviser fn after the dust settles on how
+        # exactly to do class bindings.
 
     def test_can_bind_to_instance(self):
         an_instance = object()
