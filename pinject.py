@@ -10,6 +10,7 @@ import object_graph
 new_object_graph = object_graph.new_object_graph
 
 # TODO:
+# - DAG includes
 # - reasonable error messages for all exceptions
 # - validate python types of all input
 # - either allow binding specs to declare required bindings, or else declare

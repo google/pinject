@@ -5,6 +5,25 @@ Pinject is a dependency injection framework for python.
 The primary goal of Pinject is to help you assemble objects into graphs in
 an easy, maintainable way.
 
+== Overview ==
+
+If you are already familiar with dependency injection frameworks such as
+Guice, this section gives you a high level overview of Pinject and how it
+might be similar to or different than other dependency injection frameworks.
+
+  * Pinject uses code and decorators to configure injection, not a separate config file.
+  * Bindings are keyed by arg name, (not class type, since Python is dynamically typed).
+  * Pinject automatically creates bindings to `some_class` arg names for `SomeClass` classes.
+  * You can ask Pinject only to create bindings from binding specs and classes whose `__init__()` is marked with `@inject`.
+  * A binding spec is a class that creates explicit bindings.
+  * A binding spec can bind arg names to classes or to instances.
+  * A binding spec can bind arg names `foo` to provider methods `provide_foo()`.
+  * Binding specs can depend on (i.e., include) other binding specs.
+  * You can annotate args and bindings to distinguish among args/bindings for the same arg name.
+  * Pinject has two built-in scopes: "singleton" (always memoized; the default) and "prototype" (never memoized).
+  * You can define custom scopes, and you can configure which scopes are accessible from which other scopes.
+  * Pinject doesn't allow injecting `None` by default, but you can turn off that check.
+
 == Basic dependency injection ==
 
 The most important function in the `pinject` module is `new_object_graph()`.
@@ -43,7 +62,7 @@ instantiating `OuterClass`.
 
 Pinject creates implicit bindings for classes.  The implicit bindings assume
 your code follows PEP8 conventions: your classes are named in `CamelCase`, and
-your args are named with `lower_with_underscores`.  Pinject transforms class
+your args are named in `lower_with_underscores`.  Pinject transforms class
 names to injectable arg names by lowercasing words and connecting them with
 underscores.  It will also ignore any leading underscore on the class name.
 
@@ -53,9 +72,9 @@ underscores.  It will also ignore any leading underscore on the class name.
 || '_Foo'     || `foo`     ||
 || `_FooBar`  || `foo_bar` ||
 
-If two classes map to the same arg name, whether in the same module or
-different modules, Pinject will not create an implicit binding for that arg
-name (though it will not raise an error).
+If two classes map to the same arg name, whether those classes are in the same
+module or different modules, Pinject will not create an implicit binding for
+that arg name (though it will not raise an error).
 
 `new_object_graph()` takes a `get_arg_names_from_class_name` arg.  This is a
 function that takes in a class name (e.g., `FooBar`) and returns the arg names
@@ -84,19 +103,18 @@ behavior above by default but can be overridden.
 
 The function passed as the `get_arg_names_from_class_name` arg can return as
 many or as few arg names as it wants.  If it always returns the empty list
-(i.e., if it is `lambda _: []`), then that disables implicit class bindings
-(though it's easier and clearer to pass in `modules=None`; see below).
+(i.e., if it is `lambda _: []`), then that disables implicit class bindings.
 
 == Finding classes and providers for implicit bindings ==
 
-So far, the examples have not told `new_object_graph()` for which classes it
-should create implicit bindings.  `new_object_graph()` by default looks in all
-imported modules, but you may sometimes want to restrict the classes for which
-`new_object_graph()` creates implicit bindings.  `new_object_graph()` has two
-args for this purpose.
+So far, the examples have not told `new_object_graph()` the classes for which
+it should create implicit bindings.  `new_object_graph()` by default looks in
+all imported modules, but you may sometimes want to restrict the classes for
+which `new_object_graph()` creates implicit bindings.  `new_object_graph()`
+has two args for this purpose.
 
   * The `modules` arg specifies in which (python) modules to look for classes; this defaults to `ALL_IMPORTED_MODULES`.
-  * The `classes` arg specifies a exact list of classes.
+  * The `classes` arg specifies a exact list of classes; this defaults to `None`.
 
 {{{
 >>> class SomeClass(object):
@@ -121,7 +139,7 @@ inherits from `BindingSpec`.  A binding spec can do three things:
 
   * Its `configure()` method can create explicit bindings to classes or instances.
   * Its `dependencies()` method can return depended-on binding specs.
-  * It can have provider methods.
+  * It can have provider methods, for which explicit bindings are created.
 
 The `new_object_graph()` function takes a sequence of binding spec instances
 as its `binding_specs` arg.  `new_object_graph()` takes binding spec
