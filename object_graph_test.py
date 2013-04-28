@@ -208,6 +208,22 @@ class ObjectGraphProvideTest(unittest.TestCase):
         self.assertIs(class_one.foo, class_two.foo)
         self.assertIsNot(class_one.bar, class_two.bar)
 
+    def test_singleton_classes_are_singletons_across_arg_names(self):
+        class InjectedClass(object):
+            pass
+        class SomeClass(object):
+            def __init__(self, foo, bar):
+                self.foo = foo
+                self.bar = bar
+        class SomeBindingSpec(binding.BindingSpec):
+            def configure(self, bind):
+                bind('foo', to_class=InjectedClass, in_scope=scoping.SINGLETON)
+                bind('bar', to_class=InjectedClass, in_scope=scoping.SINGLETON)
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()])
+        some_class = obj_graph.provide(SomeClass)
+        self.assertIs(some_class.foo, some_class.bar)
+
     def test_raises_error_if_only_binding_has_different_annotation(self):
         class ClassOne(object):
             @wrapping.annotate_arg('foo', 'an-annotation')

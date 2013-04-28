@@ -16,7 +16,6 @@ new_object_graph = object_graph.new_object_graph
 # - either allow binding specs to declare required bindings, or else declare
 #     all entry points up front
 # - disallow annotations that conflict
-# - don't allow leading underscores on provider methods
 # - standard tests for scopes (reentrant? thread-safe?), annotations (eq?
 #      hash?), etc.
 

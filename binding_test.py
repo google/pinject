@@ -415,7 +415,7 @@ class BinderTest(unittest.TestCase):
         self.collected_bindings = []
         self.binder = binding.Binder(
             self.collected_bindings,
-            scope_ids=[scoping.PROTOTYPE, 'known-scope'])
+            scope_ids=[scoping.DEFAULT_SCOPE, 'known-scope'])
 
     def test_can_bind_to_class(self):
         class SomeClass(object):
