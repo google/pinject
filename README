@@ -42,7 +42,7 @@ return a reasonably configured default `ObjectGraph`.
 ...
 >>> obj_graph = pinject.new_object_graph()
 >>> outer_class = obj_graph.provide(OuterClass)
->>> outer_class.inner_class.forty_two
+>>> print outer_class.inner_class.forty_two
 42
 >>>
 }}}
@@ -96,7 +96,7 @@ behavior above by default but can be overridden.
 >>> obj_graph = pinject.new_object_graph(
 ...     get_arg_names_from_class_name=custom_get_arg_names)
 >>> outer_class = obj_graph.provide(OuterClass)
->>> outer_class.my_InnerClass.forty_two
+>>> print outer_class.my_InnerClass.forty_two
 42
 >>>
 }}}
@@ -181,7 +181,7 @@ as an arg and calls that function to create explicit bindings.
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[MyBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.long_name.foo
+>>> print some_class.long_name.foo
 'foo'
 >>>
 }}}
@@ -203,7 +203,7 @@ must be an arg name (as a `str`), to exactly one of two kinds of things.
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[MyBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
+>>> print some_class.foo
 'a-foo'
 >>>
 }}}
@@ -231,7 +231,7 @@ specs from its `dependencies()` method.
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[BindingSpecTwo()])
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foobar
+>>> print some_class.foobar
 'foo--bar'
 >>>
 }}}
@@ -268,7 +268,7 @@ then creates explicit bindings for them.
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
+>>> print some_class.foo
 'some-complex-foo'
 >>>
 }}}
@@ -300,7 +300,7 @@ You can override this default behavior by passing an arg named
 ...     binding_specs=[SomeBindingSpec()],
 ...     get_arg_names_from_provider_fn_name=custom_get_arg_names)
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
+>>> print some_class.foo
 'some-foo'
 >>>
 }}}
@@ -326,7 +326,7 @@ calls the provider method.
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foobar
+>>> print some_class.foobar
 'foo-bar'
 >>>
 }}}
@@ -355,7 +355,7 @@ Pinject will prefer an explicit to an implicit binding.
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
+>>> print some_class.foo
 'foo-instance'
 >>>
 }}}
@@ -394,7 +394,7 @@ marked for explicit binding if their initializers are decorated with
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()],
 ...     only_use_explicit_bindings=True)
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
+>>> print some_class.foo
 'explicit-foo'
 >>>
 }}}
@@ -423,21 +423,21 @@ annotation object.
 
 {{{
 >>> class SomeClass(object):
-...     @pinject.annotate('foo', 'annot')
+...     @pinject.annotate_arg('foo', 'annot')
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
 >>> class SomeBindingSpec(pinject.BindingSpec):
 ...     @pinject.annotated_with('annot')
-...     def provide_annot_foo():
+...     def provide_foo(self):
 ...         return 'foo-with-annot'
 ...     @pinject.annotated_with(12345)
-...     def provide_12345_foo():
+...     def provide_12345_foo(self):
 ...         return '12345-foo'
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class = obj_graph.provide(SomeClass)
->>> some_class.foo
+>>> print some_class.foo
 'foo-with-annot'
 >>>
 }}}
@@ -465,7 +465,7 @@ by default.
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class_1 = obj_graph.provide(SomeClass)
 >>> some_class_2 = obj_graph.provide(SomeClass)
->>> some_class_1.foo is some_class_2.foo
+>>> print some_class_1.foo is some_class_2.foo
 True
 >>>
 }}}
@@ -498,7 +498,7 @@ binding by decorating a provider method with `@in_scope()`, or by passing an
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
 >>> some_class_1 = obj_graph.provide(SomeClass)
 >>> some_class_2 = obj_graph.provide(SomeClass)
->>> some_class_1.foo is some_class_2.foo
+>>> print some_class_1.foo is some_class_2.foo
 False
 >>>
 }}}
@@ -521,15 +521,15 @@ different arg names.
 ...         self.foo = foo
 ...         self.bar = bar
 ...
->>> class SomeBindingSpec(binding.BindingSpec):
+>>> class SomeBindingSpec(pinject.BindingSpec):
 ...     def configure(self, bind):
 ...         bind('foo', to_class=InjectedClass)
 ...         bind('bar', to_class=InjectedClass)
 ...
->>> obj_graph = object_graph.new_object_graph(
+>>> obj_graph = pinject.new_object_graph(
 ...     binding_specs=[SomeBindingSpec()])
 >>> some_object = obj_graph.provide(SomeObject)
->>> some_object.foo is some_object.bar
+>>> print some_object.foo is some_object.bar
 True
 >>>
 }}}
@@ -601,9 +601,9 @@ to scope as the `id_to_scope` arg of `new_object_graph()`.
 >>> some_class_2 = obj_graph.provide(SomeClass)
 >>> my_scope.clear()
 >>> some_class_3 = obj_graph.provide(SomeClass)
->>> some_class_1.foo is some_class_2.foo
+>>> print some_class_1.foo is some_class_2.foo
 True
->>> some_class_2.foo is some_class_3.foo
+>>> print some_class_2.foo is some_class_3.foo
 False
 >>>
 }}}

@@ -1,0 +1,33 @@
+TODO:
+- figure out how a single binding spec can have two providers for the same arg name but different annotations
+- allow DAG includes
+- reasonable error messages for all exceptions
+- validate python types of all input
+- either allow binding specs to declare required bindings, or else declare
+    all entry points up front
+- standard tests for scopes (reentrant? thread-safe?), annotations (eq?
+     hash?), etc.
+
+Maybe TODO:
+- eager singletons
+- allow field injection
+    (lack of field docstrings is OK because they're the appropriate instances of that type)
+    (but get a second opinion on whether it decreases testability)
+- find modules on PYTHONPATH instead of having to import them
+- automatically instantiate the concrete subclass of an interface?
+    (use abc module)
+- visual graph of created objects
+
+Questions:
+- How should I deal with someone wanting to instantiate a class in a scope,
+    without using an arg name in between?  Scopes apply to binding keys,
+    which are arg names, not classes.  Is it going to be harmful if you
+    can't instantiate a class directly in a scope?  I don't think so, but
+    I'm not sure.  It makes some things awkward, like a special scope from
+    which it's OK to inject objects from any scope.  Maybe the main
+    ObjectGraph method should be wrap() instead of provide_class()??
+- Remove ObjectGraph.wrap()?
+- Why should @inject apply to __init__() rather than the class?
+- What's the advantage of making the user list entry points in order to
+    validate the object graph, instead of, say, doing it the Guice way with
+    require()?
