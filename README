@@ -48,8 +48,8 @@ return a reasonably configured default `ObjectGraph`.
 }}}
 
 As you can see, you don't need to tell Pinject how to construct its
-`ObjectGraph`, and you don't even need to put decorators in your code.
-Pinject has reasonable defaults that allow it to work out of the box.
+`ObjectGraph`, and you don't need to put decorators in your code.  Pinject has
+reasonable defaults that allow it to work out of the box.
 
 A Pinject _binding_ is an association between an _arg name_ and a _provider_.
 In the example above, Pinject created a binding between the arg name
@@ -410,16 +410,15 @@ name.  For instance, you may have two classes in different parts of your
 codebase named the same thing, and you want to use the same arg name in
 different parts of your codebase.
 
-On the binding side, an annotation changes the binding so that the key of the
-binding includes the annotation object.  When using `bind()` in a binding
-spec's `configure()` method, you can pass an `annotated_with` arg to specify
-the annotation object.  When defining a provider method, you can use the
-`@annotated_with()` decorator to specify the annotation object
-
 On the arg side, an annotation tells Pinject only to inject using a binding
 whose binding key includes the annotation object.  You can use
 `@annotate_arg()` on an initializer, or on a provider method, to specify the
 annotation object.
+
+On the binding side, an annotation changes the binding so that the key of the
+binding includes the annotation object.  When using `bind()` in a binding
+spec's `configure()` method, you can pass an `annotated_with` arg to specify
+the annotation object.
 
 {{{
 >>> class SomeClass(object):
@@ -428,10 +427,36 @@ annotation object.
 ...         self.foo = foo
 ...
 >>> class SomeBindingSpec(pinject.BindingSpec):
-...     @pinject.annotated_with('annot')
-...     def provide_foo(self):
+...     def configure(self, bind):
+...         bind('foo', annotated_with='annot', to_instance='foo-with-annot')
+...         bind('foo', annotated_with=12345, to_instance='12345-foo')
+...
+>>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
+>>> some_class = obj_graph.provide(SomeClass)
+>>> print some_class.foo
+'foo-with-annot'
+>>>
+}}}
+
+Also on the binding side, when defining a provider method, you can use the
+`@provides()` decorator.  The decorator lets you pass an `annotated_with` arg
+to specify the annotation object.  The decorator's first param, `arg_name`
+also lets you override what arg name you want the provider to be for.  This is
+optional but useful if you want the same binding spec to have two provider
+methods for the same arg name but annotated differently.  (Otherwise, the
+methods would need to be named the same, since they're for the same arg name.)
+
+{{{
+>>> class SomeClass(object):
+...     @pinject.annotate_arg('foo', 'annot')
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> class SomeBindingSpec(pinject.BindingSpec):
+...     @pinject.provides('foo', annotated_with='annot')
+...     def provide_annot_foo(self):
 ...         return 'foo-with-annot'
-...     @pinject.annotated_with(12345)
+...     @pinject.provides('foo', annotated_with=12345)
 ...     def provide_12345_foo(self):
 ...         return '12345-foo'
 ...
@@ -491,7 +516,7 @@ binding by decorating a provider method with `@in_scope()`, or by passing an
 ...         self.foo = foo
 ...
 >>> class SomeBindingSpec(pinject.BindingSpec):
-...     @pinject.in_scope(pinject.PROTOTYPE)
+...     @pinject.provides(in_scope=pinject.PROTOTYPE)
 ...     def provide_foo(self):
 ...         return object()
 ...
@@ -589,7 +614,7 @@ to scope as the `id_to_scope` arg of `new_object_graph()`.
 ...         self.foo = foo
 ...
 >>> class SomeBindingSpec(pinject.BindingSpec)
-...     @pinject.in_scope('my custom scope')
+...     @pinject.provides(in_scope='my custom scope')
 ...     def provide_foo():
 ...         return object()
 ...
@@ -664,10 +689,10 @@ be injected into an object of the second scope.
 ...         self.foo = foo
 ...
 >>> class SomeBindingSpec(pinject.BindingSpec)
-...     @pinject.in_scope(pinject.SINGLETON)
+...     @pinject.provides(in_scope=pinject.SINGLETON)
 ...     def provide_foo(bar):
 ...         return 'foo-' + bar
-...     @pinject.in_scope('request scope')
+...     @pinject.provides(in_scope='request scope')
 ...     def provide_bar():
 ...         return '-bar'
 ...

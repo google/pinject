@@ -19,6 +19,5 @@ SINGLETON = scoping.SINGLETON
 
 import wrapping
 annotate_arg = wrapping.annotate_arg
-annotated_with = wrapping.annotated_with
-in_scope = wrapping.in_scope
 injectable = wrapping.injectable
+provides = wrapping.provides

@@ -278,8 +278,7 @@ class Binder(object):
         # TODO(kurts): this is such a hack; isn't there a better way?
         if to_class is not None:
             @wrapping.annotate_arg('_pinject_class', (to_class, in_scope))
-            @wrapping.in_scope(in_scope)
-            @wrapping.annotated_with(annotated_with)
+            @wrapping.provides(annotated_with=annotated_with, in_scope=in_scope)
             def provide_it(_pinject_class):
                 return _pinject_class
             with self._lock:

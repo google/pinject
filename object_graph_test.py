@@ -69,7 +69,7 @@ class NewObjectGraphTest(unittest.TestCase):
             def __init__(self, foo):
                 self.foo = foo
         class SomeBindingSpec(binding.BindingSpec):
-            @wrapping.in_scope('foo-scope')
+            @wrapping.provides(in_scope='foo-scope')
             def provide_foo(self):
                 return object()
         obj_graph = object_graph.new_object_graph(
@@ -185,7 +185,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo', class_one.foo)
 
-    def test_annotated_arg_is_provided_in_correct_scope(self):
+    def test_all_parts_of_provide_decorator_are_used(self):
         class SomeClass(object):
             @wrapping.annotate_arg('foo', 'specific-foo')
             @wrapping.annotate_arg('bar', 'specific-bar')
@@ -193,12 +193,12 @@ class ObjectGraphProvideTest(unittest.TestCase):
                 self.foo = foo
                 self.bar = bar
         class SomeBindingSpec(binding.BindingSpec):
-            @wrapping.annotated_with('specific-foo')
-            @wrapping.in_scope(scoping.SINGLETON)
+            @wrapping.provides('foo', annotated_with='specific-foo',
+                               in_scope=scoping.SINGLETON)
             def provide_foo(self):
                 return object()
-            @wrapping.annotated_with('specific-bar')
-            @wrapping.in_scope(scoping.PROTOTYPE)
+            @wrapping.provides('bar', annotated_with='specific-bar',
+                               in_scope=scoping.PROTOTYPE)
             def provide_bar(self):
                 return object()
         obj_graph = object_graph.new_object_graph(
@@ -291,17 +291,17 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
-    def test_can_use_annotate_with_provides(self):
+    def test_can_use_annotate_arg_with_provides(self):
         class ClassOne(object):
             @wrapping.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         class SomeBindingSpec(binding.BindingSpec):
-            @wrapping.annotated_with('an-annotation')
+            @wrapping.provides(annotated_with='an-annotation')
             @wrapping.annotate_arg('bar', 'another-annotation')
             def provide_foo(self, bar):
                 return 'a-foo with {0}'.format(bar)
-            @wrapping.annotated_with('another-annotation')
+            @wrapping.provides(annotated_with='another-annotation')
             def provide_bar(self):
                 return 'a-bar'
         obj_graph = object_graph.new_object_graph(

@@ -1,5 +1,5 @@
 TODO:
-- figure out how a single binding spec can have two providers for the same arg name but different annotations
+- disallow multiple @provides() decorators on same function
 - allow DAG includes
 - reasonable error messages for all exceptions
 - validate python types of all input

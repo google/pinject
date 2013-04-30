@@ -30,12 +30,10 @@ def injectable(fn):
     return _get_pinject_decorated_fn(fn)
 
 
-def annotated_with(annotation):
-    return _get_pinject_wrapper(provider_annotated_with=annotation)
-
-
-def in_scope(scope_id):
-    return _get_pinject_wrapper(provider_in_scope_id=scope_id)
+def provides(arg_name=None, annotated_with=None, in_scope=None):
+    return _get_pinject_wrapper(provider_arg_name=arg_name,
+                                provider_annotated_with=annotated_with,
+                                provider_in_scope_id=in_scope)
 
 
 def get_provider_fn_bindings(provider_fn, default_arg_names):
@@ -73,6 +71,8 @@ def _get_pinject_decorated_fn(fn):
         def _pinject_decorated_fn(fn_to_wrap, *pargs, **kwargs):
             return fn_to_wrap(*pargs, **kwargs)
         pinject_decorated_fn = decorator.decorator(_pinject_decorated_fn, fn)
+        # TODO(kurts): split this so that __init__() decorators don't get
+        # provider attributes.
         setattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR, [])
         setattr(pinject_decorated_fn, _IS_WRAPPER_ATTR, True)
         setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
@@ -82,7 +82,7 @@ def _get_pinject_decorated_fn(fn):
     return pinject_decorated_fn
 
 
-def _get_pinject_wrapper(arg_binding_key=None,
+def _get_pinject_wrapper(arg_binding_key=None, provider_arg_name=None,
                          provider_annotated_with=None, provider_in_scope_id=None):
     def get_pinject_decorated_fn_with_additions(fn):
         pinject_decorated_fn = _get_pinject_decorated_fn(fn)
@@ -95,16 +95,22 @@ def _get_pinject_wrapper(arg_binding_key=None,
                     getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
                 raise errors.MultipleAnnotationsForSameArgError(arg_binding_key)
             getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(arg_binding_key)
+        if provider_arg_name is not None:
+            if getattr(pinject_decorated_fn, _PROVIDER_ARG_NAME_ATTR) is not None:
+                raise errors.DuplicateDecoratorError(
+                    'arg_name', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
+            setattr(pinject_decorated_fn, _PROVIDER_ARG_NAME_ATTR,
+                    provider_arg_name)
         if provider_annotated_with is not None:
             if getattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR) is not None:
                 raise errors.DuplicateDecoratorError(
-                    '@annotated_with', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
+                    'annotated_with', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
             setattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR,
                     provider_annotated_with)
         if provider_in_scope_id is not None:
             if getattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR) is not None:
                 raise errors.DuplicateDecoratorError(
-                    '@in_scope', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
+                    'in_scope', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
             setattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR,
                     provider_in_scope_id)
         return pinject_decorated_fn

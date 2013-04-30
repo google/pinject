@@ -68,54 +68,34 @@ class InjectableTest(unittest.TestCase):
                           do_bad_injectable)
 
 
-class AnnotatedWithTest(unittest.TestCase):
+class ProvidesTest(unittest.TestCase):
 
-    def test_sets_annotated_with(self):
-        @wrapping.annotated_with('an-annotation')
+    def test_sets_arg_values(self):
+        @wrapping.provides('an-arg-name', annotated_with='an-annotation',
+                           in_scope='a-scope-id')
         def provide_foo():
             pass
         [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
-        self.assertEqual(binding.new_binding_key('foo', 'an-annotation'),
+        self.assertEqual(binding.new_binding_key('an-arg-name', 'an-annotation'),
                          provider_fn_binding.binding_key)
+        self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
 
     def test_cannot_be_applied_twice(self):
         def do_bad_annotated_with():
-            @wrapping.annotated_with('an-annotation')
-            @wrapping.annotated_with('an-annotation')
+            @wrapping.provides(annotated_with='an-annotation')
+            @wrapping.provides(annotated_with='an-annotation')
             def provide_foo():
                 pass
         self.assertRaises(errors.DuplicateDecoratorError,
                           do_bad_annotated_with)
 
-    def test_omitted_leaves_unannotated(self):
+    def test_uses_defaults_when_args_omitted(self):
+        @wrapping.provides()
         def provide_foo():
             pass
         [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(binding.new_binding_key('foo'),
                          provider_fn_binding.binding_key)
-
-
-class InScopeTest(unittest.TestCase):
-
-    def test_sets_in_scope_id(self):
-        @wrapping.in_scope('a-scope-id')
-        def provide_foo():
-            pass
-        [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
-        self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
-
-    def test_cannot_be_applied_twice(self):
-        def do_bad_in_scope():
-            @wrapping.in_scope('a-scope')
-            @wrapping.in_scope('a-scope')
-            def provide_foo():
-                pass
-        self.assertRaises(errors.DuplicateDecoratorError, do_bad_in_scope)
-
-    def test_omitted_leaves_unannotated(self):
-        def provide_foo():
-            pass
-        [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(scoping.DEFAULT_SCOPE, provider_fn_binding.scope_id)
 
 
