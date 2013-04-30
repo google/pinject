@@ -74,7 +74,7 @@ class AnnotatedWithTest(unittest.TestCase):
         @wrapping.annotated_with('an-annotation')
         def provide_foo():
             pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
+        [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(binding.new_binding_key('foo', 'an-annotation'),
                          provider_fn_binding.binding_key)
 
@@ -90,7 +90,7 @@ class AnnotatedWithTest(unittest.TestCase):
     def test_omitted_leaves_unannotated(self):
         def provide_foo():
             pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
+        [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(binding.new_binding_key('foo'),
                          provider_fn_binding.binding_key)
 
@@ -101,7 +101,7 @@ class InScopeTest(unittest.TestCase):
         @wrapping.in_scope('a-scope-id')
         def provide_foo():
             pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
+        [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
 
     def test_cannot_be_applied_twice(self):
@@ -115,7 +115,7 @@ class InScopeTest(unittest.TestCase):
     def test_omitted_leaves_unannotated(self):
         def provide_foo():
             pass
-        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
+        [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(scoping.DEFAULT_SCOPE, provider_fn_binding.scope_id)
 
 
@@ -124,7 +124,7 @@ class GetProviderFnBindingTest(unittest.TestCase):
     def test_proviser_calls_provider_fn(self):
         def provide_foo():
             return 'a-foo'
-        provider_fn_binding = wrapping.get_provider_fn_binding(provide_foo, 'foo')
+        [provider_fn_binding] = wrapping.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual('a-foo', call_provisor_fn(provider_fn_binding))
 
     # The rest of get_provider_fn_binding() is tested above in conjuction with

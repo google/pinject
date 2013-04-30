@@ -231,10 +231,9 @@ def get_provider_bindings(
     provider_bindings = []
     fns = inspect.getmembers(binding_spec, lambda x: type(x) == types.MethodType)
     for _, fn in fns:
-        arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
-        for arg_name in arg_names:
-            provider_bindings.append(
-                wrapping.get_provider_fn_binding(fn, arg_name))
+        default_arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
+        provider_bindings.extend(
+            wrapping.get_provider_fn_bindings(fn, default_arg_names))
     return provider_bindings
 
 
@@ -284,8 +283,8 @@ class Binder(object):
             def provide_it(_pinject_class):
                 return _pinject_class
             with self._lock:
-                self._collected_bindings.append(wrapping.get_provider_fn_binding(
-                    provide_it, arg_name))
+                self._collected_bindings.extend(wrapping.get_provider_fn_bindings(
+                    provide_it, [arg_name]))
                 if (to_class, in_scope) not in self._class_bindings_created:
                     self._collected_bindings.append(Binding(
                         new_binding_key('_pinject_class', (to_class, in_scope)),

@@ -13,6 +13,7 @@ _ARG_BINDING_KEYS_ATTR = '_pinject_arg_binding_keys'
 _IS_WRAPPER_ATTR = '_pinject_is_wrapper'
 _ORIG_FN_ATTR = '_pinject_orig_fn'
 _PROVIDER_ANNOTATED_WITH_ATTR = '_pinject_provider_annotated_with'
+_PROVIDER_ARG_NAME_ATTR = '_pinject_provider_arg_name'
 _PROVIDER_IN_SCOPE_ID_ATTR = '_pinject_in_scope_id'
 
 
@@ -37,24 +38,32 @@ def in_scope(scope_id):
     return _get_pinject_wrapper(provider_in_scope_id=scope_id)
 
 
-def get_provider_fn_binding(provider_fn, arg_name):
+def get_provider_fn_bindings(provider_fn, default_arg_names):
     if hasattr(provider_fn, _IS_WRAPPER_ATTR):
         annotated_with = getattr(provider_fn, _PROVIDER_ANNOTATED_WITH_ATTR)
+        arg_name = getattr(provider_fn, _PROVIDER_ARG_NAME_ATTR)
+        if arg_name is not None:
+            arg_names = [arg_name]
+        else:
+            arg_names = default_arg_names
         in_scope_id = getattr(provider_fn, _PROVIDER_IN_SCOPE_ID_ATTR)
         if in_scope_id is None:
             in_scope_id = scoping.DEFAULT_SCOPE
     else:
         annotated_with = None
+        arg_names = default_arg_names
         in_scope_id = scoping.DEFAULT_SCOPE
-    binding_key = binding.new_binding_key(arg_name, annotated_with)
     # TODO(kurts): don't call private method of obj_graph.
     proviser_fn = lambda binding_context, obj_graph: obj_graph._call_with_injection(
         provider_fn, binding_context)
     proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
-    return binding.Binding(
-        binding_key, proviser_fn, in_scope_id,
-        desc='the provider function {0} from module {1}'.format(
-            provider_fn, provider_fn.__module__))
+    return [
+        binding.Binding(
+            binding.new_binding_key(arg_name, annotated_with),
+            proviser_fn, in_scope_id,
+            desc='the provider function {0} from module {1}'.format(
+                provider_fn, provider_fn.__module__))
+        for arg_name in arg_names]
 
 
 def _get_pinject_decorated_fn(fn):
@@ -68,6 +77,7 @@ def _get_pinject_decorated_fn(fn):
         setattr(pinject_decorated_fn, _IS_WRAPPER_ATTR, True)
         setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
         setattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR, None)
+        setattr(pinject_decorated_fn, _PROVIDER_ARG_NAME_ATTR, None)
         setattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR, None)
     return pinject_decorated_fn
 
