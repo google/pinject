@@ -19,6 +19,11 @@ import sys
 import binding
 BindingSpec = binding.BindingSpec
 
+import decorators
+annotate_arg = decorators.annotate_arg
+injectable = decorators.injectable
+provides = decorators.provides
+
 import errors
 Error = errors.Error
 for thing in dir(errors):
@@ -32,8 +37,3 @@ import scoping
 PROTOTYPE = scoping.PROTOTYPE
 Scope = scoping.Scope
 SINGLETON = scoping.SINGLETON
-
-import wrapping
-annotate_arg = wrapping.annotate_arg
-injectable = wrapping.injectable
-provides = wrapping.provides

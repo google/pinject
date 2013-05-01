@@ -23,10 +23,10 @@ import types
 import decorator
 
 import annotation as annotation_lib
+import decorators
 import errors
 import scoping
 import providing
-import wrapping
 
 
 class BindingKey(object):
@@ -229,7 +229,7 @@ def get_explicit_class_bindings(
         get_arg_names_from_class_name=default_get_arg_names_from_class_name):
     explicit_bindings = []
     for cls in classes:
-        if wrapping.is_explicitly_injectable(cls):
+        if decorators.is_explicitly_injectable(cls):
             for arg_name in get_arg_names_from_class_name(cls.__name__):
                 binding_key = new_binding_key(arg_name)
                 proviser_fn = create_class_proviser_fn(binding_key, cls)
@@ -248,7 +248,7 @@ def get_provider_bindings(
     for _, fn in fns:
         default_arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         provider_bindings.extend(
-            wrapping.get_provider_fn_bindings(fn, default_arg_names))
+            decorators.get_provider_fn_bindings(fn, default_arg_names))
     return provider_bindings
 
 
@@ -292,12 +292,12 @@ class Binder(object):
 
         # TODO(kurts): this is such a hack; isn't there a better way?
         if to_class is not None:
-            @wrapping.annotate_arg('_pinject_class', (to_class, in_scope))
-            @wrapping.provides(annotated_with=annotated_with, in_scope=in_scope)
+            @decorators.annotate_arg('_pinject_class', (to_class, in_scope))
+            @decorators.provides(annotated_with=annotated_with, in_scope=in_scope)
             def provide_it(_pinject_class):
                 return _pinject_class
             with self._lock:
-                self._collected_bindings.extend(wrapping.get_provider_fn_bindings(
+                self._collected_bindings.extend(decorators.get_provider_fn_bindings(
                     provide_it, [arg_name]))
                 if (to_class, in_scope) not in self._class_bindings_created:
                     self._collected_bindings.append(Binding(

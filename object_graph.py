@@ -19,11 +19,11 @@ import inspect
 import types
 
 import binding
+import decorators
 import errors
 import finding
 import providing
 import scoping
-import wrapping
 
 
 def new_object_graph(
@@ -72,7 +72,7 @@ def new_object_graph(
     binding_mapping = binding.BindingMapping(
         binding_key_to_binding, collided_binding_key_to_bindings)
 
-    is_injectable_fn = {True: wrapping.is_explicitly_injectable,
+    is_injectable_fn = {True: decorators.is_explicitly_injectable,
                         False: (lambda cls: True)}[only_use_explicit_bindings]
     obj_graph = ObjectGraph(binding_mapping, bindable_scopes, is_injectable_fn,
                             allow_injecting_none)
@@ -142,7 +142,7 @@ class ObjectGraph(object):
 
     def _get_injection_kwargs(self, fn, binding_context):
         kwargs = {}
-        arg_binding_keys = wrapping.get_injectable_arg_binding_keys(fn)
+        arg_binding_keys = decorators.get_injectable_arg_binding_keys(fn)
         for arg_binding_key in arg_binding_keys:
             arg_binding_key.put_provided_value_in_kwargs(
                 self._provide_from_binding_key(arg_binding_key, binding_context),

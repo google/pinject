@@ -14,7 +14,7 @@ might be similar to or different than other dependency injection frameworks.
   * Pinject uses code and decorators to configure injection, not a separate config file.
   * Bindings are keyed by arg name, (not class type, since Python is dynamically typed).
   * Pinject automatically creates bindings to `some_class` arg names for `SomeClass` classes.
-  * You can ask Pinject only to create bindings from binding specs and classes whose `__init__()` is marked with `@inject`.
+  * You can ask Pinject only to create bindings from binding specs and classes whose `__init__()` is marked with `@injectable`.
   * A binding spec is a class that creates explicit bindings.
   * A binding spec can bind arg names to classes or to instances.
   * A binding spec can bind arg names `foo` to provider methods `provide_foo()`.

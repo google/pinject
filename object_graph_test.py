@@ -18,10 +18,10 @@ import inspect
 import unittest
 
 import binding
+import decorators
 import errors
 import object_graph
 import scoping
-import wrapping
 
 
 class NewObjectGraphTest(unittest.TestCase):
@@ -84,7 +84,7 @@ class NewObjectGraphTest(unittest.TestCase):
             def __init__(self, foo):
                 self.foo = foo
         class SomeBindingSpec(binding.BindingSpec):
-            @wrapping.provides(in_scope='foo-scope')
+            @decorators.provides(in_scope='foo-scope')
             def provide_foo(self):
                 return object()
         obj_graph = object_graph.new_object_graph(
@@ -189,7 +189,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_can_provide_arg_with_annotation(self):
         class ClassOne(object):
-            @wrapping.annotate_arg('foo', 'an-annotation')
+            @decorators.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         class SomeBindingSpec(binding.BindingSpec):
@@ -202,18 +202,18 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_all_parts_of_provide_decorator_are_used(self):
         class SomeClass(object):
-            @wrapping.annotate_arg('foo', 'specific-foo')
-            @wrapping.annotate_arg('bar', 'specific-bar')
+            @decorators.annotate_arg('foo', 'specific-foo')
+            @decorators.annotate_arg('bar', 'specific-bar')
             def __init__(self, foo, bar):
                 self.foo = foo
                 self.bar = bar
         class SomeBindingSpec(binding.BindingSpec):
-            @wrapping.provides('foo', annotated_with='specific-foo',
-                               in_scope=scoping.SINGLETON)
+            @decorators.provides('foo', annotated_with='specific-foo',
+                                 in_scope=scoping.SINGLETON)
             def provide_foo(self):
                 return object()
-            @wrapping.provides('bar', annotated_with='specific-bar',
-                               in_scope=scoping.PROTOTYPE)
+            @decorators.provides('bar', annotated_with='specific-bar',
+                                 in_scope=scoping.PROTOTYPE)
             def provide_bar(self):
                 return object()
         obj_graph = object_graph.new_object_graph(
@@ -241,7 +241,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_raises_error_if_only_binding_has_different_annotation(self):
         class ClassOne(object):
-            @wrapping.annotate_arg('foo', 'an-annotation')
+            @decorators.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         class SomeBindingSpec(binding.BindingSpec):
@@ -254,7 +254,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_raises_error_if_only_binding_has_no_annotation(self):
         class ClassOne(object):
-            @wrapping.annotate_arg('foo', 'an-annotation')
+            @decorators.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         class SomeBindingSpec(binding.BindingSpec):
@@ -308,15 +308,15 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_can_use_annotate_arg_with_provides(self):
         class ClassOne(object):
-            @wrapping.annotate_arg('foo', 'an-annotation')
+            @decorators.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
         class SomeBindingSpec(binding.BindingSpec):
-            @wrapping.provides(annotated_with='an-annotation')
-            @wrapping.annotate_arg('bar', 'another-annotation')
+            @decorators.provides(annotated_with='an-annotation')
+            @decorators.annotate_arg('bar', 'another-annotation')
             def provide_foo(self, bar):
                 return 'a-foo with {0}'.format(bar)
-            @wrapping.provides(annotated_with='another-annotation')
+            @decorators.provides(annotated_with='another-annotation')
             def provide_bar(self):
                 return 'a-bar'
         obj_graph = object_graph.new_object_graph(
@@ -326,7 +326,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_inject_decorated_class_can_be_directly_provided(self):
         class SomeClass(object):
-            @wrapping.injectable
+            @decorators.injectable
             def __init__(self):
                 self.foo = 'a-foo'
         obj_graph = object_graph.new_object_graph(
@@ -345,11 +345,11 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_inject_decorated_class_is_explicitly_bound(self):
         class ClassOne(object):
-            @wrapping.injectable
+            @decorators.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         class ClassTwo(object):
-            @wrapping.injectable
+            @decorators.injectable
             def __init__(self):
                 self.foo = 'a-foo'
         obj_graph = object_graph.new_object_graph(
@@ -360,7 +360,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_explicit_binding_is_explicitly_bound(self):
         class ClassOne(object):
-            @wrapping.injectable
+            @decorators.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         class SomeBindingSpec(binding.BindingSpec):
@@ -374,7 +374,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_provider_fn_is_explicitly_bound(self):
         class ClassOne(object):
-            @wrapping.injectable
+            @decorators.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         class SomeBindingSpec(binding.BindingSpec):
@@ -388,7 +388,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
 
     def test_non_bound_non_decorated_class_is_not_explicitly_bound(self):
         class ClassOne(object):
-            @wrapping.injectable
+            @decorators.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         class ClassTwo(object):
