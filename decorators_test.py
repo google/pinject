@@ -95,6 +95,14 @@ class ProvidesTest(unittest.TestCase):
                          provider_fn_binding.binding_key)
         self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
 
+    def test_at_least_one_arg_must_be_specified(self):
+        def do_bad_annotated_with():
+            @decorators.provides()
+            def provide_foo():
+                pass
+        self.assertRaises(errors.EmptyProvidesDecoratorError,
+                          do_bad_annotated_with)
+
     def test_cannot_be_applied_twice(self):
         def do_bad_annotated_with():
             @decorators.provides(annotated_with='an-annotation')
@@ -104,14 +112,56 @@ class ProvidesTest(unittest.TestCase):
         self.assertRaises(errors.DuplicateDecoratorError,
                           do_bad_annotated_with)
 
-    def test_uses_defaults_when_args_omitted(self):
-        @decorators.provides()
-        def provide_foo():
+    def test_uses_default_binding_when_arg_name_and_annotation_omitted(self):
+        @decorators.provides(in_scope='unused')
+        def provide_foo(self):
             pass
         [provider_fn_binding] = decorators.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(binding.new_binding_key('foo'),
                          provider_fn_binding.binding_key)
+
+    def test_uses_default_scope_when_not_specified(self):
+        @decorators.provides('unused')
+        def provide_foo(self):
+            pass
+        [provider_fn_binding] = decorators.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(scoping.DEFAULT_SCOPE, provider_fn_binding.scope_id)
+
+
+class GetProviderFnDecorationsTest(unittest.TestCase):
+
+    def test_returns_defaults_for_undecorated_fn(self):
+        def provide_foo():
+            pass
+        annotated_with, arg_names, in_scope_id = (
+            decorators._get_provider_fn_decorations(
+                provide_foo, ['default-arg-name']))
+        self.assertEqual(None, annotated_with)
+        self.assertEqual(['default-arg-name'], arg_names)
+        self.assertEqual(scoping.DEFAULT_SCOPE, in_scope_id)
+
+    def test_returns_defaults_if_no_values_set(self):
+        @decorators.annotate_arg('foo', 'unused')
+        def provide_foo(foo):
+            pass
+        annotated_with, arg_names, in_scope_id = (
+            decorators._get_provider_fn_decorations(
+                provide_foo, ['default-arg-name']))
+        self.assertEqual(None, annotated_with)
+        self.assertEqual(['default-arg-name'], arg_names)
+        self.assertEqual(scoping.DEFAULT_SCOPE, in_scope_id)
+
+    def test_returns_set_values_if_set(self):
+        @decorators.provides('foo', annotated_with='an-annotation',
+                             in_scope='a-scope-id')
+        def provide_foo():
+            pass
+        annotated_with, arg_names, in_scope_id = (
+            decorators._get_provider_fn_decorations(
+                provide_foo, ['default-arg-name']))
+        self.assertEqual('an-annotation', annotated_with)
+        self.assertEqual(['foo'], arg_names)
+        self.assertEqual('a-scope-id', in_scope_id)
 
 
 class GetProviderFnBindingTest(unittest.TestCase):

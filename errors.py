@@ -62,6 +62,12 @@ class EmptyBindingSpecError(Error):
                 binding_spec))
 
 
+class EmptyProvidesDecoratorError(Error):
+
+    def __init__(self):
+        Error.__init__(self, '@provides() needs at least one non-default arg')
+
+
 class InjectableDecoratorAppliedToNonInitError(Error):
 
     def __init__(self, fn):

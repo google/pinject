@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-
 import inspect
 
 # From http://micheles.googlecode.com/hg/decorator/documentation.html
@@ -33,11 +32,39 @@ _PROVIDER_IN_SCOPE_ID_ATTR = '_pinject_in_scope_id'
 
 
 def annotate_arg(arg_name, with_annotation):
+    """Adds an annotation to an injected arg.
+
+    arg_name must be one of the named args of the decorated function, i.e.,
+      @annotate_arg('foo', with_annotation='something')
+      def a_function(foo):  # ...
+    is OK, but
+      @annotate_arg('foo', with_annotation='something')
+      def a_function(bar, **kwargs):  # ...
+    is not.
+
+    The same arg (on the same function) may not be annotated twice.
+
+    Args:
+      arg_name: the name of the arg to annotate on the decorated function
+      with_annotation: an annotation object
+    Returns:
+      a function that will decorate functions passed to it
+    """
     binding_key = binding.new_binding_key(arg_name, with_annotation)
     return _get_pinject_wrapper(arg_binding_key=binding_key)
 
 
 def injectable(fn):
+    """Marks an initializer explicitly as injectable.
+
+    An initializer marked with @injectable will be usable even if setting
+    only_use_explicit_bindings=True when calling new_object_graph().
+
+    Args:
+      fn: the function to decorate
+    Returns:
+      fn, decorated
+    """
     if not inspect.isfunction(fn):
         raise errors.InjectableDecoratorAppliedToNonInitError(fn)
     if fn.__name__ != '__init__':
@@ -46,12 +73,50 @@ def injectable(fn):
 
 
 def provides(arg_name=None, annotated_with=None, in_scope=None):
+    """Modifies the binding of a provider method.
+
+    If arg_name is specified, then the created binding is for that arg name
+    instead of the one gotten from the provider method name (e.g., 'foo' from
+    'provide_foo').
+
+    If annotated_with is specified, then the created binding includes that
+    annotation object.
+
+    If in_scope is specified, then the created binding is in the scope with
+    that scope ID.
+
+    At least one of the args must be specified.  A provider method may not be
+    decorated with @provides() twice.
+
+    Args:
+      arg_name: the name of the arg to annotate on the decorated function
+      annotated_with: an annotation object
+      in_scope: a scope ID
+    Returns:
+      a function that will decorate functions passed to it
+    """
+    if arg_name is None and annotated_with is None and in_scope is None:
+        raise errors.EmptyProvidesDecoratorError()
     return _get_pinject_wrapper(provider_arg_name=arg_name,
                                 provider_annotated_with=annotated_with,
                                 provider_in_scope_id=in_scope)
 
 
-def get_provider_fn_bindings(provider_fn, default_arg_names):
+def _get_provider_fn_decorations(provider_fn, default_arg_names):
+    """Retrieves the provider method-relevant info set by decorators.
+
+    If any info wasn't set by decorators, then defaults are returned.
+
+    Args:
+      provider_fn: a (possibly decorated) provider function
+      default_arg_names: the (possibly empty) arg names to use if none were
+          specified via @provides()
+    Returns:
+      a tuple (annotated_with, arg_names, in_scope_id) where
+          annotated_with: an annotation object
+          arg_name: the name of the arg provided by the provider function
+          in_scope: a scope ID
+    """
     if hasattr(provider_fn, _IS_WRAPPER_ATTR):
         annotated_with = getattr(provider_fn, _PROVIDER_ANNOTATED_WITH_ATTR)
         arg_name = getattr(provider_fn, _PROVIDER_ARG_NAME_ATTR)
@@ -66,6 +131,12 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
         annotated_with = None
         arg_names = default_arg_names
         in_scope_id = scoping.DEFAULT_SCOPE
+    return annotated_with, arg_names, in_scope_id
+
+
+def get_provider_fn_bindings(provider_fn, default_arg_names):
+    annotated_with, arg_names, in_scope_id = _get_provider_fn_decorations(
+        provider_fn, default_arg_names)
     # TODO(kurts): don't call private method of obj_graph.
     proviser_fn = lambda binding_context, obj_graph: obj_graph._call_with_injection(
         provider_fn, binding_context)
