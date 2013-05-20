@@ -5,24 +5,10 @@ Pinject is a dependency injection framework for python.
 The primary goal of Pinject is to help you assemble objects into graphs in
 an easy, maintainable way.
 
-== Overview ==
-
-If you are already familiar with dependency injection frameworks such as
-Guice, this section gives you a high level overview of Pinject and how it
-might be similar to or different than other dependency injection frameworks.
-
-  * Pinject uses code and decorators to configure injection, not a separate config file.
-  * Bindings are keyed by arg name, (not class type, since Python is dynamically typed).
-  * Pinject automatically creates bindings to `some_class` arg names for `SomeClass` classes.
-  * You can ask Pinject only to create bindings from binding specs and classes whose `__init__()` is marked with `@injectable`.
-  * A binding spec is a class that creates explicit bindings.
-  * A binding spec can bind arg names to classes or to instances.
-  * A binding spec can bind arg names `foo` to provider methods `provide_foo()`.
-  * Binding specs can depend on (i.e., include) other binding specs.
-  * You can annotate args and bindings to distinguish among args/bindings for the same arg name.
-  * Pinject has two built-in scopes: "singleton" (always memoized; the default) and "prototype" (never memoized).
-  * You can define custom scopes, and you can configure which scopes are accessible from which other scopes.
-  * Pinject doesn't allow injecting `None` by default, but you can turn off that check.
+If you are already familiar with other dependency injection frameworks, you
+may want to read the condensed summary section at the end, so that you get an
+idea of what Pinject is like and how it might differ from frameworks you're
+used to.
 
 == Basic dependency injection ==
 
@@ -76,6 +62,9 @@ If two classes map to the same arg name, whether those classes are in the same
 module or different modules, Pinject will not create an implicit binding for
 that arg name (though it will not raise an error).
 
+If your code follows PIP8 naming coventions and these implicit bindings work
+for you, then you can skip the rest of this section.  If not, read on!
+
 `new_object_graph()` takes a `get_arg_names_from_class_name` arg.  This is a
 function that takes in a class name (e.g., `FooBar`) and returns the arg names
 to which that class should be implicitly bound (e.g., `foo_bar`).  It has the
@@ -109,9 +98,9 @@ many or as few arg names as it wants.  If it always returns the empty list
 
 So far, the examples have not told `new_object_graph()` the classes for which
 it should create implicit bindings.  `new_object_graph()` by default looks in
-all imported modules, but you may sometimes want to restrict the classes for
-which `new_object_graph()` creates implicit bindings.  `new_object_graph()`
-has two args for this purpose.
+all imported modules, but you may occasionally want to restrict the classes
+for which `new_object_graph()` creates implicit bindings.  If so,
+`new_object_graph()` has two args for this purpose.
 
   * The `modules` arg specifies in which (python) modules to look for classes; this defaults to `ALL_IMPORTED_MODULES`.
   * The `classes` arg specifies a exact list of classes; this defaults to `None`.
@@ -215,13 +204,17 @@ dependencies by returning a sequence of instances of the dependent binding
 specs from its `dependencies()` method.
 
 {{{
->>> class SomeClass(object):
-...     def __init__(self, foo, bar):
-...         self.foobar = foo + bar
-...
+>>> class ClassOne(object):
+...    def __init__(self, foo):
+...        self.foo = foo
+....
 >>> class BindingSpecOne(pinject.BindingSpec):
 ...     def configure(self, bind):
 ...         bind('foo', to_instance='foo-')
+...
+>>> class ClassTwo(object):
+...     def __init__(self, class_one, bar):
+...         self.foobar = class_one.foo + bar
 ...
 >>> class BindingSpecTwo(pinject.BindingSpec):
 ...     def configure(self, bind):
@@ -230,16 +223,21 @@ specs from its `dependencies()` method.
 ...         return [BindingSpecOne()]
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[BindingSpecTwo()])
->>> some_class = obj_graph.provide(SomeClass)
->>> print some_class.foobar
+>>> class_two = obj_graph.provide(ClassTwo)
+>>> print class_two.foobar
 'foo--bar'
 >>>
 }}}
 
 If classes from module A are injected as collaborators into classes from
 module B, then you should consider having the binding spec for module B depend
-on the binding spec for module A.  In this way, you can build a graph of
-binding spec dependencies that mirrors the graph of collaborator dependencies.
+on the binding spec for module A.  In the example above, `ClassOne` is
+injected as a collaborator into `ClassTwo`, and so `BindingSpecTwo` (the
+binding spec for `ClassTwo`) depends on `BindingSpecOne` (the binding spec for
+`ClassOne`).
+
+In this way, you can build a graph of binding spec dependencies that mirrors
+the graph of collaborator dependencies.
 
 Since explicit bindings cannot conflict (see the section below on binding
 precedence), a binding spec should only have dependencies that there will
@@ -310,6 +308,10 @@ A function passed as the `get_arg_names_from_provider_fn_name` arg to
 the arg names for which that provider method is a provider (and an empty list
 if it does not seem to name a provider method).
 
+In general, `get_arg_names_from_provider_fn_name` is useful at the same time
+that `get_arg_names_from_class_name` is useful: when your code doesn't follow
+PEP8 convections.
+
 Pinject injects all args of provider methods that have no default when it
 calls the provider method.
 
@@ -370,20 +372,25 @@ create different (and thus conflicting) explicit bindings.
 Pinject tries to strike a balance between being helpful and being safe.
 Sometimes, you may want or need to change this balance.
 
-`new_object_graph()` creates implicit bindings by default.  If you worry that you
+`new_object_graph()` uses implicit bindings by default.  If you worry that you
 may accidentally inject a class or use a provider function unintentionally,
-then you can turn off implicit bindings by setting
+then you can make `new_object_graph()` ignore implicit bindings, by setting
 `only_use_explicit_bindings=True`.  If you do so, then Pinject will only use
 explicit bindings.
 
-You can mark a class as explicitly injectable, without having to create a
-binding spec for it, by annotating it with `@injectable`.  Classes are also
-marked for explicit binding if their initializers are decorated with
-`@annotate_arg()` (see below), with or without `@injectable` as well.
+If you want to promote an implicit binding to be an explicit binding, you can
+annotate the corresponding class with `@injectable`.  This decorator lets you
+create explicit bindings without needing to create binding specs, as long as
+you can live with the binding defaults (e.g., no annotations on args, see
+below).
 
 {{{
->>> class SomeClass(object):
+>>> class ExplicitlyBoundClass(object):
 ...     @pinject.injectable
+...     def __init__(self, foo):
+...         self.foo = foo
+...
+>>> class ImplicitlyBoundClass(object):
 ...     def __init__(self, foo):
 ...         self.foo = foo
 ...
@@ -393,11 +400,15 @@ marked for explicit binding if their initializers are decorated with
 ...
 >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()],
 ...     only_use_explicit_bindings=True)
->>> some_class = obj_graph.provide(SomeClass)
+>>> # obj_graph.provide(ImplicitlyBoundClass)  # would raise a NonExplicitlyBoundClassError
+>>> some_class = obj_graph.provide(ExplicitlyBoundClass)
 >>> print some_class.foo
 'explicit-foo'
 >>>
 }}}
+
+You can also promote an implicit binding to explicit by using
+`@annotated_arg()` (see below), with or without `@injectable` as well.
 
 On the opposite side of permissiveness, Pinject by default will complain if a
 provider method returns `None`.  If you really want to turn off this default
@@ -734,3 +745,24 @@ deal with one object in your custom scope trying to inject another object in
 your custom scope.
 
 That's it for gotchas, for now.
+
+== Condensed summary ==
+
+If you are already familiar with dependency injection frameworks such as
+Guice, this section gives you a condensed high level summary of Pinject and
+how it might be similar to or different than other dependency injection
+frameworks.  (If you don't understand it, no problem.  The rest of the
+documentation covers everything listed here.)
+
+  * Pinject uses code and decorators to configure injection, not a separate config file.
+  * Bindings are keyed by arg name, (not class type, since Python is dynamically typed).
+  * Pinject automatically creates bindings to `some_class` arg names for `SomeClass` classes.
+  * You can ask Pinject only to create bindings from binding specs and classes whose `__init__()` is marked with `@injectable`.
+  * A binding spec is a class that creates explicit bindings.
+  * A binding spec can bind arg names to classes or to instances.
+  * A binding spec can bind arg names `foo` to provider methods `provide_foo()`.
+  * Binding specs can depend on (i.e., include) other binding specs.
+  * You can annotate args and bindings to distinguish among args/bindings for the same arg name.
+  * Pinject has two built-in scopes: "singleton" (always memoized; the default) and "prototype" (never memoized).
+  * You can define custom scopes, and you can configure which scopes are accessible from which other scopes.
+  * Pinject doesn't allow injecting `None` by default, but you can turn off that check.
