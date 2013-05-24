@@ -19,116 +19,10 @@ import unittest
 
 import annotation
 import binding
+import binding_keys
 import decorators
 import errors
 import scoping
-
-
-class BindingKeyTest(unittest.TestCase):
-
-    def test_repr(self):
-        binding_key = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('an-annotation'))
-        self.assertEqual('<the arg name "an-arg-name" annotated with "an-annotation">',
-                         repr(binding_key))
-
-    def test_str(self):
-        binding_key = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('an-annotation'))
-        self.assertEqual('the arg name "an-arg-name" annotated with "an-annotation"',
-                         str(binding_key))
-
-    def test_equal_if_same_arg_name_and_annotation(self):
-        binding_key_one = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('an-annotation'))
-        binding_key_two = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('an-annotation'))
-        self.assertEqual(binding_key_one, binding_key_two)
-        self.assertEqual(hash(binding_key_one), hash(binding_key_two))
-        self.assertEqual(str(binding_key_one), str(binding_key_two))
-
-    def test_unequal_if_not_same_arg_name(self):
-        binding_key_one = binding.BindingKey(
-            'arg-name-one', annotation.Annotation('an-annotation'))
-        binding_key_two = binding.BindingKey(
-            'arg-name-two', annotation.Annotation('an-annotation'))
-        self.assertNotEqual(binding_key_one, binding_key_two)
-        self.assertNotEqual(hash(binding_key_one), hash(binding_key_two))
-        self.assertNotEqual(str(binding_key_one), str(binding_key_two))
-
-    def test_unequal_if_not_same_annotation(self):
-        binding_key_one = binding.BindingKey(
-            'arg-name-one', annotation.Annotation('an-annotation'))
-        binding_key_two = binding.BindingKey(
-            'arg-name-two', annotation.Annotation('another-annotation'))
-        self.assertNotEqual(binding_key_one, binding_key_two)
-        self.assertNotEqual(hash(binding_key_one), hash(binding_key_two))
-        self.assertNotEqual(str(binding_key_one), str(binding_key_two))
-
-    def test_can_apply_to_one_of_arg_names(self):
-        binding_key = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('unused'))
-        self.assertTrue(binding_key.can_apply_to_one_of_arg_names(
-            ['foo', 'an-arg-name', 'bar']))
-
-    def test_cannot_apply_to_one_of_arg_names(self):
-        binding_key = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('unused'))
-        self.assertFalse(binding_key.can_apply_to_one_of_arg_names(
-            ['foo', 'other-arg-name', 'bar']))
-
-    def test_conflicts_with_some_binding_key(self):
-        binding_key = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('ann1'))
-        non_conflicting_binding_key = binding.BindingKey(
-            'other-arg-name', annotation.Annotation('unused'))
-        conflicting_binding_key = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('ann2'))
-        self.assertTrue(binding_key.conflicts_with_any_binding_key(
-            [non_conflicting_binding_key, conflicting_binding_key]))
-
-    def test_doesnt_conflict_with_any_binding_key(self):
-        binding_key = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('ann1'))
-        non_conflicting_binding_key = binding.BindingKey(
-            'other-arg-name', annotation.Annotation('unused'))
-        self.assertFalse(binding_key.conflicts_with_any_binding_key(
-            [non_conflicting_binding_key]))
-
-    def test_puts_provided_value_in_kwargs(self):
-        binding_key = binding.BindingKey(
-            'an-arg-name', annotation.Annotation('unused'))
-        kwargs = {}
-        binding_key.put_provided_value_in_kwargs('a-value', kwargs)
-        self.assertEqual({'an-arg-name': 'a-value'}, kwargs)
-
-
-class GetUnboundArgNamesTest(unittest.TestCase):
-
-    def test_all_arg_names_bound(self):
-        arg_names = ['bound1', 'bound2']
-        binding_keys = [binding.new_binding_key('bound1'),
-                        binding.new_binding_key('bound2')]
-        self.assertEqual(
-            [], binding.get_unbound_arg_names(arg_names, binding_keys))
-
-    def test_some_arg_name_unbound(self):
-        arg_names = ['bound', 'unbound']
-        binding_keys = [binding.new_binding_key('bound')]
-        self.assertEqual(
-            ['unbound'], binding.get_unbound_arg_names(arg_names, binding_keys))
-
-
-class NewBindingKeyTest(unittest.TestCase):
-
-    def test_without_annotation(self):
-        binding_key = binding.new_binding_key('an-arg-name')
-        self.assertEqual('the arg name "an-arg-name" unannotated', str(binding_key))
-
-    def test_with_annotation(self):
-        binding_key = binding.new_binding_key('an-arg-name', 'an-annotation')
-        self.assertEqual('the arg name "an-arg-name" annotated with "an-annotation"',
-                         str(binding_key))
 
 
 class GetBindingKeyToBindingMapsTest(unittest.TestCase):
@@ -136,7 +30,7 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
     def setUp(self):
         class SomeClass(object):
             pass
-        self.some_binding_key = binding.new_binding_key('some_class')
+        self.some_binding_key = binding_keys.new('some_class')
         self.some_binding = binding.new_binding_in_default_scope(
             self.some_binding_key, 'a-proviser-fn')
         self.another_some_binding = binding.new_binding_in_default_scope(
@@ -192,7 +86,7 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
     def setUp(self):
         class SomeClass(object):
             pass
-        self.some_binding_key = binding.new_binding_key('some_class')
+        self.some_binding_key = binding_keys.new('some_class')
         self.some_binding = binding.new_binding_in_default_scope(
             self.some_binding_key, 'a-proviser-fn')
         self.another_some_binding = binding.new_binding_in_default_scope(
@@ -255,7 +149,7 @@ class BindingMappingTest(unittest.TestCase):
                           binding_mapping.get, 'unknown-binding-key')
 
     def test_colliding_bindings_raises_error(self):
-        binding_key = binding.new_binding_key('unused')
+        binding_key = binding_keys.new('unused')
         binding_one = binding.new_binding_in_default_scope(
             binding_key,
             binding.create_instance_proviser_fn(binding_key, 'unused'))
@@ -271,12 +165,12 @@ class BindingMappingTest(unittest.TestCase):
 class BindingContextTest(unittest.TestCase):
 
     def setUp(self):
-        self.binding_key = binding.new_binding_key('foo')
+        self.binding_key = binding_keys.new('foo')
         self.binding_context = binding.BindingContext(
             [self.binding_key], 'curr-scope')
 
     def test_get_child_successfully(self):
-        other_binding_key = binding.new_binding_key('bar')
+        other_binding_key = binding_keys.new('bar')
         new_binding_context = self.binding_context.get_child(
             other_binding_key, 'new-scope')
         self.assertTrue(
@@ -339,7 +233,7 @@ class GetExplicitClassBindingsTest(unittest.TestCase):
             def __init__(self):
                 pass
         [explicit_binding] = binding.get_explicit_class_bindings([SomeClass])
-        self.assertEqual(binding.new_binding_key('some_class'),
+        self.assertEqual(binding_keys.new('some_class'),
                          explicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
 
@@ -350,7 +244,7 @@ class GetExplicitClassBindingsTest(unittest.TestCase):
                 pass
         [explicit_binding] = binding.get_explicit_class_bindings(
             [SomeClass], get_arg_names_from_class_name=lambda _: ['foo'])
-        self.assertEqual(binding.new_binding_key('foo'),
+        self.assertEqual(binding_keys.new('foo'),
                          explicit_binding.binding_key)
 
 
@@ -367,7 +261,7 @@ class GetProviderBindingsTest(unittest.TestCase):
             def provide_foo(self):
                 return 'a-foo'
         [implicit_binding] = binding.get_provider_bindings(SomeBindingSpec())
-        self.assertEqual(binding.new_binding_key('foo'),
+        self.assertEqual(binding_keys.new('foo'),
                          implicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
 
@@ -380,7 +274,7 @@ class GetProviderBindingsTest(unittest.TestCase):
         [implicit_binding] = binding.get_provider_bindings(
             SomeBindingSpec(),
             get_arg_names_from_provider_fn_name=get_arg_names)
-        self.assertEqual(binding.new_binding_key('foo'),
+        self.assertEqual(binding_keys.new('foo'),
                          implicit_binding.binding_key)
 
 
@@ -393,7 +287,7 @@ class GetImplicitClassBindingsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         [implicit_binding] = binding.get_implicit_class_bindings([SomeClass])
-        self.assertEqual(binding.new_binding_key('some_class'),
+        self.assertEqual(binding_keys.new('some_class'),
                          implicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(implicit_binding))
 
@@ -406,12 +300,12 @@ class GetImplicitClassBindingsTest(unittest.TestCase):
             [ClassOne, ClassTwo])
         for implicit_binding in implicit_bindings:
             if (implicit_binding.binding_key ==
-                binding.new_binding_key('class_one')):
+                binding_keys.new('class_one')):
                 self.assertEqual(
                     'a-provided-ClassOne', call_provisor_fn(implicit_binding))
             else:
                 self.assertEqual(implicit_binding.binding_key,
-                                 binding.new_binding_key('class_two'))
+                                 binding_keys.new('class_two'))
                 self.assertEqual(
                     'a-provided-ClassTwo', call_provisor_fn(implicit_binding))
 
@@ -420,7 +314,7 @@ class GetImplicitClassBindingsTest(unittest.TestCase):
             pass
         [implicit_binding] = binding.get_implicit_class_bindings(
             [SomeClass], get_arg_names_from_class_name=lambda _: ['foo'])
-        self.assertEqual(binding.new_binding_key('foo'),
+        self.assertEqual(binding_keys.new('foo'),
                          implicit_binding.binding_key)
 
 
@@ -437,7 +331,7 @@ class BinderTest(unittest.TestCase):
             pass
         self.binder.bind('an-arg-name', to_class=SomeClass)
         [expected_binding] = [b for b in self.collected_bindings
-                              if b.binding_key == binding.new_binding_key('an-arg-name')]
+                              if b.binding_key == binding_keys.new('an-arg-name')]
         # TODO(kurts): test the proviser fn after the dust settles on how
         # exactly to do class bindings.
 
@@ -445,7 +339,7 @@ class BinderTest(unittest.TestCase):
         an_instance = object()
         self.binder.bind('an-arg-name', to_instance=an_instance)
         [only_binding] = self.collected_bindings
-        self.assertEqual(binding.new_binding_key('an-arg-name'),
+        self.assertEqual(binding_keys.new('an-arg-name'),
                          only_binding.binding_key)
         self.assertIs(an_instance, call_provisor_fn(only_binding))
 
@@ -454,7 +348,7 @@ class BinderTest(unittest.TestCase):
                          to_instance='an-instance')
         [only_binding] = self.collected_bindings
         self.assertEqual(
-            binding.new_binding_key('an-arg-name', 'an-annotation'),
+            binding_keys.new('an-arg-name', 'an-annotation'),
             only_binding.binding_key)
 
     def test_can_bind_with_scope(self):

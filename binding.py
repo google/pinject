@@ -23,62 +23,11 @@ import types
 import decorator
 
 import annotation as annotation_lib
+import binding_keys
 import decorators
 import errors
 import scoping
 import providing
-
-
-class BindingKey(object):
-    """The key for a binding."""
-
-    def __init__(self, arg_name, annotation):
-        self._arg_name = arg_name
-        self._annotation = annotation
-
-    def __repr__(self):
-        return '<{0}>'.format(self)
-
-    def __str__(self):
-        return 'the arg name "{0}" {1}'.format(
-            self._arg_name, self._annotation.as_adjective())
-
-    def __eq__(self, other):
-        return (isinstance(other, BindingKey) and
-                self._arg_name == other._arg_name and
-                self._annotation == other._annotation)
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __hash__(self):
-        return hash(self._arg_name) ^ hash(self._annotation)
-
-    def can_apply_to_one_of_arg_names(self, arg_names):
-        return self._arg_name in arg_names
-
-    def conflicts_with_any_binding_key(self, binding_keys):
-        return self._arg_name in [bk._arg_name for bk in binding_keys]
-
-    def put_provided_value_in_kwargs(self, value, kwargs):
-        kwargs[self._arg_name] = value
-
-
-# TODO(kurts): Get a second opinion on module-level methods operating on
-# internal state of classes.  In another language, this would be a static
-# member and so allowed access to internals.
-def get_unbound_arg_names(arg_names, arg_binding_keys):
-    bound_arg_names = [bk._arg_name for bk in arg_binding_keys]
-    return [arg_name for arg_name in arg_names
-            if arg_name not in bound_arg_names]
-
-
-def new_binding_key(arg_name, annotated_with=None):
-    if annotated_with is not None:
-        annotation = annotation_lib.Annotation(annotated_with)
-    else:
-        annotation = annotation_lib.NO_ANNOTATION
-    return BindingKey(arg_name, annotation)
 
 
 def new_binding_in_default_scope(binding_key, proviser_fn):
@@ -231,7 +180,7 @@ def get_explicit_class_bindings(
     for cls in classes:
         if decorators.is_explicitly_injectable(cls):
             for arg_name in get_arg_names_from_class_name(cls.__name__):
-                binding_key = new_binding_key(arg_name)
+                binding_key = binding_keys.new(arg_name)
                 proviser_fn = create_class_proviser_fn(binding_key, cls)
                 explicit_bindings.append(Binding(
                     binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
@@ -260,7 +209,7 @@ def get_implicit_class_bindings(
     for cls in classes:
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
-            binding_key = new_binding_key(arg_name)
+            binding_key = binding_keys.new(arg_name)
             proviser_fn = create_class_proviser_fn(binding_key, cls)
             implicit_bindings.append(Binding(
                 binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
@@ -280,7 +229,7 @@ class Binder(object):
              to_class=None, to_instance=None, in_scope=scoping.DEFAULT_SCOPE):
         if in_scope not in self._scope_ids:
             raise errors.UnknownScopeError(in_scope)
-        binding_key = new_binding_key(arg_name, annotated_with)
+        binding_key = binding_keys.new(arg_name, annotated_with)
         specified_to_params = ['to_class' if to_class is not None else None,
                                'to_instance' if to_instance is not None else None]
         specified_to_params = [x for x in specified_to_params if x is not None]
@@ -301,7 +250,7 @@ class Binder(object):
                     provide_it, [arg_name]))
                 if (to_class, in_scope) not in self._class_bindings_created:
                     self._collected_bindings.append(Binding(
-                        new_binding_key('_pinject_class', (to_class, in_scope)),
+                        binding_keys.new('_pinject_class', (to_class, in_scope)),
                         create_class_proviser_fn(binding_key, to_class),
                         in_scope, desc='TODO(kurts)'))
                     self._class_bindings_created.append((to_class, in_scope))

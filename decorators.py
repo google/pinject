@@ -19,6 +19,7 @@ import inspect
 import decorator
 
 import binding
+import binding_keys
 import errors
 import scoping
 
@@ -50,7 +51,7 @@ def annotate_arg(arg_name, with_annotation):
     Returns:
       a function that will decorate functions passed to it
     """
-    binding_key = binding.new_binding_key(arg_name, with_annotation)
+    binding_key = binding_keys.new(arg_name, with_annotation)
     return _get_pinject_wrapper(arg_binding_key=binding_key)
 
 
@@ -143,7 +144,7 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
     proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
     return [
         binding.Binding(
-            binding.new_binding_key(arg_name, annotated_with),
+            binding_keys.new(arg_name, annotated_with),
             proviser_fn, in_scope_id,
             desc='the provider function {0} from module {1}'.format(
                 provider_fn, provider_fn.__module__))
@@ -215,7 +216,7 @@ def get_injectable_arg_binding_keys(fn):
             inspect.getargspec(getattr(fn, _ORIG_FN_ATTR)))
         num_to_keep = (len(arg_names) - len(defaults)) if defaults else len(arg_names)
         arg_names = arg_names[:num_to_keep]
-        unbound_arg_names = binding.get_unbound_arg_names(
+        unbound_arg_names = binding_keys.get_unbound_arg_names(
             [arg_name for arg_name in _remove_self_if_exists(arg_names)],
             arg_binding_keys)
     else:
@@ -226,7 +227,7 @@ def get_injectable_arg_binding_keys(fn):
         arg_names = arg_names[:num_to_keep]
         unbound_arg_names = _remove_self_if_exists(arg_names)
     all_arg_binding_keys = list(arg_binding_keys)
-    all_arg_binding_keys.extend([binding.new_binding_key(arg_name)
+    all_arg_binding_keys.extend([binding_keys.new(arg_name)
                                  for arg_name in unbound_arg_names])
     return all_arg_binding_keys
 

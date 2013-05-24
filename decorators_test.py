@@ -18,6 +18,7 @@ import inspect
 import unittest
 
 import binding
+import binding_keys
 import decorators
 import errors
 import scoping
@@ -51,7 +52,7 @@ class AnnotateArgTest(unittest.TestCase):
         @decorators.annotate_arg('foo', 'an-annotation')
         def some_function(foo):
             return foo
-        self.assertEqual([binding.new_binding_key('foo', 'an-annotation')],
+        self.assertEqual([binding_keys.new('foo', 'an-annotation')],
                          [binding_key for binding_key in getattr(some_function,
                                                                  decorators._ARG_BINDING_KEYS_ATTR)])
 
@@ -91,7 +92,7 @@ class ProvidesTest(unittest.TestCase):
         def provide_foo():
             pass
         [provider_fn_binding] = decorators.get_provider_fn_bindings(provide_foo, ['foo'])
-        self.assertEqual(binding.new_binding_key('an-arg-name', 'an-annotation'),
+        self.assertEqual(binding_keys.new('an-arg-name', 'an-annotation'),
                          provider_fn_binding.binding_key)
         self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
 
@@ -117,7 +118,7 @@ class ProvidesTest(unittest.TestCase):
         def provide_foo(self):
             pass
         [provider_fn_binding] = decorators.get_provider_fn_bindings(provide_foo, ['foo'])
-        self.assertEqual(binding.new_binding_key('foo'),
+        self.assertEqual(binding_keys.new('foo'),
                          provider_fn_binding.binding_key)
 
     def test_uses_default_scope_when_not_specified(self):
@@ -196,8 +197,8 @@ class GetPinjectWrapperTest(unittest.TestCase):
         @decorators.annotate_arg('bar', 'an-annotation')
         def some_function(foo, bar):
             return foo + bar
-        self.assertEqual([binding.new_binding_key('bar', 'an-annotation'),
-                          binding.new_binding_key('foo', 'an-annotation')],
+        self.assertEqual([binding_keys.new('bar', 'an-annotation'),
+                          binding_keys.new('foo', 'an-annotation')],
                          [binding_key
                           for binding_key in getattr(some_function,
                                                      decorators._ARG_BINDING_KEYS_ATTR)])
@@ -255,14 +256,14 @@ class GetInjectableArgBindingKeysTest(unittest.TestCase):
 
     def test_fn_with_unannotated_arg_returns_unannotated_binding_key(self):
         self.assert_fn_has_injectable_arg_binding_keys(
-            lambda foo: None, [binding.new_binding_key('foo')])
+            lambda foo: None, [binding_keys.new('foo')])
 
     def test_fn_with_annotated_arg_returns_annotated_binding_key(self):
         @decorators.annotate_arg('foo', 'an-annotation')
         def fn(foo):
             pass
         self.assert_fn_has_injectable_arg_binding_keys(
-            fn, [binding.new_binding_key('foo', 'an-annotation')])
+            fn, [binding_keys.new('foo', 'an-annotation')])
 
     def test_fn_with_arg_with_default_returns_nothing(self):
         self.assert_fn_has_injectable_arg_binding_keys(lambda foo=42: None, [])
@@ -272,5 +273,5 @@ class GetInjectableArgBindingKeysTest(unittest.TestCase):
         def fn(foo, bar, baz='baz'):
             pass
         self.assert_fn_has_injectable_arg_binding_keys(
-            fn, [binding.new_binding_key('foo', 'an-annotation'),
-                 binding.new_binding_key('bar')])
+            fn, [binding_keys.new('foo', 'an-annotation'),
+                 binding_keys.new('bar')])

@@ -17,6 +17,7 @@ limitations under the License.
 import unittest
 
 import binding
+import binding_keys
 import errors
 import scoping
 
@@ -30,7 +31,7 @@ class PrototypeScopeTest(unittest.TestCase):
             next_provided[0] += 1
             return provided
         scope = scoping.PrototypeScope()
-        binding_key = binding.new_binding_key('unused')
+        binding_key = binding_keys.new('unused')
         self.assertEqual(
             range(10),
             [scope.provide(binding_key, provider_fn) for _ in xrange(10)])
@@ -40,8 +41,8 @@ class SingletonScopeTest(unittest.TestCase):
 
     def setUp(self):
         self.scope = scoping.SingletonScope()
-        self.binding_key_one = binding.new_binding_key('one')
-        self.binding_key_two = binding.new_binding_key('two')
+        self.binding_key_one = binding_keys.new('one')
+        self.binding_key_two = binding_keys.new('two')
         self.provider_fn = lambda: object()
 
     def test_calls_provider_fn_just_once_for_same_binding_key(self):
@@ -97,7 +98,7 @@ class BindableScopesTest(unittest.TestCase):
 
     def test_get_sub_scope_successfully(self):
         usable_binding = binding.Binding(
-            binding.new_binding_key('foo'),
+            binding_keys.new('foo'),
             'unused-proviser-fn', 'usable-scope-id', 'unused-desc')
         self.assertEqual(
             'usable-scope',
@@ -106,7 +107,7 @@ class BindableScopesTest(unittest.TestCase):
 
     def test_sub_scope_not_usable_from_scope_raises_error(self):
         unusable_binding = binding.Binding(
-            binding.new_binding_key('foo'),
+            binding_keys.new('foo'),
             'unused-proviser-fn', 'unusable-scope-id', 'unused-desc')
         self.assertRaises(errors.BadDependencyScopeError,
                           self.bindable_scopes.get_sub_scope, unusable_binding,

@@ -19,6 +19,7 @@ import inspect
 import types
 
 import binding
+import binding_keys
 import decorators
 import errors
 import finding
@@ -131,7 +132,7 @@ class ObjectGraph(object):
                 kwargs = dict(kwargs)
                 for arg_name in injected_arg_names:
                     kwargs[arg_name] = self._provide_from_binding_key(
-                        binding.new_binding_key(arg_name),
+                        binding_keys.new(arg_name),
                         binding.new_binding_context())
             return fn(*pargs, **kwargs)
         return WrappedFn
