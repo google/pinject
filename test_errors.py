@@ -16,13 +16,22 @@ limitations under the License.
 """
 
 
+import inspect
+import sys
 import traceback
+import types
 
+import binding
 import errors
 import object_graph
 
 
-all_print_methods = []
+def _print_raised_exception(exc, fn, *pargs, **kwargs):
+    try:
+        fn(*pargs, **kwargs)
+        raise Exception('failed to raise')
+    except exc:
+        traceback.print_exc()
 
 
 def print_ambiguous_arg_name_error():
@@ -34,12 +43,8 @@ def print_ambiguous_arg_name_error():
     class _Foo():
         pass
     obj_graph = object_graph.new_object_graph(classes=[SomeClass, Foo, _Foo])
-    try:
-        _ = obj_graph.provide(SomeClass)
-        raise Exception('failed to raise')
-    except errors.AmbiguousArgNameError:
-        traceback.print_exc()
-all_print_methods.append(print_ambiguous_arg_name_error)
+    _print_raised_exception(errors.AmbiguousArgNameError,
+                            obj_graph.provide, SomeClass)
 
 
 def print_bad_dependency_scope_error():
@@ -50,26 +55,27 @@ def print_bad_dependency_scope_error():
             pass
     obj_graph = object_graph.new_object_graph(
         classes=[Foo, Bar], is_scope_usable_from_scope=lambda _1, _2: False)
-    try:
-        _ = obj_graph.provide(Bar)
-        raise Exception('failed to raise')
-    except errors.BadDependencyScopeError:
-        traceback.print_exc()
-all_print_methods.append(print_bad_dependency_scope_error)
+    _print_raised_exception(errors.BadDependencyScopeError,
+                            obj_graph.provide, Bar)
 
 
 def print_conflicting_bindings_error():
-    def binding_fn(bind):
-        bind('foo', to_instance=1)
-        bind('foo', to_instance=2)
-    try:
-        _ = object_graph.new_object_graph(binding_fns=[binding_fn])
-        raise Exception('failed to raise')
-    except errors.ConflictingBindingsError:
-        traceback.print_exc()
-all_print_methods.append(print_conflicting_bindings_error)
+    class SomeBindingSpec(binding.BindingSpec):
+        def configure(self, bind):
+            bind('foo', to_instance=1)
+            bind('foo', to_instance=2)
+    _print_raised_exception(errors.ConflictingBindingsError,
+                            object_graph.new_object_graph,
+                            binding_specs=[SomeBindingSpec()])
 
 
+all_print_method_pairs = inspect.getmembers(
+    sys.modules[__name__],
+    lambda x: (type(x) == types.FunctionType and
+               x.__name__.startswith('print_') and
+               x.__name__.endswith('_error')))
+all_print_method_pairs.sort(key=lambda x: x[0])
+all_print_methods = [value for name, value in all_print_method_pairs]
 for print_method in all_print_methods:
     print '#' * 78
     print_method()

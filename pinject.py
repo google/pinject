@@ -28,7 +28,7 @@ import errors
 Error = errors.Error
 for thing in dir(errors):
     if isinstance(thing, errors.Error):
-        setattr(sys.modules(__name__), thing.__name__, thing)
+        setattr(sys.modules[__name__], thing.__name__, thing)
 
 import object_graph
 new_object_graph = object_graph.new_object_graph
