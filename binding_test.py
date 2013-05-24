@@ -17,7 +17,6 @@ limitations under the License.
 import threading
 import unittest
 
-import annotation
 import binding
 import binding_keys
 import decorators

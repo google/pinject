@@ -14,7 +14,7 @@ limitations under the License.
 """
 
 
-import annotation as annotation_lib
+import annotations
 
 
 class BindingKey(object):
@@ -98,7 +98,7 @@ def new(arg_name, annotated_with=None):
       a new BindingKey
     """
     if annotated_with is not None:
-        annotation = annotation_lib.Annotation(annotated_with)
+        annotation = annotations.Annotation(annotated_with)
     else:
-        annotation = annotation_lib.NO_ANNOTATION
+        annotation = annotations.NO_ANNOTATION
     return BindingKey(arg_name, annotation)

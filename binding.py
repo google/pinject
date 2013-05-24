@@ -22,7 +22,6 @@ import types
 # From http://micheles.googlecode.com/hg/decorator/documentation.html
 import decorator
 
-import annotation as annotation_lib
 import binding_keys
 import decorators
 import errors
