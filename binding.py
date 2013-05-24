@@ -77,7 +77,7 @@ def new_binding_key(arg_name, annotated_with=None):
     if annotated_with is not None:
         annotation = annotation_lib.Annotation(annotated_with)
     else:
-        annotation = annotation_lib._NO_ANNOTATION
+        annotation = annotation_lib.NO_ANNOTATION
     return BindingKey(arg_name, annotation)
 
 

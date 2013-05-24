@@ -15,11 +15,26 @@ limitations under the License.
 
 
 class Annotation(object):
+    """A binding annotation."""
 
     def __init__(self, annotation_obj):
+        """Initializer.
+
+        Args:
+          annotation_obj: the annotation object, which can be any object that
+              implements __eq__() and __hash__()
+        """
         self._annotation_obj = annotation_obj
 
     def as_adjective(self):
+        """Returns the annotation as an adjective phrase.
+
+        For example, if the annotation object is '3', then the annotation
+        adjective phrase is 'annotated with "3"'.
+
+        Returns:
+          an annotation adjective phrase
+        """
         return 'annotated with "{0}"'.format(self._annotation_obj)
 
     def __eq__(self, other):
@@ -34,6 +49,7 @@ class Annotation(object):
 
 
 class _NoAnnotation(object):
+    """A polymorph for Annotation but that actually means "no annotation"."""
 
     def as_adjective(self):
         return 'unannotated'
@@ -48,4 +64,4 @@ class _NoAnnotation(object):
         return 0
 
 
-_NO_ANNOTATION = _NoAnnotation()
+NO_ANNOTATION = _NoAnnotation()
