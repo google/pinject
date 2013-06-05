@@ -25,12 +25,8 @@ import decorator
 import binding_keys
 import decorators
 import errors
-import scoping
 import providing
-
-
-def new_binding_in_default_scope(binding_key, proviser_fn):
-    return Binding(binding_key, proviser_fn, scoping.DEFAULT_SCOPE, desc='unknown')
+import scoping
 
 
 class Binding(object):
@@ -78,6 +74,7 @@ def _get_binding_key_to_binding_maps(bindings, handle_binding_collision_fn):
 
 
 def get_overall_binding_key_to_binding_maps(bindings_lists):
+
     """bindings_lists from lowest to highest priority.  Last item in
     bindings_lists is assumed explicit.
 

@@ -24,15 +24,29 @@ import errors
 import scoping
 
 
+def new_in_default_scope(binding_key, proviser_fn):
+    """Returns a new Binding in the default scope.
+
+    Args:
+      binding_key: a BindingKey
+      proviser_fn: a function taking a BindingContext and ObjectGraph and
+          returning an instance of the bound value
+    Returns:
+      a Binding
+    """
+    return bindings_lib.Binding(
+        binding_key, proviser_fn, scoping.DEFAULT_SCOPE, desc='unknown')
+
+
 class GetBindingKeyToBindingMapsTest(unittest.TestCase):
 
     def setUp(self):
         class SomeClass(object):
             pass
         self.some_binding_key = binding_keys.new('some_class')
-        self.some_binding = bindings_lib.new_binding_in_default_scope(
+        self.some_binding = new_in_default_scope(
             self.some_binding_key, 'a-proviser-fn')
-        self.another_some_binding = bindings_lib.new_binding_in_default_scope(
+        self.another_some_binding = new_in_default_scope(
             self.some_binding_key, 'another-proviser-fn')
 
     def assertBindingsReturnMaps(
@@ -86,9 +100,9 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.some_binding_key = binding_keys.new('some_class')
-        self.some_binding = bindings_lib.new_binding_in_default_scope(
+        self.some_binding = new_in_default_scope(
             self.some_binding_key, 'a-proviser-fn')
-        self.another_some_binding = bindings_lib.new_binding_in_default_scope(
+        self.another_some_binding = new_in_default_scope(
             self.some_binding_key, 'another-proviser-fn')
 
     def assertBindingsListsReturnMaps(
@@ -149,10 +163,10 @@ class BindingMappingTest(unittest.TestCase):
 
     def test_colliding_bindings_raises_error(self):
         binding_key = binding_keys.new('unused')
-        binding_one = bindings_lib.new_binding_in_default_scope(
+        binding_one = new_in_default_scope(
             binding_key,
             bindings_lib.create_instance_proviser_fn(binding_key, 'unused'))
-        binding_two = bindings_lib.new_binding_in_default_scope(
+        binding_two = new_in_default_scope(
             binding_key,
             bindings_lib.create_instance_proviser_fn(binding_key, 'unused'))
         binding_mapping = bindings_lib.BindingMapping(
