@@ -91,13 +91,6 @@ class BindingKeyTest(unittest.TestCase):
         self.assertFalse(binding_key.conflicts_with_any_binding_key(
             [non_conflicting_binding_key]))
 
-    def test_puts_provided_value_in_kwargs(self):
-        binding_key = binding_keys.BindingKey(
-            'an-arg-name', annotations.Annotation('unused'))
-        kwargs = {}
-        binding_key.put_provided_value_in_kwargs('a-value', kwargs)
-        self.assertEqual({'an-arg-name': 'a-value'}, kwargs)
-
 
 class GetUnboundArgNamesTest(unittest.TestCase):
 
@@ -113,6 +106,21 @@ class GetUnboundArgNamesTest(unittest.TestCase):
             ['unbound'],
             binding_keys.get_unbound_arg_names(
                 ['bound', 'unbound'], [binding_keys.new('bound')]))
+
+
+class CreateKwargsTest(unittest.TestCase):
+
+    def test_returns_nothing_for_no_input(self):
+        self.assertEqual({}, binding_keys.create_kwargs([], provider_fn=None))
+
+    def test_returns_provided_value_for_arg(self):
+        def ProviderFn(binding_key):
+            return ('an-arg-value' if binding_key == binding_keys.new('an-arg')
+                    else None)
+        self.assertEqual(
+            {'an-arg': 'an-arg-value'},
+            binding_keys.create_kwargs([binding_keys.new('an-arg')],
+                                       ProviderFn))
 
 
 class NewBindingKeyTest(unittest.TestCase):

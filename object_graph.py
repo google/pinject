@@ -142,10 +142,6 @@ class ObjectGraph(object):
         return provider_fn(**kwargs)
 
     def _get_injection_kwargs(self, fn, binding_context):
-        kwargs = {}
-        arg_binding_keys = decorators.get_injectable_arg_binding_keys(fn)
-        for arg_binding_key in arg_binding_keys:
-            arg_binding_key.put_provided_value_in_kwargs(
-                self._provide_from_binding_key(arg_binding_key, binding_context),
-                kwargs)
-        return kwargs
+        return binding_keys.create_kwargs(
+            decorators.get_injectable_arg_binding_keys(fn),
+            lambda bk: self._provide_from_binding_key(bk, binding_context))

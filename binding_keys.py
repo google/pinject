@@ -66,9 +66,6 @@ class BindingKey(object):
         """
         return self._arg_name in [bk._arg_name for bk in binding_keys]
 
-    def put_provided_value_in_kwargs(self, value, kwargs):
-        kwargs[self._arg_name] = value
-
 
 # TODO(kurts): Get a second opinion on module-level methods operating on
 # internal state of classes.  In another language, this would be a static
@@ -78,7 +75,8 @@ def get_unbound_arg_names(arg_names, arg_binding_keys):
 
     Args:
       arg_names: a sequence of the names of possibly bound args
-      arg_binding_keys: a sequence of BindingKey
+      arg_binding_keys: a sequence of BindingKey each of whose arg names is in
+          arg_names
     Returns:
       a sequence of arg names that is a (possibly empty, possibly non-proper)
           subset of arg_names
@@ -86,6 +84,20 @@ def get_unbound_arg_names(arg_names, arg_binding_keys):
     bound_arg_names = [bk._arg_name for bk in arg_binding_keys]
     return [arg_name for arg_name in arg_names
             if arg_name not in bound_arg_names]
+
+
+def create_kwargs(arg_binding_keys, provider_fn):
+    """Creates a kwargs map for the given arg binding keys.
+
+    Args:
+      arg_binding_keys: a sequence of BindingKey for some function's args
+      provider_fn: a function that takes a BindingKey and returns whatever
+          is bound to that binding key
+    Returns:
+      a (possibly empty) map from arg name to provided value
+    """
+    return {arg_binding_key._arg_name: provider_fn(arg_binding_key)
+            for arg_binding_key in arg_binding_keys}
 
 
 def new(arg_name, annotated_with=None):
