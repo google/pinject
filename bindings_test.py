@@ -17,7 +17,7 @@ limitations under the License.
 import threading
 import unittest
 
-import binding
+import bindings as bindings_lib
 import binding_keys
 import decorators
 import errors
@@ -30,9 +30,9 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.some_binding_key = binding_keys.new('some_class')
-        self.some_binding = binding.new_binding_in_default_scope(
+        self.some_binding = bindings_lib.new_binding_in_default_scope(
             self.some_binding_key, 'a-proviser-fn')
-        self.another_some_binding = binding.new_binding_in_default_scope(
+        self.another_some_binding = bindings_lib.new_binding_in_default_scope(
             self.some_binding_key, 'another-proviser-fn')
 
     def assertBindingsReturnMaps(
@@ -41,14 +41,14 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
             handle_binding_collision_fn='unused-handle-binding-collision'):
         self.assertEqual(
             (binding_key_to_binding, collided_binding_key_to_bindings),
-            binding._get_binding_key_to_binding_maps(
+            bindings_lib._get_binding_key_to_binding_maps(
                 bindings, handle_binding_collision_fn))
 
     def assertBindingsRaise(
             self, bindings, error_type,
             handle_binding_collision_fn='unused-handle-binding-collision'):
         self.assertRaises(error_type,
-                          binding._get_binding_key_to_binding_maps,
+                          bindings_lib._get_binding_key_to_binding_maps,
                           bindings, handle_binding_collision_fn)
 
     def test_no_input_bindings_returns_empty_maps(self):
@@ -86,9 +86,9 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.some_binding_key = binding_keys.new('some_class')
-        self.some_binding = binding.new_binding_in_default_scope(
+        self.some_binding = bindings_lib.new_binding_in_default_scope(
             self.some_binding_key, 'a-proviser-fn')
-        self.another_some_binding = binding.new_binding_in_default_scope(
+        self.another_some_binding = bindings_lib.new_binding_in_default_scope(
             self.some_binding_key, 'another-proviser-fn')
 
     def assertBindingsListsReturnMaps(
@@ -96,11 +96,11 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
             binding_key_to_binding, collided_binding_key_to_bindings):
         self.assertEqual(
             (binding_key_to_binding, collided_binding_key_to_bindings),
-            binding.get_overall_binding_key_to_binding_maps(bindings_lists))
+            bindings_lib.get_overall_binding_key_to_binding_maps(bindings_lists))
 
     def assertBindingsListsRaise(self, bindings_lists, error_type):
         self.assertRaises(error_type,
-                          binding.get_overall_binding_key_to_binding_maps,
+                          bindings_lib.get_overall_binding_key_to_binding_maps,
                           bindings_lists)
 
     def test_no_input_bindings_returns_empty_maps(self):
@@ -136,26 +136,26 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
 class BindingMappingTest(unittest.TestCase):
 
     def test_success(self):
-        binding_mapping = binding.BindingMapping(
+        binding_mapping = bindings_lib.BindingMapping(
             {'a-binding-key': 'a-binding'}, {})
         self.assertEqual('a-binding',
                          binding_mapping.get('a-binding-key'))
 
     def test_unknown_binding_raises_error(self):
-        binding_mapping = binding.BindingMapping(
+        binding_mapping = bindings_lib.BindingMapping(
             {'a-binding-key': 'a-binding'}, {})
         self.assertRaises(errors.NothingInjectableForArgError,
                           binding_mapping.get, 'unknown-binding-key')
 
     def test_colliding_bindings_raises_error(self):
         binding_key = binding_keys.new('unused')
-        binding_one = binding.new_binding_in_default_scope(
+        binding_one = bindings_lib.new_binding_in_default_scope(
             binding_key,
-            binding.create_instance_proviser_fn(binding_key, 'unused'))
-        binding_two = binding.new_binding_in_default_scope(
+            bindings_lib.create_instance_proviser_fn(binding_key, 'unused'))
+        binding_two = bindings_lib.new_binding_in_default_scope(
             binding_key,
-            binding.create_instance_proviser_fn(binding_key, 'unused'))
-        binding_mapping = binding.BindingMapping(
+            bindings_lib.create_instance_proviser_fn(binding_key, 'unused'))
+        binding_mapping = bindings_lib.BindingMapping(
             {}, {'colliding-binding-key': [binding_one, binding_two]})
         self.assertRaises(errors.AmbiguousArgNameError,
                           binding_mapping.get, 'colliding-binding-key')
@@ -165,7 +165,7 @@ class BindingContextTest(unittest.TestCase):
 
     def setUp(self):
         self.binding_key = binding_keys.new('foo')
-        self.binding_context = binding.BindingContext(
+        self.binding_context = bindings_lib.BindingContext(
             [self.binding_key], 'curr-scope')
 
     def test_get_child_successfully(self):
@@ -192,16 +192,16 @@ class BindingContextTest(unittest.TestCase):
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
 
     def test_single_word_lowercased(self):
-        self.assertEqual(['foo'], binding.default_get_arg_names_from_class_name('Foo'))
+        self.assertEqual(['foo'], bindings_lib.default_get_arg_names_from_class_name('Foo'))
 
     def test_leading_underscore_stripped(self):
-        self.assertEqual(['foo'], binding.default_get_arg_names_from_class_name('_Foo'))
+        self.assertEqual(['foo'], bindings_lib.default_get_arg_names_from_class_name('_Foo'))
 
     def test_multiple_words_lowercased_with_underscores(self):
-        self.assertEqual(['foo_bar_baz'], binding.default_get_arg_names_from_class_name('FooBarBaz'))
+        self.assertEqual(['foo_bar_baz'], bindings_lib.default_get_arg_names_from_class_name('FooBarBaz'))
 
     def test_malformed_class_name_raises_error(self):
-        self.assertEqual([], binding.default_get_arg_names_from_class_name('notAllCamelCase'))
+        self.assertEqual([], bindings_lib.default_get_arg_names_from_class_name('notAllCamelCase'))
 
 
 class FakeInjector(object):
@@ -216,7 +216,7 @@ class FakeInjector(object):
         return provider_fn()
 
 
-_UNUSED_BINDING_CONTEXT = binding.BindingContext('unused', 'unused')
+_UNUSED_BINDING_CONTEXT = bindings_lib.BindingContext('unused', 'unused')
 def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
 
@@ -224,14 +224,14 @@ def call_provisor_fn(a_binding):
 class GetExplicitClassBindingsTest(unittest.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
-        self.assertEqual([], binding.get_explicit_class_bindings([]))
+        self.assertEqual([], bindings_lib.get_explicit_class_bindings([]))
 
     def test_returns_binding_for_input_explicitly_injected_class(self):
         class SomeClass(object):
             @decorators.injectable
             def __init__(self):
                 pass
-        [explicit_binding] = binding.get_explicit_class_bindings([SomeClass])
+        [explicit_binding] = bindings_lib.get_explicit_class_bindings([SomeClass])
         self.assertEqual(binding_keys.new('some_class'),
                          explicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(explicit_binding))
@@ -241,7 +241,7 @@ class GetExplicitClassBindingsTest(unittest.TestCase):
             @decorators.injectable
             def __init__(self):
                 pass
-        [explicit_binding] = binding.get_explicit_class_bindings(
+        [explicit_binding] = bindings_lib.get_explicit_class_bindings(
             [SomeClass], get_arg_names_from_class_name=lambda _: ['foo'])
         self.assertEqual(binding_keys.new('foo'),
                          explicit_binding.binding_key)
@@ -253,24 +253,24 @@ class GetProviderBindingsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.assertEqual(
-            [], binding.get_provider_bindings(SomeClass()))
+            [], bindings_lib.get_provider_bindings(SomeClass()))
 
     def test_returns_binding_for_provider_fn(self):
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings_lib.BindingSpec):
             def provide_foo(self):
                 return 'a-foo'
-        [implicit_binding] = binding.get_provider_bindings(SomeBindingSpec())
+        [implicit_binding] = bindings_lib.get_provider_bindings(SomeBindingSpec())
         self.assertEqual(binding_keys.new('foo'),
                          implicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
 
     def test_uses_provided_fn_to_map_provider_fn_names_to_arg_names(self):
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings_lib.BindingSpec):
             def some_foo():
                 return 'a-foo'
         def get_arg_names(fn_name):
             return ['foo'] if fn_name == 'some_foo' else []
-        [implicit_binding] = binding.get_provider_bindings(
+        [implicit_binding] = bindings_lib.get_provider_bindings(
             SomeBindingSpec(),
             get_arg_names_from_provider_fn_name=get_arg_names)
         self.assertEqual(binding_keys.new('foo'),
@@ -280,12 +280,12 @@ class GetProviderBindingsTest(unittest.TestCase):
 class GetImplicitClassBindingsTest(unittest.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
-        self.assertEqual([], binding.get_implicit_class_bindings([]))
+        self.assertEqual([], bindings_lib.get_implicit_class_bindings([]))
 
     def test_returns_binding_for_input_class(self):
         class SomeClass(object):
             pass
-        [implicit_binding] = binding.get_implicit_class_bindings([SomeClass])
+        [implicit_binding] = bindings_lib.get_implicit_class_bindings([SomeClass])
         self.assertEqual(binding_keys.new('some_class'),
                          implicit_binding.binding_key)
         self.assertEqual('a-provided-SomeClass', call_provisor_fn(implicit_binding))
@@ -295,7 +295,7 @@ class GetImplicitClassBindingsTest(unittest.TestCase):
             pass
         class ClassTwo(object):
             pass
-        implicit_bindings = binding.get_implicit_class_bindings(
+        implicit_bindings = bindings_lib.get_implicit_class_bindings(
             [ClassOne, ClassTwo])
         for implicit_binding in implicit_bindings:
             if (implicit_binding.binding_key ==
@@ -311,7 +311,7 @@ class GetImplicitClassBindingsTest(unittest.TestCase):
     def test_uses_provided_fn_to_map_class_names_to_arg_names(self):
         class SomeClass(object):
             pass
-        [implicit_binding] = binding.get_implicit_class_bindings(
+        [implicit_binding] = bindings_lib.get_implicit_class_bindings(
             [SomeClass], get_arg_names_from_class_name=lambda _: ['foo'])
         self.assertEqual(binding_keys.new('foo'),
                          implicit_binding.binding_key)
@@ -321,7 +321,7 @@ class BinderTest(unittest.TestCase):
 
     def setUp(self):
         self.collected_bindings = []
-        self.binder = binding.Binder(
+        self.binder = bindings_lib.Binder(
             self.collected_bindings,
             scope_ids=[scoping.DEFAULT_SCOPE, 'known-scope'])
 
