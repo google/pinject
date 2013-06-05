@@ -18,7 +18,7 @@ import inspect
 # From http://micheles.googlecode.com/hg/decorator/documentation.html
 import decorator
 
-import binding
+import bindings
 import binding_keys
 import errors
 import scoping
@@ -143,7 +143,7 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
         provider_fn, binding_context)
     proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
     return [
-        binding.Binding(
+        bindings.Binding(
             binding_keys.new(arg_name, annotated_with),
             proviser_fn, in_scope_id,
             desc='the provider function {0} from module {1}'.format(

@@ -18,7 +18,7 @@ import functools
 import inspect
 import types
 
-import binding
+import bindings
 import binding_keys
 import decorators
 import errors
@@ -31,7 +31,7 @@ def new_object_graph(
         modules=finding.ALL_IMPORTED_MODULES, classes=None, binding_specs=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
         get_arg_names_from_class_name=(
-            binding.default_get_arg_names_from_class_name),
+            bindings.default_get_arg_names_from_class_name),
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name),
         id_to_scope=None, is_scope_usable_from_scope=lambda _1, _2: True):
@@ -45,11 +45,11 @@ def new_object_graph(
     if only_use_explicit_bindings:
         implicit_class_bindings = []
     else:
-        implicit_class_bindings = binding.get_implicit_class_bindings(
+        implicit_class_bindings = bindings.get_implicit_class_bindings(
             found_classes, get_arg_names_from_class_name)
-    explicit_bindings = binding.get_explicit_class_bindings(
+    explicit_bindings = bindings.get_explicit_class_bindings(
         found_classes, get_arg_names_from_class_name)
-    binder = binding.Binder(explicit_bindings, known_scope_ids)
+    binder = bindings.Binder(explicit_bindings, known_scope_ids)
     if binding_specs is not None:
         binding_specs = list(binding_specs)
         while binding_specs:
@@ -61,16 +61,16 @@ def new_object_graph(
                 has_configure = False
             dependencies = binding_spec.dependencies()
             binding_specs.extend(dependencies)
-            provider_bindings = binding.get_provider_bindings(
+            provider_bindings = bindings.get_provider_bindings(
                 binding_spec, get_arg_names_from_provider_fn_name)
             explicit_bindings.extend(provider_bindings)
             if not has_configure and not dependencies and not provider_bindings:
                 raise errors.EmptyBindingSpecError(binding_spec)
 
     binding_key_to_binding, collided_binding_key_to_bindings = (
-        binding.get_overall_binding_key_to_binding_maps(
+        bindings.get_overall_binding_key_to_binding_maps(
             [implicit_class_bindings, explicit_bindings]))
-    binding_mapping = binding.BindingMapping(
+    binding_mapping = bindings.BindingMapping(
         binding_key_to_binding, collided_binding_key_to_bindings)
 
     is_injectable_fn = {True: decorators.is_explicitly_injectable,
@@ -92,7 +92,7 @@ class ObjectGraph(object):
     def provide(self, cls):
         if not self._is_injectable_fn(cls):
             raise errors.NonExplicitlyBoundClassError(cls)
-        return self._provide_class(cls, binding.new_binding_context())
+        return self._provide_class(cls, bindings.new_binding_context())
 
     def _provide_from_binding_key(self, binding_key, binding_context):
         binding_ = self._binding_mapping.get(binding_key)
@@ -133,7 +133,7 @@ class ObjectGraph(object):
                 for arg_name in injected_arg_names:
                     kwargs[arg_name] = self._provide_from_binding_key(
                         binding_keys.new(arg_name),
-                        binding.new_binding_context())
+                        bindings.new_binding_context())
             return fn(*pargs, **kwargs)
         return WrappedFn
 

@@ -16,7 +16,7 @@ limitations under the License.
 
 import unittest
 
-import binding
+import bindings
 import binding_keys
 import errors
 import scoping
@@ -97,18 +97,18 @@ class BindableScopesTest(unittest.TestCase):
             {'usable-scope-id': 'usable-scope'}, is_scope_usable_from_scope)
 
     def test_get_sub_scope_successfully(self):
-        usable_binding = binding.Binding(
+        usable_binding = bindings.Binding(
             binding_keys.new('foo'),
             'unused-proviser-fn', 'usable-scope-id', 'unused-desc')
         self.assertEqual(
             'usable-scope',
             self.bindable_scopes.get_sub_scope(
-                usable_binding, binding.new_binding_context()))
+                usable_binding, bindings.new_binding_context()))
 
     def test_sub_scope_not_usable_from_scope_raises_error(self):
-        unusable_binding = binding.Binding(
+        unusable_binding = bindings.Binding(
             binding_keys.new('foo'),
             'unused-proviser-fn', 'unusable-scope-id', 'unused-desc')
         self.assertRaises(errors.BadDependencyScopeError,
                           self.bindable_scopes.get_sub_scope, unusable_binding,
-                          binding.new_binding_context())
+                          bindings.new_binding_context())

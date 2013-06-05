@@ -16,8 +16,8 @@ limitations under the License.
 
 import sys
 
-import binding
-BindingSpec = binding.BindingSpec
+import bindings
+BindingSpec = bindings.BindingSpec
 
 import decorators
 annotate_arg = decorators.annotate_arg

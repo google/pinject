@@ -17,7 +17,7 @@ limitations under the License.
 import inspect
 import unittest
 
-import binding
+import bindings
 import decorators
 import errors
 import object_graph
@@ -46,7 +46,7 @@ class NewObjectGraphTest(unittest.TestCase):
                 pass
         class SomeClass(object):
             pass
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def configure(self, bind):
                 bind('foo', to_class=SomeClass)
         obj_graph = object_graph.new_object_graph(
@@ -56,10 +56,10 @@ class NewObjectGraphTest(unittest.TestCase):
                               ClassWithFooInjected)
 
     def test_uses_binding_spec_dependencies(self):
-        class BindingSpecOne(binding.BindingSpec):
+        class BindingSpecOne(bindings.BindingSpec):
             def configure(self, bind):
                 bind('foo', to_instance='a-foo')
-        class BindingSpecTwo(binding.BindingSpec):
+        class BindingSpecTwo(bindings.BindingSpec):
             def configure(self, bind):
                 bind('bar', to_instance='a-bar')
             def dependencies(self):
@@ -73,7 +73,7 @@ class NewObjectGraphTest(unittest.TestCase):
         self.assertEqual('a-fooa-bar', some_class.foobar)
 
     def test_raises_error_if_binding_spec_is_empty(self):
-        class EmptyBindingSpec(binding.BindingSpec):
+        class EmptyBindingSpec(bindings.BindingSpec):
             pass
         self.assertRaises(errors.EmptyBindingSpecError,
                           object_graph.new_object_graph, modules=None, classes=None,
@@ -83,7 +83,7 @@ class NewObjectGraphTest(unittest.TestCase):
         class SomeClass(object):
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             @decorators.provides(in_scope='foo-scope')
             def provide_foo(self):
                 return object()
@@ -174,7 +174,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
     def test_injects_args_of_provider_fns(self):
         class ClassOne(object):
             pass
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def provide_foo(self, class_one):
                 class_one.three = 3
                 return class_one
@@ -192,7 +192,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             @decorators.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def configure(self, bind):
                 bind('foo', annotated_with='an-annotation', to_instance='a-foo')
         obj_graph = object_graph.new_object_graph(
@@ -207,7 +207,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def __init__(self, foo, bar):
                 self.foo = foo
                 self.bar = bar
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             @decorators.provides('foo', annotated_with='specific-foo',
                                  in_scope=scoping.SINGLETON)
             def provide_foo(self):
@@ -230,7 +230,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def __init__(self, foo, bar):
                 self.foo = foo
                 self.bar = bar
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def configure(self, bind):
                 bind('foo', to_class=InjectedClass, in_scope=scoping.SINGLETON)
                 bind('bar', to_class=InjectedClass, in_scope=scoping.SINGLETON)
@@ -244,7 +244,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             @decorators.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def configure(self, bind):
                 bind('foo', annotated_with='other-annotation', to_instance='a-foo')
         obj_graph = object_graph.new_object_graph(
@@ -257,7 +257,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             @decorators.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def configure(self, bind):
                 bind('foo', to_instance='a-foo')
         obj_graph = object_graph.new_object_graph(
@@ -269,7 +269,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class ClassOne(object):
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def provide_foo(self):
                 return 'a-foo'
         obj_graph = object_graph.new_object_graph(
@@ -283,7 +283,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
                 self.foo = foo
         class Foo(object):
             pass
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def provide_foo(self):
                 return 'a-foo'
         obj_graph = object_graph.new_object_graph(
@@ -296,7 +296,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class ClassOne(object):
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def provide_foo(self, bar):
                 return 'a-foo with {0}'.format(bar)
             def provide_bar(self):
@@ -311,7 +311,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             @decorators.annotate_arg('foo', 'an-annotation')
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             @decorators.provides(annotated_with='an-annotation')
             @decorators.annotate_arg('bar', 'another-annotation')
             def provide_foo(self, bar):
@@ -363,7 +363,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             @decorators.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def configure(self, bind):
                 bind('class_two', to_instance='a-class-two')
         obj_graph = object_graph.new_object_graph(
@@ -377,7 +377,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
             @decorators.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def provide_class_two(self):
                 return 'a-class-two'
         obj_graph = object_graph.new_object_graph(
@@ -404,7 +404,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class SomeClass(object):
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def provide_foo(self):
                 return None
         obj_graph = object_graph.new_object_graph(
@@ -417,7 +417,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class SomeClass(object):
             def __init__(self, foo):
                 self.foo = foo
-        class SomeBindingSpec(binding.BindingSpec):
+        class SomeBindingSpec(bindings.BindingSpec):
             def provide_foo(self):
                 return None
         obj_graph = object_graph.new_object_graph(

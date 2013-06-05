@@ -21,7 +21,7 @@ import sys
 import traceback
 import types
 
-import binding
+import bindings
 import errors
 import object_graph
 
@@ -60,7 +60,7 @@ def print_bad_dependency_scope_error():
 
 
 def print_conflicting_bindings_error():
-    class SomeBindingSpec(binding.BindingSpec):
+    class SomeBindingSpec(bindings.BindingSpec):
         def configure(self, bind):
             bind('foo', to_instance=1)
             bind('foo', to_instance=2)
