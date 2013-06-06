@@ -36,9 +36,10 @@ def new_object_graph(
             providing.default_get_arg_names_from_provider_fn_name),
         id_to_scope=None, is_scope_usable_from_scope=lambda _1, _2: True):
 
+    binding_context_factory = bindings.BindingContextFactory(
+        is_scope_usable_from_scope)
     id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
-    bindable_scopes = scoping.BindableScopes(
-        id_to_scope, is_scope_usable_from_scope)
+    bindable_scopes = scoping.BindableScopes(id_to_scope)
     known_scope_ids = id_to_scope.keys()
 
     found_classes = finding.find_classes(modules, classes)
@@ -75,16 +76,19 @@ def new_object_graph(
 
     is_injectable_fn = {True: decorators.is_explicitly_injectable,
                         False: (lambda cls: True)}[only_use_explicit_bindings]
-    obj_graph = ObjectGraph(binding_mapping, bindable_scopes, is_injectable_fn,
-                            allow_injecting_none)
+    obj_graph = ObjectGraph(
+        binding_mapping, binding_context_factory, bindable_scopes,
+        is_injectable_fn, allow_injecting_none)
     return obj_graph
 
 
 class ObjectGraph(object):
 
-    def __init__(self, binding_mapping, bindable_scopes, is_injectable_fn,
-                 allow_injecting_none):
+    def __init__(
+            self, binding_mapping, binding_context_factory, bindable_scopes,
+            is_injectable_fn, allow_injecting_none):
         self._binding_mapping = binding_mapping
+        self._binding_context_factory = binding_context_factory
         self._bindable_scopes = bindable_scopes
         self._is_injectable_fn = is_injectable_fn
         self._allow_injecting_none = allow_injecting_none
@@ -92,14 +96,14 @@ class ObjectGraph(object):
     def provide(self, cls):
         if not self._is_injectable_fn(cls):
             raise errors.NonExplicitlyBoundClassError(cls)
-        return self._provide_class(cls, bindings.new_binding_context())
+        return self._provide_class(cls, self._binding_context_factory.new())
 
     def _provide_from_binding_key(self, binding_key, binding_context):
-        binding_ = self._binding_mapping.get(binding_key)
-        scope = self._bindable_scopes.get_sub_scope(binding_, binding_context)
+        binding = self._binding_mapping.get(binding_key)
+        scope = self._bindable_scopes.get_sub_scope(binding)
         provided = scope.provide(
             binding_key,
-            lambda: binding_.proviser_fn(binding_context.get_child(binding_key, binding_.scope_id), self))
+            lambda: binding.proviser_fn(binding_context.get_child(binding), self))
         if (provided is None) and not self._allow_injecting_none:
             raise errors.InjectingNoneDisallowedError()
         return provided
@@ -133,7 +137,7 @@ class ObjectGraph(object):
                 for arg_name in injected_arg_names:
                     kwargs[arg_name] = self._provide_from_binding_key(
                         binding_keys.new(arg_name),
-                        bindings.new_binding_context())
+                        self._binding_context_factory.new())
             return fn(*pargs, **kwargs)
         return WrappedFn
 

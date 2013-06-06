@@ -28,10 +28,10 @@ class AmbiguousArgNameError(Error):
 
 class BadDependencyScopeError(Error):
 
-    def __init__(self, to_scope_id, binding_key, binding_context):
+    def __init__(self, from_scope_id, to_scope_id, binding_key):
         Error.__init__(
             self, 'scope "{0}" is not usable when binding {1} from'
-            ' {2}'.format(to_scope_id, binding_key, binding_context))
+            ' {2}'.format(to_scope_id, binding_key, from_scope_id))
 
 
 class ConflictingBindingsError(Error):

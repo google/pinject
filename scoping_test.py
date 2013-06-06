@@ -91,24 +91,12 @@ class GetIdToScopeWithDefaultsTest(unittest.TestCase):
 class BindableScopesTest(unittest.TestCase):
 
     def setUp(self):
-        def is_scope_usable_from_scope(child_scope_id, parent_scope_id):
-            return child_scope_id == 'usable-scope-id'
         self.bindable_scopes = scoping.BindableScopes(
-            {'usable-scope-id': 'usable-scope'}, is_scope_usable_from_scope)
+            {'usable-scope-id': 'usable-scope'})
 
     def test_get_sub_scope_successfully(self):
         usable_binding = bindings.Binding(
             binding_keys.new('foo'),
             'unused-proviser-fn', 'usable-scope-id', 'unused-desc')
         self.assertEqual(
-            'usable-scope',
-            self.bindable_scopes.get_sub_scope(
-                usable_binding, bindings.new_binding_context()))
-
-    def test_sub_scope_not_usable_from_scope_raises_error(self):
-        unusable_binding = bindings.Binding(
-            binding_keys.new('foo'),
-            'unused-proviser-fn', 'unusable-scope-id', 'unused-desc')
-        self.assertRaises(errors.BadDependencyScopeError,
-                          self.bindable_scopes.get_sub_scope, unusable_binding,
-                          bindings.new_binding_context())
+            'usable-scope', self.bindable_scopes.get_sub_scope(usable_binding))

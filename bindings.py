@@ -117,30 +117,36 @@ class BindingMapping(object):
             raise errors.NothingInjectableForArgError(binding_key)
 
 
-def new_binding_context():
-    return BindingContext(binding_key_stack=[], scope_id=scoping.UNSCOPED)
+class BindingContextFactory(object):
+
+    def __init__(self, is_scope_usable_from_scope_fn):
+        self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
+
+    def new(self):
+        return _BindingContext(
+            binding_key_stack=[], scope_id=scoping.UNSCOPED,
+            is_scope_usable_from_scope_fn=self._is_scope_usable_from_scope_fn)
 
 
-class BindingContext(object):
+class _BindingContext(object):
 
-    def __init__(self, binding_key_stack, scope_id):
+    def __init__(self, binding_key_stack, scope_id,
+                 is_scope_usable_from_scope_fn):
         self._binding_key_stack = binding_key_stack
         self._scope_id = scope_id
+        self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
-    def get_child(self, binding_key, scope_id):
+    def get_child(self, binding):
+        binding_key = binding.binding_key
         new_binding_key_stack = list(self._binding_key_stack)
         new_binding_key_stack.append(binding_key)
         if binding_key in self._binding_key_stack:
             raise errors.CyclicInjectionError(new_binding_key_stack)
-        return BindingContext(new_binding_key_stack, scope_id)
-
-    # TODO(kurts): this smells like a public attribute.  Maybe move
-    # BindableScopes in here?
-    def does_scope_id_match(self, does_scope_id_match_fn):
-        return does_scope_id_match_fn(self._scope_id)
-
-    def __str__(self):
-        return 'the scope "{0}"'.format(self._scope_id)
+        if not self._is_scope_usable_from_scope_fn(binding.scope_id, self._scope_id):
+            raise errors.BadDependencyScopeError(
+                self._scope_id, binding.scope_id, binding_key)
+        return _BindingContext(new_binding_key_stack, binding.scope_id,
+                               self._is_scope_usable_from_scope_fn)
 
 
 def default_get_arg_names_from_class_name(class_name):
@@ -150,9 +156,9 @@ def default_get_arg_names_from_class_name(class_name):
     underscore.  Normal arg names are assumed to be lower_with_underscores.
 
     Args:
-      class_name: a class name, e.g., "FooBar"
+      class_name: a class name, e.g., "FooBar" or "_FooBar"
     Returns:
-      all likely corresponding param names, e.g., ["foo_bar"]
+      all likely corresponding arg names, e.g., ["foo_bar"]
     """
     parts = []
     rest = class_name

@@ -179,28 +179,25 @@ class BindingContextTest(unittest.TestCase):
 
     def setUp(self):
         self.binding_key = binding_keys.new('foo')
-        self.binding_context = bindings_lib.BindingContext(
-            [self.binding_key], 'curr-scope')
+        self.binding_context = bindings_lib._BindingContext(
+            [self.binding_key], 'curr-scope',
+            lambda to_scope, from_scope: to_scope != 'unusable-scope')
 
     def test_get_child_successfully(self):
         other_binding_key = binding_keys.new('bar')
         new_binding_context = self.binding_context.get_child(
-            other_binding_key, 'new-scope')
-        self.assertTrue(
-            new_binding_context.does_scope_id_match(lambda s: s == 'new-scope'))
+            bindings_lib.Binding(other_binding_key, 'unused-proviser-fn', 'new-scope', 'unused-desc'))
 
     def test_get_child_raises_error_when_binding_key_already_seen(self):
         self.assertRaises(
             errors.CyclicInjectionError, self.binding_context.get_child,
-            self.binding_key, 'new-scope')
+            bindings_lib.Binding(self.binding_key, 'unused-proviser-fn', 'new-scope', 'unused-desc'))
 
-    def test_scope_id_does_match(self):
-        self.assertTrue(
-            self.binding_context.does_scope_id_match(lambda s: s == 'curr-scope'))
-
-    def test_scope_id_does_not_match(self):
-        self.assertFalse(
-            self.binding_context.does_scope_id_match(lambda s: s == 'other-scope'))
+    def test_get_child_raises_error_when_scope_not_usable(self):
+        other_binding_key = binding_keys.new('bar')
+        self.assertRaises(
+            errors.BadDependencyScopeError, self.binding_context.get_child,
+            bindings_lib.Binding(other_binding_key, 'unused-proviser-fn', 'unusable-scope', 'unused-desc'))
 
 
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
@@ -230,7 +227,7 @@ class FakeInjector(object):
         return provider_fn()
 
 
-_UNUSED_BINDING_CONTEXT = bindings_lib.BindingContext('unused', 'unused')
+_UNUSED_BINDING_CONTEXT = bindings_lib.BindingContextFactory('unused').new()
 def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
 

@@ -41,7 +41,7 @@ class FakeInjector(object):
 
 
 # TODO(kurts): have only one call_provisor_fn() for tests.
-_UNUSED_BINDING_CONTEXT = bindings.BindingContext('unused', 'unused')
+_UNUSED_BINDING_CONTEXT = bindings.BindingContextFactory('unused').new()
 def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
 

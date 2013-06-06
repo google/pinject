@@ -85,15 +85,11 @@ def get_id_to_scope_with_defaults(id_to_scope=None):
     return id_to_scope
 
 
+# TODO(kurts): either make this class pull its weight, or delete it.
 class BindableScopes(object):
 
-    def __init__(self, id_to_scope, is_scope_usable_from_scope_fn):
+    def __init__(self, id_to_scope):
         self._id_to_scope = id_to_scope
-        self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
-    def get_sub_scope(self, binding, binding_context):
-        is_scope_id_usable = lambda sid: self._is_scope_usable_from_scope_fn(binding.scope_id, sid)
-        if not binding_context.does_scope_id_match(is_scope_id_usable):
-            raise errors.BadDependencyScopeError(
-                binding.scope_id, binding.binding_key, binding_context)
+    def get_sub_scope(self, binding):
         return self._id_to_scope[binding.scope_id]
