@@ -17,11 +17,11 @@ limitations under the License.
 import threading
 import unittest
 
-import binding_contexts
 import bindings as bindings_lib
 import binding_keys
 import decorators
 import errors
+import injection_contexts
 import scoping
 
 
@@ -30,7 +30,7 @@ def new_in_default_scope(binding_key, proviser_fn):
 
     Args:
       binding_key: a BindingKey
-      proviser_fn: a function taking a BindingContext and ObjectGraph and
+      proviser_fn: a function taking a InjectionContext and ObjectGraph and
           returning an instance of the bound value
     Returns:
       a Binding
@@ -194,18 +194,19 @@ class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
 class FakeInjector(object):
 
     def provide(self, cls):
-        return self._provide_class(cls, _UNUSED_BINDING_CONTEXT)
+        return self._provide_class(cls, _UNUSED_INJECTION_CONTEXT)
 
-    def _provide_class(self, cls, binding_context):
+    def _provide_class(self, cls, injection_context):
         return 'a-provided-{0}'.format(cls.__name__)
 
-    def _call_with_injection(self, provider_fn, binding_context):
+    def _call_with_injection(self, provider_fn, injection_context):
         return provider_fn()
 
 
-_UNUSED_BINDING_CONTEXT = binding_contexts.BindingContextFactory('unused').new()
+_UNUSED_INJECTION_CONTEXT = (
+    injection_contexts.InjectionContextFactory('unused').new())
 def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
+    return a_binding.proviser_fn(_UNUSED_INJECTION_CONTEXT, FakeInjector())
 
 
 class GetExplicitClassBindingsTest(unittest.TestCase):

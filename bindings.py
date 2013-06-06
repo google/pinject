@@ -239,14 +239,14 @@ def create_class_proviser_fn(binding_key, to_class):
         raise errors.InvalidBindingTargetError(
             binding_key, to_class, 'class')
     # TODO(kurts): don't call private method of obj_graph.
-    proviser_fn = lambda binding_context, obj_graph: obj_graph._provide_class(
-        to_class, binding_context)
+    proviser_fn = lambda injection_context, obj_graph: obj_graph._provide_class(
+        to_class, injection_context)
     proviser_fn._pinject_desc = 'the class {0!r}'.format(to_class)
     return proviser_fn
 
 
 def create_instance_proviser_fn(binding_key, to_instance):
-    proviser_fn = lambda binding_context, obj_graph: to_instance
+    proviser_fn = lambda injection_context, obj_graph: to_instance
     proviser_fn._pinject_desc = 'the instance {0!r}'.format(to_instance)
     return proviser_fn
 

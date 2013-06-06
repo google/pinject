@@ -17,11 +17,11 @@ limitations under the License.
 import inspect
 import unittest
 
-import binding_contexts
 import bindings
 import binding_keys
 import decorators
 import errors
+import injection_contexts
 import scoping
 
 
@@ -29,22 +29,23 @@ import scoping
 class FakeInjector(object):
 
     def provide(self, cls):
-        return self._provide_class(cls, _UNUSED_BINDING_CONTEXT)
+        return self._provide_class(cls, _UNUSED_INJECTION_CONTEXT)
 
-    def _provide_class(self, cls, binding_context):
+    def _provide_class(self, cls, injection_context):
         return 'a-provided-{0}'.format(cls.__name__)
 
-    def _provide_from_binding_key(self, binding_key, binding_context):
+    def _provide_from_binding_key(self, binding_key, injection_context):
         return 'provided with {0}'.format(binding_key)
 
-    def _call_with_injection(self, provider_fn, binding_context):
+    def _call_with_injection(self, provider_fn, injection_context):
         return provider_fn()
 
 
 # TODO(kurts): have only one call_provisor_fn() for tests.
-_UNUSED_BINDING_CONTEXT = binding_contexts.BindingContextFactory('unused').new()
+_UNUSED_INJECTION_CONTEXT = (
+    injection_contexts.InjectionContextFactory('unused').new())
 def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
+    return a_binding.proviser_fn(_UNUSED_INJECTION_CONTEXT, FakeInjector())
 
 
 class AnnotateArgTest(unittest.TestCase):

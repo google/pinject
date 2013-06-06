@@ -18,12 +18,12 @@ import functools
 import inspect
 import types
 
-import binding_contexts
 import bindings
 import binding_keys
 import decorators
 import errors
 import finding
+import injection_contexts
 import providing
 import scoping
 
@@ -41,7 +41,7 @@ def new_object_graph(
               returning whether an object in the first scope can be injected
               into an object from the second scope
     """
-    binding_context_factory = binding_contexts.BindingContextFactory(
+    injection_context_factory = injection_contexts.InjectionContextFactory(
         is_scope_usable_from_scope)
     id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
     bindable_scopes = scoping.BindableScopes(id_to_scope)
@@ -82,7 +82,7 @@ def new_object_graph(
     is_injectable_fn = {True: decorators.is_explicitly_injectable,
                         False: (lambda cls: True)}[only_use_explicit_bindings]
     obj_graph = ObjectGraph(
-        binding_mapping, binding_context_factory, bindable_scopes,
+        binding_mapping, injection_context_factory, bindable_scopes,
         is_injectable_fn, allow_injecting_none)
     return obj_graph
 
@@ -90,10 +90,10 @@ def new_object_graph(
 class ObjectGraph(object):
 
     def __init__(
-            self, binding_mapping, binding_context_factory, bindable_scopes,
+            self, binding_mapping, injection_context_factory, bindable_scopes,
             is_injectable_fn, allow_injecting_none):
         self._binding_mapping = binding_mapping
-        self._binding_context_factory = binding_context_factory
+        self._injection_context_factory = injection_context_factory
         self._bindable_scopes = bindable_scopes
         self._is_injectable_fn = is_injectable_fn
         self._allow_injecting_none = allow_injecting_none
@@ -101,22 +101,22 @@ class ObjectGraph(object):
     def provide(self, cls):
         if not self._is_injectable_fn(cls):
             raise errors.NonExplicitlyBoundClassError(cls)
-        return self._provide_class(cls, self._binding_context_factory.new())
+        return self._provide_class(cls, self._injection_context_factory.new())
 
-    def _provide_from_binding_key(self, binding_key, binding_context):
+    def _provide_from_binding_key(self, binding_key, injection_context):
         binding = self._binding_mapping.get(binding_key)
         scope = self._bindable_scopes.get_sub_scope(binding)
         provided = scope.provide(
             binding_key,
-            lambda: binding.proviser_fn(binding_context.get_child(binding), self))
+            lambda: binding.proviser_fn(injection_context.get_child(binding), self))
         if (provided is None) and not self._allow_injecting_none:
             raise errors.InjectingNoneDisallowedError()
         return provided
 
-    def _provide_class(self, cls, binding_context):
+    def _provide_class(self, cls, injection_context):
         if type(cls.__init__) is types.MethodType:
             init_kwargs = self._get_injection_kwargs(
-                cls.__init__, binding_context)
+                cls.__init__, injection_context)
         else:
             init_kwargs = {}
         return cls(**init_kwargs)
@@ -142,15 +142,15 @@ class ObjectGraph(object):
                 for arg_name in injected_arg_names:
                     kwargs[arg_name] = self._provide_from_binding_key(
                         binding_keys.new(arg_name),
-                        self._binding_context_factory.new())
+                        self._injection_context_factory.new())
             return fn(*pargs, **kwargs)
         return WrappedFn
 
-    def _call_with_injection(self, provider_fn, binding_context):
-        kwargs = self._get_injection_kwargs(provider_fn, binding_context)
+    def _call_with_injection(self, provider_fn, injection_context):
+        kwargs = self._get_injection_kwargs(provider_fn, injection_context)
         return provider_fn(**kwargs)
 
-    def _get_injection_kwargs(self, fn, binding_context):
+    def _get_injection_kwargs(self, fn, injection_context):
         return binding_keys.create_kwargs(
             decorators.get_injectable_arg_binding_keys(fn),
-            lambda bk: self._provide_from_binding_key(bk, binding_context))
+            lambda bk: self._provide_from_binding_key(bk, injection_context))

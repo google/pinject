@@ -18,8 +18,8 @@ import errors
 import scoping
 
 
-class BindingContextFactory(object):
-    """A creator of _BindingContexts."""
+class InjectionContextFactory(object):
+    """A creator of _InjectionContexts."""
 
     def __init__(self, is_scope_usable_from_scope_fn):
         """Initializer.
@@ -32,18 +32,18 @@ class BindingContextFactory(object):
         self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
     def new(self):
-        """Creates a _BindingContext.
+        """Creates a _InjectionContext.
 
         Returns:
-          a new empty _BindingContext in the default scope
+          a new empty _InjectionContext in the default scope
         """
-        return _BindingContext(
+        return _InjectionContext(
             binding_key_stack=[], scope_id=scoping.UNSCOPED,
             is_scope_usable_from_scope_fn=self._is_scope_usable_from_scope_fn)
 
 
 # TODO(kurts): rename to _InjectionContext.
-class _BindingContext(object):
+class _InjectionContext(object):
     """The context of dependency-injecting some bound value."""
 
     def __init__(self, binding_key_stack, scope_id,
@@ -72,7 +72,7 @@ class _BindingContext(object):
         Args:
           binding: a Binding
         Returns:
-          a new _BindingContext
+          a new _InjectionContext
         """
         child_binding_key = binding.binding_key
         child_scope_id = binding.scope_id
@@ -83,5 +83,5 @@ class _BindingContext(object):
                 child_scope_id, self._scope_id):
             raise errors.BadDependencyScopeError(
                 self._scope_id, child_scope_id, child_binding_key)
-        return _BindingContext(new_binding_key_stack, child_scope_id,
-                               self._is_scope_usable_from_scope_fn)
+        return _InjectionContext(new_binding_key_stack, child_scope_id,
+                                 self._is_scope_usable_from_scope_fn)
