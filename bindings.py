@@ -117,38 +117,6 @@ class BindingMapping(object):
             raise errors.NothingInjectableForArgError(binding_key)
 
 
-class BindingContextFactory(object):
-
-    def __init__(self, is_scope_usable_from_scope_fn):
-        self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
-
-    def new(self):
-        return _BindingContext(
-            binding_key_stack=[], scope_id=scoping.UNSCOPED,
-            is_scope_usable_from_scope_fn=self._is_scope_usable_from_scope_fn)
-
-
-class _BindingContext(object):
-
-    def __init__(self, binding_key_stack, scope_id,
-                 is_scope_usable_from_scope_fn):
-        self._binding_key_stack = binding_key_stack
-        self._scope_id = scope_id
-        self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
-
-    def get_child(self, binding):
-        binding_key = binding.binding_key
-        new_binding_key_stack = list(self._binding_key_stack)
-        new_binding_key_stack.append(binding_key)
-        if binding_key in self._binding_key_stack:
-            raise errors.CyclicInjectionError(new_binding_key_stack)
-        if not self._is_scope_usable_from_scope_fn(binding.scope_id, self._scope_id):
-            raise errors.BadDependencyScopeError(
-                self._scope_id, binding.scope_id, binding_key)
-        return _BindingContext(new_binding_key_stack, binding.scope_id,
-                               self._is_scope_usable_from_scope_fn)
-
-
 def default_get_arg_names_from_class_name(class_name):
     """Converts normal class names into normal arg names.
 

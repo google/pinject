@@ -17,6 +17,7 @@ limitations under the License.
 import inspect
 import unittest
 
+import binding_contexts
 import bindings
 import binding_keys
 import decorators
@@ -41,7 +42,7 @@ class FakeInjector(object):
 
 
 # TODO(kurts): have only one call_provisor_fn() for tests.
-_UNUSED_BINDING_CONTEXT = bindings.BindingContextFactory('unused').new()
+_UNUSED_BINDING_CONTEXT = binding_contexts.BindingContextFactory('unused').new()
 def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
 

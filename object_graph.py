@@ -18,6 +18,7 @@ import functools
 import inspect
 import types
 
+import binding_contexts
 import bindings
 import binding_keys
 import decorators
@@ -35,8 +36,12 @@ def new_object_graph(
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name),
         id_to_scope=None, is_scope_usable_from_scope=lambda _1, _2: True):
-
-    binding_context_factory = bindings.BindingContextFactory(
+    """
+          is_scope_usable_from_scope_fn: a function taking two scope IDs and
+              returning whether an object in the first scope can be injected
+              into an object from the second scope
+    """
+    binding_context_factory = binding_contexts.BindingContextFactory(
         is_scope_usable_from_scope)
     id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
     bindable_scopes = scoping.BindableScopes(id_to_scope)

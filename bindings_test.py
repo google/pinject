@@ -17,6 +17,7 @@ limitations under the License.
 import threading
 import unittest
 
+import binding_contexts
 import bindings as bindings_lib
 import binding_keys
 import decorators
@@ -175,31 +176,6 @@ class BindingMappingTest(unittest.TestCase):
                           binding_mapping.get, 'colliding-binding-key')
 
 
-class BindingContextTest(unittest.TestCase):
-
-    def setUp(self):
-        self.binding_key = binding_keys.new('foo')
-        self.binding_context = bindings_lib._BindingContext(
-            [self.binding_key], 'curr-scope',
-            lambda to_scope, from_scope: to_scope != 'unusable-scope')
-
-    def test_get_child_successfully(self):
-        other_binding_key = binding_keys.new('bar')
-        new_binding_context = self.binding_context.get_child(
-            bindings_lib.Binding(other_binding_key, 'unused-proviser-fn', 'new-scope', 'unused-desc'))
-
-    def test_get_child_raises_error_when_binding_key_already_seen(self):
-        self.assertRaises(
-            errors.CyclicInjectionError, self.binding_context.get_child,
-            bindings_lib.Binding(self.binding_key, 'unused-proviser-fn', 'new-scope', 'unused-desc'))
-
-    def test_get_child_raises_error_when_scope_not_usable(self):
-        other_binding_key = binding_keys.new('bar')
-        self.assertRaises(
-            errors.BadDependencyScopeError, self.binding_context.get_child,
-            bindings_lib.Binding(other_binding_key, 'unused-proviser-fn', 'unusable-scope', 'unused-desc'))
-
-
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
 
     def test_single_word_lowercased(self):
@@ -227,7 +203,7 @@ class FakeInjector(object):
         return provider_fn()
 
 
-_UNUSED_BINDING_CONTEXT = bindings_lib.BindingContextFactory('unused').new()
+_UNUSED_BINDING_CONTEXT = binding_contexts.BindingContextFactory('unused').new()
 def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(_UNUSED_BINDING_CONTEXT, FakeInjector())
 
