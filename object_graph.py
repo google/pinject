@@ -28,6 +28,9 @@ import providing
 import scoping
 
 
+_SHORT_USER_VISIBLE_STACK_TRACE = True
+
+
 def new_object_graph(
         modules=finding.ALL_IMPORTED_MODULES, classes=None, binding_specs=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
@@ -41,43 +44,49 @@ def new_object_graph(
               returning whether an object in the first scope can be injected
               into an object from the second scope
     """
-    injection_context_factory = injection_contexts.InjectionContextFactory(
-        is_scope_usable_from_scope)
-    id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
-    bindable_scopes = scoping.BindableScopes(id_to_scope)
-    known_scope_ids = id_to_scope.keys()
+    try:
+        injection_context_factory = injection_contexts.InjectionContextFactory(
+            is_scope_usable_from_scope)
+        id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
+        bindable_scopes = scoping.BindableScopes(id_to_scope)
+        known_scope_ids = id_to_scope.keys()
 
-    found_classes = finding.find_classes(modules, classes)
-    if only_use_explicit_bindings:
-        implicit_class_bindings = []
-    else:
-        implicit_class_bindings = bindings.get_implicit_class_bindings(
+        found_classes = finding.find_classes(modules, classes)
+        if only_use_explicit_bindings:
+            implicit_class_bindings = []
+        else:
+            implicit_class_bindings = bindings.get_implicit_class_bindings(
+                found_classes, get_arg_names_from_class_name)
+        explicit_bindings = bindings.get_explicit_class_bindings(
             found_classes, get_arg_names_from_class_name)
-    explicit_bindings = bindings.get_explicit_class_bindings(
-        found_classes, get_arg_names_from_class_name)
-    binder = bindings.Binder(explicit_bindings, known_scope_ids)
-    if binding_specs is not None:
-        binding_specs = list(binding_specs)
-        while binding_specs:
-            binding_spec = binding_specs.pop()
-            try:
-                binding_spec.configure(binder.bind)
-                has_configure = True
-            except NotImplementedError:
-                has_configure = False
-            dependencies = binding_spec.dependencies()
-            binding_specs.extend(dependencies)
-            provider_bindings = bindings.get_provider_bindings(
-                binding_spec, get_arg_names_from_provider_fn_name)
-            explicit_bindings.extend(provider_bindings)
-            if not has_configure and not dependencies and not provider_bindings:
-                raise errors.EmptyBindingSpecError(binding_spec)
+        binder = bindings.Binder(explicit_bindings, known_scope_ids)
+        if binding_specs is not None:
+            binding_specs = list(binding_specs)
+            while binding_specs:
+                binding_spec = binding_specs.pop()
+                try:
+                    binding_spec.configure(binder.bind)
+                    has_configure = True
+                except NotImplementedError:
+                    has_configure = False
+                dependencies = binding_spec.dependencies()
+                binding_specs.extend(dependencies)
+                provider_bindings = bindings.get_provider_bindings(
+                    binding_spec, get_arg_names_from_provider_fn_name)
+                explicit_bindings.extend(provider_bindings)
+                if not has_configure and not dependencies and not provider_bindings:
+                    raise errors.EmptyBindingSpecError(binding_spec)
 
-    binding_key_to_binding, collided_binding_key_to_bindings = (
-        bindings.get_overall_binding_key_to_binding_maps(
-            [implicit_class_bindings, explicit_bindings]))
-    binding_mapping = bindings.BindingMapping(
-        binding_key_to_binding, collided_binding_key_to_bindings)
+        binding_key_to_binding, collided_binding_key_to_bindings = (
+            bindings.get_overall_binding_key_to_binding_maps(
+                [implicit_class_bindings, explicit_bindings]))
+        binding_mapping = bindings.BindingMapping(
+            binding_key_to_binding, collided_binding_key_to_bindings)
+    except errors.Error as e:
+        if _SHORT_USER_VISIBLE_STACK_TRACE:
+            raise e
+        else:
+            raise
 
     is_injectable_fn = {True: decorators.is_explicitly_injectable,
                         False: (lambda cls: True)}[only_use_explicit_bindings]
@@ -98,8 +107,14 @@ class ObjectGraph(object):
     def provide(self, cls):
         if not self._is_injectable_fn(cls):
             raise errors.NonExplicitlyBoundClassError(cls)
-        return self._obj_provider.provide_class(
-            cls, self._injection_context_factory.new())
+        try:
+            return self._obj_provider.provide_class(
+                cls, self._injection_context_factory.new())
+        except errors.Error as e:
+            if _SHORT_USER_VISIBLE_STACK_TRACE:
+                raise e
+            else:
+                raise
 
     # TODO(kurts): what's the use case for this, really?  Provider functions
     # are already injected by default.  Functional programming?
