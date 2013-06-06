@@ -138,9 +138,8 @@ def _get_provider_fn_decorations(provider_fn, default_arg_names):
 def get_provider_fn_bindings(provider_fn, default_arg_names):
     annotated_with, arg_names, in_scope_id = _get_provider_fn_decorations(
         provider_fn, default_arg_names)
-    # TODO(kurts): don't call private method of obj_graph.
-    proviser_fn = lambda injection_context, obj_graph: obj_graph._call_with_injection(
-        provider_fn, injection_context)
+    proviser_fn = lambda injection_context, obj_provider: (
+        obj_provider.call_with_injection(provider_fn, injection_context))
     proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
     return [
         bindings.Binding(

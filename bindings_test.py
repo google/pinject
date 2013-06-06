@@ -191,22 +191,19 @@ class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
         self.assertEqual([], bindings_lib.default_get_arg_names_from_class_name('notAllCamelCase'))
 
 
-class FakeInjector(object):
+class FakeObjectProvider(object):
 
-    def provide(self, cls):
-        return self._provide_class(cls, _UNUSED_INJECTION_CONTEXT)
-
-    def _provide_class(self, cls, injection_context):
+    def provide_class(self, cls, injection_context):
         return 'a-provided-{0}'.format(cls.__name__)
 
-    def _call_with_injection(self, provider_fn, injection_context):
+    def call_with_injection(self, provider_fn, injection_context):
         return provider_fn()
 
 
 _UNUSED_INJECTION_CONTEXT = (
     injection_contexts.InjectionContextFactory('unused').new())
 def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_INJECTION_CONTEXT, FakeInjector())
+    return a_binding.proviser_fn(_UNUSED_INJECTION_CONTEXT, FakeObjectProvider())
 
 
 class GetExplicitClassBindingsTest(unittest.TestCase):

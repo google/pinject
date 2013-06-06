@@ -81,45 +81,25 @@ def new_object_graph(
 
     is_injectable_fn = {True: decorators.is_explicitly_injectable,
                         False: (lambda cls: True)}[only_use_explicit_bindings]
-    obj_graph = ObjectGraph(
-        binding_mapping, injection_context_factory, bindable_scopes,
-        is_injectable_fn, allow_injecting_none)
-    return obj_graph
+    obj_provider = ObjectProvider(
+        binding_mapping, bindable_scopes, allow_injecting_none)
+    return ObjectGraph(
+        obj_provider, injection_context_factory, is_injectable_fn)
 
 
 class ObjectGraph(object):
 
-    def __init__(
-            self, binding_mapping, injection_context_factory, bindable_scopes,
-            is_injectable_fn, allow_injecting_none):
-        self._binding_mapping = binding_mapping
+    def __init__(self, obj_provider, injection_context_factory,
+                 is_injectable_fn):
+        self._obj_provider = obj_provider
         self._injection_context_factory = injection_context_factory
-        self._bindable_scopes = bindable_scopes
         self._is_injectable_fn = is_injectable_fn
-        self._allow_injecting_none = allow_injecting_none
 
     def provide(self, cls):
         if not self._is_injectable_fn(cls):
             raise errors.NonExplicitlyBoundClassError(cls)
-        return self._provide_class(cls, self._injection_context_factory.new())
-
-    def _provide_from_binding_key(self, binding_key, injection_context):
-        binding = self._binding_mapping.get(binding_key)
-        scope = self._bindable_scopes.get_sub_scope(binding)
-        provided = scope.provide(
-            binding_key,
-            lambda: binding.proviser_fn(injection_context.get_child(binding), self))
-        if (provided is None) and not self._allow_injecting_none:
-            raise errors.InjectingNoneDisallowedError()
-        return provided
-
-    def _provide_class(self, cls, injection_context):
-        if type(cls.__init__) is types.MethodType:
-            init_kwargs = self._get_injection_kwargs(
-                cls.__init__, injection_context)
-        else:
-            init_kwargs = {}
-        return cls(**init_kwargs)
+        return self._obj_provider.provide_class(
+            cls, self._injection_context_factory.new())
 
     # TODO(kurts): what's the use case for this, really?  Provider functions
     # are already injected by default.  Functional programming?
@@ -140,17 +120,44 @@ class ObjectGraph(object):
             if injected_arg_names:
                 kwargs = dict(kwargs)
                 for arg_name in injected_arg_names:
-                    kwargs[arg_name] = self._provide_from_binding_key(
+                    kwargs[arg_name] = self._obj_provider.provide_from_binding_key(
                         binding_keys.new(arg_name),
                         self._injection_context_factory.new())
             return fn(*pargs, **kwargs)
         return WrappedFn
 
-    def _call_with_injection(self, provider_fn, injection_context):
-        kwargs = self._get_injection_kwargs(provider_fn, injection_context)
+
+# TODO(kurts): move to its own file.
+class ObjectProvider(object):
+
+    def __init__(self, binding_mapping, bindable_scopes, allow_injecting_none):
+        self._binding_mapping = binding_mapping
+        self._bindable_scopes = bindable_scopes
+        self._allow_injecting_none = allow_injecting_none
+
+    def provide_from_binding_key(self, binding_key, injection_context):
+        binding = self._binding_mapping.get(binding_key)
+        scope = self._bindable_scopes.get_sub_scope(binding)
+        provided = scope.provide(
+            binding_key,
+            lambda: binding.proviser_fn(injection_context.get_child(binding), self))
+        if (provided is None) and not self._allow_injecting_none:
+            raise errors.InjectingNoneDisallowedError()
+        return provided
+
+    def provide_class(self, cls, injection_context):
+        if type(cls.__init__) is types.MethodType:
+            init_kwargs = self.get_injection_kwargs(
+                cls.__init__, injection_context)
+        else:
+            init_kwargs = {}
+        return cls(**init_kwargs)
+
+    def call_with_injection(self, provider_fn, injection_context):
+        kwargs = self.get_injection_kwargs(provider_fn, injection_context)
         return provider_fn(**kwargs)
 
-    def _get_injection_kwargs(self, fn, injection_context):
+    def get_injection_kwargs(self, fn, injection_context):
         return binding_keys.create_kwargs(
             decorators.get_injectable_arg_binding_keys(fn),
-            lambda bk: self._provide_from_binding_key(bk, injection_context))
+            lambda bk: self.provide_from_binding_key(bk, injection_context))

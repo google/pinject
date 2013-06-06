@@ -25,19 +25,16 @@ import injection_contexts
 import scoping
 
 
-# TODO(kurts): have only one FakeInjector for tests.
-class FakeInjector(object):
+# TODO(kurts): have only one FakeObjectProvider for tests.
+class FakeObjectProvider(object):
 
-    def provide(self, cls):
-        return self._provide_class(cls, _UNUSED_INJECTION_CONTEXT)
-
-    def _provide_class(self, cls, injection_context):
+    def provide_class(self, cls, injection_context):
         return 'a-provided-{0}'.format(cls.__name__)
 
-    def _provide_from_binding_key(self, binding_key, injection_context):
+    def provide_from_binding_key(self, binding_key, injection_context):
         return 'provided with {0}'.format(binding_key)
 
-    def _call_with_injection(self, provider_fn, injection_context):
+    def call_with_injection(self, provider_fn, injection_context):
         return provider_fn()
 
 
@@ -45,7 +42,7 @@ class FakeInjector(object):
 _UNUSED_INJECTION_CONTEXT = (
     injection_contexts.InjectionContextFactory('unused').new())
 def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_INJECTION_CONTEXT, FakeInjector())
+    return a_binding.proviser_fn(_UNUSED_INJECTION_CONTEXT, FakeObjectProvider())
 
 
 class AnnotateArgTest(unittest.TestCase):
