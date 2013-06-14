@@ -24,6 +24,7 @@ import decorators
 import errors
 import finding
 import injection_contexts
+import object_providers
 import providing
 import scoping
 
@@ -90,7 +91,7 @@ def new_object_graph(
 
     is_injectable_fn = {True: decorators.is_explicitly_injectable,
                         False: (lambda cls: True)}[only_use_explicit_bindings]
-    obj_provider = ObjectProvider(
+    obj_provider = object_providers.ObjectProvider(
         binding_mapping, bindable_scopes, allow_injecting_none)
     return ObjectGraph(
         obj_provider, injection_context_factory, is_injectable_fn)
@@ -140,39 +141,3 @@ class ObjectGraph(object):
                         self._injection_context_factory.new())
             return fn(*pargs, **kwargs)
         return WrappedFn
-
-
-# TODO(kurts): move to its own file.
-class ObjectProvider(object):
-
-    def __init__(self, binding_mapping, bindable_scopes, allow_injecting_none):
-        self._binding_mapping = binding_mapping
-        self._bindable_scopes = bindable_scopes
-        self._allow_injecting_none = allow_injecting_none
-
-    def provide_from_binding_key(self, binding_key, injection_context):
-        binding = self._binding_mapping.get(binding_key)
-        scope = self._bindable_scopes.get_sub_scope(binding)
-        provided = scope.provide(
-            binding_key,
-            lambda: binding.proviser_fn(injection_context.get_child(binding), self))
-        if (provided is None) and not self._allow_injecting_none:
-            raise errors.InjectingNoneDisallowedError()
-        return provided
-
-    def provide_class(self, cls, injection_context):
-        if type(cls.__init__) is types.MethodType:
-            init_kwargs = self.get_injection_kwargs(
-                cls.__init__, injection_context)
-        else:
-            init_kwargs = {}
-        return cls(**init_kwargs)
-
-    def call_with_injection(self, provider_fn, injection_context):
-        kwargs = self.get_injection_kwargs(provider_fn, injection_context)
-        return provider_fn(**kwargs)
-
-    def get_injection_kwargs(self, fn, injection_context):
-        return binding_keys.create_kwargs(
-            decorators.get_injectable_arg_binding_keys(fn),
-            lambda bk: self.provide_from_binding_key(bk, injection_context))

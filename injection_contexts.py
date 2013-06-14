@@ -42,7 +42,6 @@ class InjectionContextFactory(object):
             is_scope_usable_from_scope_fn=self._is_scope_usable_from_scope_fn)
 
 
-# TODO(kurts): rename to _InjectionContext.
 class _InjectionContext(object):
     """The context of dependency-injecting some bound value."""
 
