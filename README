@@ -277,7 +277,10 @@ method names are.  For instance, Pinject assumes that the method
 `provide_foo_bar()` is a provider method for the arg name `foo_bar`.
 
 You can override this default behavior by passing an arg named
-`get_arg_names_from_provider_fn_name` to `new_object_graph()`.
+`get_arg_names_from_provider_fn_name` to `new_object_graph()`.  For instance,
+if you work for a certain large corporation whose python style guide makes you
+name functions in CamelCase, you may want `ProvideFooBar()` to be a provider
+method for the arg name `foo_bar`.
 
 {{{
 >>> class SomeClass(object):
@@ -285,18 +288,20 @@ You can override this default behavior by passing an arg named
 ...         self.foo = foo
 ...
 >>> class SomeBindingSpec(pinject.BindingSpec):
-...     def gimme_some_foo(self):
+...     def ProvideFoo(self):
 ...         return 'some-foo'
 ...
->>> def custom_get_arg_names(provider_fn_name):
-...     if provider_fn_name.startswith('gimme_some_'):
-...         return [provider_fn_name[len('gimme_some_'):]]
+>>> import re
+>>> def CustomGetArgNames(provider_fn_name):
+...     if provider_fn_name.startswith('Provide'):
+...         provided_camelcase = provider_fn_name[len('Provide'):]
+...         return [re.sub('(?!^)([A-Z]+)', r'_\1', provided_camelcase).lower()]
 ...     else:
 ...         return []
 ...
 >>> obj_graph = pinject.new_object_graph(
 ...     binding_specs=[SomeBindingSpec()],
-...     get_arg_names_from_provider_fn_name=custom_get_arg_names)
+...     get_arg_names_from_provider_fn_name=CustomGetArgNames)
 >>> some_class = obj_graph.provide(SomeClass)
 >>> print some_class.foo
 'some-foo'
