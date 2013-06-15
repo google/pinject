@@ -1,6 +1,7 @@
 TODO:
+- make it easy to declare injected provider functions, not just instances
 - disallow multiple @provides() decorators on same function
-- allow DAG includes
+- allow DAG binding spec dependencies
 - reasonable error messages for all exceptions
 - validate python types of all input
 - either allow binding specs to declare required bindings, or else declare
@@ -9,6 +10,7 @@ TODO:
      hash?), etc.
 
 Maybe TODO:
+- change default scope back to prototype?
 - eager singletons
 - allow field injection
     (lack of field docstrings is OK because they're the appropriate instances of that type)
