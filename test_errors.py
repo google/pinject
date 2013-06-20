@@ -21,9 +21,9 @@ import sys
 import traceback
 import types
 
-import bindings
-import errors
-import object_graph
+from pinject import bindings
+from pinject import errors
+from pinject import object_graph
 
 
 def _print_raised_exception(exc, fn, *pargs, **kwargs):

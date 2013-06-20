@@ -17,13 +17,13 @@ limitations under the License.
 import inspect
 import unittest
 
-import binding_keys
-import bindings
-import decorators
-import errors
-import injection_contexts
-import object_providers
-import scoping
+from pinject import binding_keys
+from pinject import bindings
+from pinject import decorators
+from pinject import errors
+from pinject import injection_contexts
+from pinject import object_providers
+from pinject import scoping
 
 
 def new_test_obj_provider(binding_key, instance, allow_injecting_none=True):

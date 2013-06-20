@@ -14,8 +14,8 @@ limitations under the License.
 """
 
 
-import errors
-import scoping
+from . import errors
+from . import scoping
 
 
 class InjectionContextFactory(object):

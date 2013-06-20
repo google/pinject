@@ -16,9 +16,9 @@ limitations under the License.
 
 import types
 
-import binding_keys
-import decorators
-import errors
+from . import binding_keys
+from . import decorators
+from . import errors
 
 
 class ObjectProvider(object):

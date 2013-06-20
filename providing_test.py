@@ -16,7 +16,7 @@ limitations under the License.
 
 import unittest
 
-import providing
+from pinject import providing
 
 
 class DefaultGetArgNamesFromProviderFnNameTest(unittest.TestCase):

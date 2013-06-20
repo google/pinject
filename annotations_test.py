@@ -16,7 +16,7 @@ limitations under the License.
 
 import unittest
 
-import annotations
+from pinject import annotations
 
 
 class AnnotationTest(unittest.TestCase):

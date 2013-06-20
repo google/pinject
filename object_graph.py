@@ -18,15 +18,15 @@ import functools
 import inspect
 import types
 
-import bindings
-import binding_keys
-import decorators
-import errors
-import finding
-import injection_contexts
-import object_providers
-import providing
-import scoping
+from . import bindings
+from . import binding_keys
+from . import decorators
+from . import errors
+from . import finding
+from . import injection_contexts
+from . import object_providers
+from . import providing
+from . import scoping
 
 
 _SHORT_USER_VISIBLE_STACK_TRACE = True

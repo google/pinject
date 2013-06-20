@@ -17,7 +17,7 @@ limitations under the License.
 import sys
 import unittest
 
-import finding
+from pinject import finding
 
 
 class FindClassesTest(unittest.TestCase):

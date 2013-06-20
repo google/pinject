@@ -16,10 +16,10 @@ limitations under the License.
 
 import unittest
 
-import binding_keys
-import bindings
-import injection_contexts
-import errors
+from pinject import binding_keys
+from pinject import bindings
+from pinject import errors
+from pinject import injection_contexts
 
 
 class InjectionContextTest(unittest.TestCase):

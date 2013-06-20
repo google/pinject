@@ -16,8 +16,8 @@ limitations under the License.
 
 import unittest
 
-import annotations
-import binding_keys
+from pinject import annotations
+from pinject import binding_keys
 
 
 class BindingKeyTest(unittest.TestCase):

@@ -16,7 +16,7 @@ limitations under the License.
 
 import threading
 
-import errors
+from . import errors
 
 
 class _SingletonScopeId(object):

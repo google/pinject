@@ -19,14 +19,13 @@ import re
 import threading
 import types
 
-# From http://micheles.googlecode.com/hg/decorator/documentation.html
-import decorator
+from .third_party import decorator
 
-import binding_keys
-import decorators
-import errors
-import providing
-import scoping
+from . import binding_keys
+from . import decorators
+from . import errors
+from . import providing
+from . import scoping
 
 
 class Binding(object):
@@ -168,7 +167,7 @@ def get_provider_bindings(
     for _, fn in fns:
         default_arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         provider_bindings.extend(
-            decorators.get_provider_fn_bindings(fn, default_arg_names))
+            get_provider_fn_bindings(fn, default_arg_names))
     return provider_bindings
 
 
@@ -217,8 +216,8 @@ class Binder(object):
             def provide_it(_pinject_class):
                 return _pinject_class
             with self._lock:
-                self._collected_bindings.extend(decorators.get_provider_fn_bindings(
-                    provide_it, [arg_name]))
+                self._collected_bindings.extend(
+                    get_provider_fn_bindings(provide_it, [arg_name]))
                 if (to_class, in_scope) not in self._class_bindings_created:
                     self._collected_bindings.append(Binding(
                         binding_keys.new('_pinject_class', (to_class, in_scope)),
@@ -258,3 +257,18 @@ class BindingSpec(object):
 
     def dependencies(self):
         return []
+
+
+def get_provider_fn_bindings(provider_fn, default_arg_names):
+    annotated_with, arg_names, in_scope_id = (
+        decorators._get_provider_fn_decorations(provider_fn, default_arg_names))
+    proviser_fn = lambda injection_context, obj_provider: (
+        obj_provider.call_with_injection(provider_fn, injection_context))
+    proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
+    return [
+        Binding(
+            binding_keys.new(arg_name, annotated_with),
+            proviser_fn, in_scope_id,
+            desc='the provider function {0} from module {1}'.format(
+                provider_fn, provider_fn.__module__))
+        for arg_name in arg_names]

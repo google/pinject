@@ -16,24 +16,18 @@ limitations under the License.
 
 import sys
 
-import bindings
-BindingSpec = bindings.BindingSpec
 
-import decorators
-annotate_arg = decorators.annotate_arg
-injectable = decorators.injectable
-provides = decorators.provides
-
-import errors
-Error = errors.Error
-for thing in dir(errors):
-    if isinstance(thing, errors.Error):
-        setattr(sys.modules[__name__], thing.__name__, thing)
-
-import object_graph
-new_object_graph = object_graph.new_object_graph
-
-import scoping
-PROTOTYPE = scoping.PROTOTYPE
-Scope = scoping.Scope
-SINGLETON = scoping.SINGLETON
+__all__ = []
+from .bindings import BindingSpec
+__all__.extend(['BindingSpec'])
+from .decorators import annotate_arg, injectable, provides
+__all__.extend(['annotate_arg', 'injectable', 'provides'])
+for thing_name in dir(errors):
+    thing = getattr(errors, thing_name)
+    if type(thing) == type(str):
+        setattr(sys.modules[__name__], thing_name, thing)
+        __all__.append(thing_name)
+from .object_graph import new_object_graph
+__all__.extend(['new_object_graph'])
+from .scoping import PROTOTYPE, Scope, SINGLETON
+__all__.extend(['PROTOTYPE', 'Scope', 'SINGLETON'])

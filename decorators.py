@@ -13,15 +13,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+
 import inspect
 
-# From http://micheles.googlecode.com/hg/decorator/documentation.html
-import decorator
+from .third_party import decorator
 
-import bindings
-import binding_keys
-import errors
-import scoping
+from . import binding_keys
+from . import errors
+from . import scoping
 
 
 _ARG_BINDING_KEYS_ATTR = '_pinject_arg_binding_keys'
@@ -133,21 +132,6 @@ def _get_provider_fn_decorations(provider_fn, default_arg_names):
         arg_names = default_arg_names
         in_scope_id = scoping.DEFAULT_SCOPE
     return annotated_with, arg_names, in_scope_id
-
-
-def get_provider_fn_bindings(provider_fn, default_arg_names):
-    annotated_with, arg_names, in_scope_id = _get_provider_fn_decorations(
-        provider_fn, default_arg_names)
-    proviser_fn = lambda injection_context, obj_provider: (
-        obj_provider.call_with_injection(provider_fn, injection_context))
-    proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
-    return [
-        bindings.Binding(
-            binding_keys.new(arg_name, annotated_with),
-            proviser_fn, in_scope_id,
-            desc='the provider function {0} from module {1}'.format(
-                provider_fn, provider_fn.__module__))
-        for arg_name in arg_names]
 
 
 def _get_pinject_decorated_fn(fn):

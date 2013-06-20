@@ -16,10 +16,10 @@ limitations under the License.
 
 import unittest
 
-import bindings
-import binding_keys
-import errors
-import scoping
+from pinject import bindings
+from pinject import binding_keys
+from pinject import errors
+from pinject import scoping
 
 
 class PrototypeScopeTest(unittest.TestCase):

@@ -17,12 +17,12 @@ limitations under the License.
 import threading
 import unittest
 
-import bindings as bindings_lib
-import binding_keys
-import decorators
-import errors
-import injection_contexts
-import scoping
+from pinject import bindings as bindings_lib
+from pinject import binding_keys
+from pinject import decorators
+from pinject import errors
+from pinject import injection_contexts
+from pinject import scoping
 
 
 def new_in_default_scope(binding_key, proviser_fn):
@@ -361,3 +361,16 @@ class BinderTest(unittest.TestCase):
         self.assertRaises(errors.InvalidBindingTargetError,
                           self.binder.bind, 'unused-arg-name',
                           to_class='not-a-class')
+
+
+class GetProviderFnBindingsTest(unittest.TestCase):
+
+    def test_proviser_calls_provider_fn(self):
+        def provide_foo():
+            return 'a-foo'
+        [provider_fn_binding] = bindings_lib.get_provider_fn_bindings(provide_foo, ['foo'])
+        self.assertEqual('a-foo', call_provisor_fn(provider_fn_binding))
+
+    # The rest of get_provider_fn_binding() is tested in
+    # GetProviderFnDecorationsTest in conjection with @annotated_with() and
+    # @in_scope().

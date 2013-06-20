@@ -14,7 +14,7 @@ limitations under the License.
 """
 
 
-import annotations
+from . import annotations
 
 
 class BindingKey(object):

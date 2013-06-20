@@ -17,11 +17,11 @@ limitations under the License.
 import inspect
 import unittest
 
-import bindings
-import decorators
-import errors
-import object_graph
-import scoping
+from pinject import bindings
+from pinject import decorators
+from pinject import errors
+from pinject import object_graph
+from pinject import scoping
 
 
 class NewObjectGraphTest(unittest.TestCase):

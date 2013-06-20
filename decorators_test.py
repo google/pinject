@@ -17,12 +17,12 @@ limitations under the License.
 import inspect
 import unittest
 
-import bindings
-import binding_keys
-import decorators
-import errors
-import injection_contexts
-import scoping
+from pinject import bindings
+from pinject import binding_keys
+from pinject import decorators
+from pinject import errors
+from pinject import injection_contexts
+from pinject import scoping
 
 
 # TODO(kurts): have only one FakeObjectProvider for tests.
@@ -90,7 +90,7 @@ class ProvidesTest(unittest.TestCase):
                            in_scope='a-scope-id')
         def provide_foo():
             pass
-        [provider_fn_binding] = decorators.get_provider_fn_bindings(provide_foo, ['foo'])
+        [provider_fn_binding] = bindings.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(binding_keys.new('an-arg-name', 'an-annotation'),
                          provider_fn_binding.binding_key)
         self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
@@ -116,7 +116,7 @@ class ProvidesTest(unittest.TestCase):
         @decorators.provides(in_scope='unused')
         def provide_foo(self):
             pass
-        [provider_fn_binding] = decorators.get_provider_fn_bindings(provide_foo, ['foo'])
+        [provider_fn_binding] = bindings.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(binding_keys.new('foo'),
                          provider_fn_binding.binding_key)
 
@@ -124,7 +124,7 @@ class ProvidesTest(unittest.TestCase):
         @decorators.provides('unused')
         def provide_foo(self):
             pass
-        [provider_fn_binding] = decorators.get_provider_fn_bindings(provide_foo, ['foo'])
+        [provider_fn_binding] = bindings.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(scoping.DEFAULT_SCOPE, provider_fn_binding.scope_id)
 
 
@@ -162,18 +162,6 @@ class GetProviderFnDecorationsTest(unittest.TestCase):
         self.assertEqual('an-annotation', annotated_with)
         self.assertEqual(['foo'], arg_names)
         self.assertEqual('a-scope-id', in_scope_id)
-
-
-class GetProviderFnBindingTest(unittest.TestCase):
-
-    def test_proviser_calls_provider_fn(self):
-        def provide_foo():
-            return 'a-foo'
-        [provider_fn_binding] = decorators.get_provider_fn_bindings(provide_foo, ['foo'])
-        self.assertEqual('a-foo', call_provisor_fn(provider_fn_binding))
-
-    # The rest of get_provider_fn_binding() is tested above in conjuction with
-    # @annotated_with() and @in_scope().
 
 
 class GetPinjectWrapperTest(unittest.TestCase):
