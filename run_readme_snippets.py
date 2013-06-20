@@ -24,7 +24,7 @@ import pinject
 readme_contents = open('README.rst').read()
 paragraphs = re.split('\n\n', readme_contents)
 for index, paragraph in enumerate(paragraphs):
-    if paragraph != '::':
+    if paragraph != '.. code-block:: python':
         continue
     snippet = paragraphs[index + 1]
     code_lines = [line[8:] for line in snippet.split('\n')
