@@ -154,7 +154,7 @@ need to split them into multiple files, you should name them each with a
 ``_binding_specs.py`` suffix.
 
 Binding spec ``configure()`` methods
-----------------------------------
+------------------------------------
 
 Pinject creates implicit bindings for classes, but sometimes the implicit
 bindings aren't what you want.  For instance, if you have
