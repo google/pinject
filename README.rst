@@ -798,3 +798,9 @@ everything listed here.)
 * Pinject has two built-in scopes: "singleton" (always memoized; the default) and "prototype" (never memoized).
 * You can define custom scopes, and you can configure which scopes are accessible from which other scopes.
 * Pinject doesn't allow injecting ``None`` by default, but you can turn off that check.
+
+Pinject and Google
+==================
+
+Though Google owns this project's copyright, this project is not an official
+Google product.
