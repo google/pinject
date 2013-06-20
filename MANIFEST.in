@@ -1,0 +1,3 @@
+include LICENSE README.rst
+recursive-include pinject *.py
+recursive-exclude pinject *_test.py

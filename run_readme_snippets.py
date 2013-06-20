@@ -21,10 +21,13 @@ import re
 import pinject
 
 
-readme_contents = open('README').read()
-snippets = re.split(r'{{{([^}]+)}}}', readme_contents)[1::2]
-for snippet in snippets:
-    code_lines = [line[4:] for line in snippet.split('\n')
-                  if line.startswith('>>> ') or line.startswith('... ')]
+readme_contents = open('README.rst').read()
+paragraphs = re.split('\n\n', readme_contents)
+for index, paragraph in enumerate(paragraphs):
+    if paragraph != '::':
+        continue
+    snippet = paragraphs[index + 1]
+    code_lines = [line[8:] for line in snippet.split('\n')
+                  if line.startswith('    >>> ') or line.startswith('    ... ')]
     code = ''.join(line + '\n' for line in code_lines)
     exec code
