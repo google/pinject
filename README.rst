@@ -111,8 +111,8 @@ looks in all imported modules, but you may occasionally want to restrict the
 classes for which ``new_object_graph()`` creates implicit bindings.  If so,
 ``new_object_graph()`` has two args for this purpose.
 
-  * The ``modules`` arg specifies in which (python) modules to look for classes; this defaults to ``ALL_IMPORTED_MODULES``.
-  * The ``classes`` arg specifies a exact list of classes; this defaults to ``None``.
+* The ``modules`` arg specifies in which (python) modules to look for classes; this defaults to ``ALL_IMPORTED_MODULES``.
+* The ``classes`` arg specifies a exact list of classes; this defaults to ``None``.
 
 ::
 
@@ -136,9 +136,9 @@ To create any bindings more complex than the implicit class bindings described
 above, you use a *binding spec*.  A binding spec is any python class that
 inherits from ``BindingSpec``.  A binding spec can do three things:
 
-  * Its ``configure()`` method can create explicit bindings to classes or instances.
-  * Its ``dependencies()`` method can return depended-on binding specs.
-  * It can have provider methods, for which explicit bindings are created.
+* Its ``configure()`` method can create explicit bindings to classes or instances.
+* Its ``dependencies()`` method can return depended-on binding specs.
+* It can have provider methods, for which explicit bindings are created.
 
 The ``new_object_graph()`` function takes a sequence of binding spec instances
 as its ``binding_specs`` arg.  ``new_object_graph()`` takes binding spec
@@ -191,8 +191,8 @@ The ``bind()`` function passed to a binding function binds its first arg,
 which must be an arg name (as a ``str``), to exactly one of two kinds of
 things.
 
-  * Using ``to_class`` binds to a class.  When the binding is used, Pinject injects an instance of the class.
-  * Using ``to_instance`` binds to an instance of some object.  Every time the binding is used, Pinject uses that instance.
+* Using ``to_class`` binds to a class.  When the binding is used, Pinject injects an instance of the class.
+* Using ``to_instance`` binds to an instance of some object.  Every time the binding is used, Pinject uses that instance.
 
 ::
 
@@ -359,8 +359,8 @@ Binding precedence
 Bindings have precedence: explicit bindings take precedence over implicit
 bindings.
 
-  * Explicit bindings are the bindings that come from binding specs.
-  * Implicit bindings are the bindings created for classes in the ``modules`` and ``classes`` args passed to ``new_object_graph()``.
+* Explicit bindings are the bindings that come from binding specs.
+* Implicit bindings are the bindings created for classes in the ``modules`` and ``classes`` args passed to ``new_object_graph()``.
 
 Pinject will prefer an explicit to an implicit binding.
 
@@ -786,15 +786,15 @@ might be similar to or different than other dependency injection libraries.
 (If you don't understand it, no problem.  The rest of the documentation covers
 everything listed here.)
 
-  * Pinject uses code and decorators to configure injection, not a separate config file.
-  * Bindings are keyed by arg name, (not class type, since Python is dynamically typed).
-  * Pinject automatically creates bindings to ``some_class`` arg names for ``SomeClass`` classes.
-  * You can ask Pinject only to create bindings from binding specs and classes whose ``__init__()`` is marked with ``@injectable``.
-  * A binding spec is a class that creates explicit bindings.
-  * A binding spec can bind arg names to classes or to instances.
-  * A binding spec can bind arg names ``foo`` to provider methods ``provide_foo()``.
-  * Binding specs can depend on (i.e., include) other binding specs.
-  * You can annotate args and bindings to distinguish among args/bindings for the same arg name.
-  * Pinject has two built-in scopes: "singleton" (always memoized; the default) and "prototype" (never memoized).
-  * You can define custom scopes, and you can configure which scopes are accessible from which other scopes.
-  * Pinject doesn't allow injecting ``None`` by default, but you can turn off that check.
+* Pinject uses code and decorators to configure injection, not a separate config file.
+* Bindings are keyed by arg name, (not class type, since Python is dynamically typed).
+* Pinject automatically creates bindings to ``some_class`` arg names for ``SomeClass`` classes.
+* You can ask Pinject only to create bindings from binding specs and classes whose ``__init__()`` is marked with ``@injectable``.
+* A binding spec is a class that creates explicit bindings.
+* A binding spec can bind arg names to classes or to instances.
+* A binding spec can bind arg names ``foo`` to provider methods ``provide_foo()``.
+* Binding specs can depend on (i.e., include) other binding specs.
+* You can annotate args and bindings to distinguish among args/bindings for the same arg name.
+* Pinject has two built-in scopes: "singleton" (always memoized; the default) and "prototype" (never memoized).
+* You can define custom scopes, and you can configure which scopes are accessible from which other scopes.
+* Pinject doesn't allow injecting ``None`` by default, but you can turn off that check.
