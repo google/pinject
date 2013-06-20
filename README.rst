@@ -20,7 +20,7 @@ instantiate objects using dependency injection.  If you pass no args to
 ``new_object_graph()``, it will return a reasonably configured default
 ``ObjectGraph``.
 
-::
+.. code-block:: python
 
     >>> class OuterClass(object):
     ...     def __init__(self, inner_class):
@@ -78,7 +78,7 @@ a function that takes in a class name (e.g., ``FooBar``) and returns the arg
 names to which that class should be implicitly bound (e.g., ``foo_bar``).  It
 has the behavior above by default but can be overridden.
 
-::
+.. code-block:: python
 
     >>> class OuterClass(object):
     ...     def __init__(self, my_InnerClass):
@@ -114,7 +114,7 @@ classes for which ``new_object_graph()`` creates implicit bindings.  If so,
 * The ``modules`` arg specifies in which (python) modules to look for classes; this defaults to ``ALL_IMPORTED_MODULES``.
 * The ``classes`` arg specifies a exact list of classes; this defaults to ``None``.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, foo):
@@ -167,7 +167,7 @@ For such situations, you can create explicit bindings using the
 function ``bind()`` as an arg and calls that function to create explicit
 bindings.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, long_name):
@@ -194,7 +194,7 @@ things.
 * Using ``to_class`` binds to a class.  When the binding is used, Pinject injects an instance of the class.
 * Using ``to_instance`` binds to an instance of some object.  Every time the binding is used, Pinject uses that instance.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, foo):
@@ -217,7 +217,7 @@ Binding specs can declare dependencies.  A binding spec declares its
 dependencies by returning a sequence of instances of the dependent binding
 specs from its ``dependencies()`` method.
 
-::
+.. code-block:: python
 
     >>> class ClassOne(object):
     ...    def __init__(self, foo):
@@ -270,7 +270,7 @@ values of other args.
 Pinject looks on binding specs for methods named like provider methods and
 then creates explicit bindings for them.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, foo):
@@ -297,7 +297,7 @@ instance, if you work for a certain large corporation whose python style guide
 makes you name functions in CamelCase, you may want ``ProvideFooBar()`` to be
 a provider method for the arg name ``foo_bar``.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, foo):
@@ -335,7 +335,7 @@ follow PEP8 convections.
 Pinject injects all args of provider methods that have no default when it
 calls the provider method.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, foobar):
@@ -364,7 +364,7 @@ bindings.
 
 Pinject will prefer an explicit to an implicit binding.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, foo):
@@ -406,7 +406,7 @@ you create explicit bindings without needing to create binding specs, as long
 as you can live with the binding defaults (e.g., no annotations on args, see
 below).
 
-::
+.. code-block:: python
 
     >>> class ExplicitlyBoundClass(object):
     ...     @pinject.injectable
@@ -455,7 +455,7 @@ binding includes the annotation object.  When using ``bind()`` in a binding
 spec's ``configure()`` method, you can pass an ``annotated_with`` arg to
 specify the annotation object.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     @pinject.annotate_arg('foo', 'annot')
@@ -482,7 +482,7 @@ two provider methods for the same arg name but annotated differently.
 (Otherwise, the methods would need to be named the same, since they're for the
 same arg name.)
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     @pinject.annotate_arg('foo', 'annot')
@@ -515,7 +515,7 @@ same name.  This means that, for each arg name, a single instance of the
 bound-to class, or a single instance returned by a provider method, is created
 by default.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, foo):
@@ -547,7 +547,7 @@ Every binding is associated with a scope.  You can specify a scope for a
 binding by decorating a provider method with ``@in_scope()``, or by passing an
 ``in_scope`` arg to ``bind()`` in a binding spec's ``configure()`` method.
 
-::
+.. code-block:: python
 
     >>> class SomeClass(object):
     ...     def __init__(self, foo):
@@ -574,7 +574,7 @@ two different annotations) to the same class, and the class is in a memoizing
 scope, then the same class instance will be provided when you inject the
 different arg names.
 
-::
+.. code-block:: python
 
     >>> class InjectedClass(object):
     ...     pass
@@ -610,7 +610,7 @@ whose lifetime is shorter than the entire lifetime of your program.
 
 A custom scope is any class that implements the ``Scope`` interface.
 
-::
+.. code-block:: python
 
     class Scope(object):
         def provide(self, binding_key, default_provider_fn):
@@ -636,7 +636,7 @@ handle to clear the scope's cache at the appropriate time.
 You can use one or more custom scopes by passing a map from *scope identifier*
 to scope as the ``id_to_scope`` arg of ``new_object_graph()``.
 
-::
+.. code-block:: python
 
     >>> class MyScope(pinject.Scope):
     ...     def __init__(self):
@@ -681,7 +681,7 @@ verbosely) rewritten to be thread-safe, as in the example below.  The lock is
 reentrant so that something in ``MyScope`` can be injected into something else
 in ``MyScope``.
 
-::
+.. code-block:: python
 
     >>> class MyScope(pinject.Scope):
     ...     def __init__(self):
@@ -715,7 +715,7 @@ Pinject lets you pass a validation function as the
 takes two scope identifiers and returns ``True`` iff an object in the first
 scope can be injected into an object of the second scope.
 
-::
+.. code-block:: python
 
     >>> class RequestScope(pinject.Scope):
     ...     def start_request(self):
