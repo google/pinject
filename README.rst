@@ -11,6 +11,28 @@ If you are already familiar with other dependency injection libraries, you may
 want to read the condensed summary section at the end, so that you get an idea
 of what Pinject is like and how it might differ from libraries you're used to.
 
+Why Pinject?
+============
+
+If you're wondering why to use a dependency injection library at all: if
+you're writing a lot of object-oriented code in python, then it will make your
+life easier.  See, for instance:
+
+  https://en.wikipedia.org/wiki/Dependency_injection
+  http://lmgtfy.com/?q=dependency+injection
+
+If you're wondering why to use Pinject instead of another python dependency
+injection library, a few of reasons are:
+
+* Pinject is much easier to get started with.  Forget having to decorate your code with ``@inject_this`` and ``@annotate_that`` just to get started.  With Pinject, you call ``new_object_graph()``, one line, and you're good to go.
+* Pinject is a *pythonic* dependency injection library.  Python ports of other libraries, like Spring or Guice, retain the feel (and verbosity) of being designed for a statically typed language.  Pinject was designed from the ground up for python.
+* The design choices in Pinject are informed by several dependency injection experts working Google, based on many years of experience.  Several common confusing or misguided features are omitted altogether from Pinject.
+
+Look at the simplest getting-started examples for Pinject and for other
+similar libraries.  Pinject should be uniformly easier to use, clearer to
+read, and less boilerplate that you need to add.  If you don't find this to be
+the case, email!
+
 Basic dependency injection
 ==========================
 
