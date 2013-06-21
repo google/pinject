@@ -8,6 +8,11 @@ TODO:
     all entry points up front
 - standard tests for scopes (reentrant? thread-safe?), annotations (eq?
      hash?), etc.
+- describe features specifically omitted, e.g.,
+  - field injection
+  - circular injection
+  - scope annotations on classes
+- figure out whether/how Pinject works with inheritance
 
 Maybe TODO:
 - change default scope back to prototype?

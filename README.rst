@@ -18,8 +18,8 @@ If you're wondering why to use a dependency injection library at all: if
 you're writing a lot of object-oriented code in python, then it will make your
 life easier.  See, for instance:
 
-  https://en.wikipedia.org/wiki/Dependency_injection
-  http://lmgtfy.com/?q=dependency+injection
+* https://en.wikipedia.org/wiki/Dependency_injection
+* http://lmgtfy.com/?q=dependency+injection
 
 If you're wondering why to use Pinject instead of another python dependency
 injection library, a few of reasons are:
