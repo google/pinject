@@ -29,17 +29,21 @@ class ObjectProvider(object):
         self._allow_injecting_none = allow_injecting_none
 
     def provide_from_arg_binding_key(self, arg_binding_key, injection_context):
-        # TODO(kurts): make this not access internals, and use the provider
-        # indirection.
-        binding_key = arg_binding_key._binding_key
-
+        binding_key = arg_binding_key.binding_key
         binding = self._binding_mapping.get(binding_key)
         scope = self._bindable_scopes.get_sub_scope(binding)
-        provided = scope.provide(
-            binding_key,
-            lambda: binding.proviser_fn(injection_context.get_child(binding), self))
-        if (provided is None) and not self._allow_injecting_none:
-            raise errors.InjectingNoneDisallowedError()
+        def Provide():
+            provided = scope.provide(
+                binding_key,
+                lambda: binding.proviser_fn(injection_context.get_child(binding), self))
+            # TODO(kurts): document that setting allow_injecting_none to False
+            # means that provide_foo injected providers also cannot return
+            # None.
+            if (provided is None) and not self._allow_injecting_none:
+                raise errors.InjectingNoneDisallowedError()
+            return provided
+        provider_indirection = arg_binding_key.provider_indirection
+        provided = provider_indirection.StripIndirectionIfNeeded(Provide)
         return provided
 
     def provide_class(self, cls, injection_context):

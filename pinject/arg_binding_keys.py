@@ -19,21 +19,36 @@ from . import provider_indirections
 
 
 class ArgBindingKey(object):
+    """The binding key for an arg of a function."""
 
     def __init__(self, arg_name, binding_key, provider_indirection):
         self._arg_name = arg_name
-        self._binding_key = binding_key
+        self.binding_key = binding_key
+        self.provider_indirection = provider_indirection
+
+    def __repr__(self):
+        return '<{0}>'.format(self)
+
+    def __str__(self):
+        return 'the arg named "{0}" {1}'.format(
+            self._arg_name, self.binding_key.annotation_as_adjective())
 
     def __eq__(self, other):
         return (isinstance(other, ArgBindingKey) and
                 self._arg_name == other._arg_name and
-                self._binding_key == other._binding_key)
+                self.binding_key == other.binding_key and
+                self.provider_indirection == other.provider_indirection)
 
     def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):
-        return hash(self._arg_name) ^ hash(self._binding_key)
+        # Watch out: self._arg_name is likely also binding_key._name, and so
+        # XORing their hashes will remove the arg name from the hash.
+        # self._arg_name is really captured as part of the other two, so let's
+        # omit it.
+        return (hash(self.binding_key) ^
+                hash(self.provider_indirection))
 
     # TODO(kurts): the methods feel unbalanced: they only use self._arg_name.
     # That should probably be a full-fledged class, and ArgBindingKey should

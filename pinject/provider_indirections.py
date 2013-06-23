@@ -14,5 +14,17 @@ limitations under the License.
 """
 
 
-INDIRECTION = None
-NO_INDIRECTION = None
+class ProviderIndirection(object):
+
+    def StripIndirectionIfNeeded(self, provide_fn):
+        return provide_fn
+
+
+class NoProviderIndirection(object):
+
+    def StripIndirectionIfNeeded(self, provide_fn):
+        return provide_fn()
+
+
+INDIRECTION = ProviderIndirection()
+NO_INDIRECTION = NoProviderIndirection()

@@ -187,6 +187,18 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class_two = obj_graph.provide(ClassTwo)
         self.assertEqual(3, class_two.foo.three)
 
+    def test_injects_provider_fn_if_so_named(self):
+        class ClassOne(object):
+            def __init__(self):
+                self.forty_two = 42
+        class ClassTwo(object):
+            def __init__(self, provide_class_one):
+                self.provide_class_one = provide_class_one
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[ClassOne, ClassTwo])
+        class_two = obj_graph.provide(ClassTwo)
+        self.assertEqual(42, class_two.provide_class_one().forty_two)
+
     def test_can_provide_arg_with_annotation(self):
         class ClassOne(object):
             @decorators.annotate_arg('foo', 'an-annotation')

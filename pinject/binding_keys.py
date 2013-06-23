@@ -34,10 +34,11 @@ class BindingKey(object):
         return '<{0}>'.format(self)
 
     def __str__(self):
-        # TODO(kurts): this can't be correct after renaming self._arg_name to
-        # _name, but what's now correct?
-        return 'the arg name "{0}" {1}'.format(
-            self._name, self._annotation.as_adjective())
+        return 'the binding name "{0}" {1}'.format(
+            self._name, self.annotation_as_adjective())
+
+    def annotation_as_adjective(self):
+        return self._annotation.as_adjective()
 
     def __eq__(self, other):
         return (isinstance(other, BindingKey) and

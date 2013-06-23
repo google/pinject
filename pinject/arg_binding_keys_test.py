@@ -18,48 +18,70 @@ import unittest
 
 from pinject import annotations
 from pinject import arg_binding_keys
+from pinject import binding_keys
+from pinject import provider_indirections
 
 
 class ArgBindingKeyTest(unittest.TestCase):
 
-    # def test_repr(self):
-    #     binding_key = binding_keys.BindingKey(
-    #         'an-arg-name', annotations.Annotation('an-annotation'))
-    #     self.assertEqual('<the arg name "an-arg-name" annotated with "an-annotation">',
-    #                      repr(binding_key))
+    def test_repr(self):
+        arg_binding_key = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
+            provider_indirections.INDIRECTION)
+        self.assertEqual('<the arg named "an-arg-name" annotated with "an-annotation">',
+                         repr(arg_binding_key))
 
-    # def test_str(self):
-    #     binding_key = binding_keys.BindingKey(
-    #         'an-arg-name', annotations.Annotation('an-annotation'))
-    #     self.assertEqual('the arg name "an-arg-name" annotated with "an-annotation"',
-    #                      str(binding_key))
+    def test_str(self):
+        arg_binding_key = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
+            provider_indirections.INDIRECTION)
+        self.assertEqual('the arg named "an-arg-name" annotated with "an-annotation"',
+                         str(arg_binding_key))
 
-    # def test_equal_if_same_arg_name_and_annotation(self):
-    #     binding_key_one = binding_keys.BindingKey(
-    #         'an-arg-name', annotations.Annotation('an-annotation'))
-    #     binding_key_two = binding_keys.BindingKey(
-    #         'an-arg-name', annotations.Annotation('an-annotation'))
-    #     self.assertEqual(binding_key_one, binding_key_two)
-    #     self.assertEqual(hash(binding_key_one), hash(binding_key_two))
-    #     self.assertEqual(str(binding_key_one), str(binding_key_two))
+    def test_equal_if_same_field_values(self):
+        arg_binding_key_one = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
+            provider_indirections.INDIRECTION)
+        arg_binding_key_two = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
+            provider_indirections.INDIRECTION)
+        self.assertEqual(arg_binding_key_one, arg_binding_key_two)
+        self.assertEqual(hash(arg_binding_key_one), hash(arg_binding_key_two))
+        self.assertEqual(str(arg_binding_key_one), str(arg_binding_key_two))
 
-    # def test_unequal_if_not_same_arg_name(self):
-    #     binding_key_one = binding_keys.BindingKey(
-    #         'arg-name-one', annotations.Annotation('an-annotation'))
-    #     binding_key_two = binding_keys.BindingKey(
-    #         'arg-name-two', annotations.Annotation('an-annotation'))
-    #     self.assertNotEqual(binding_key_one, binding_key_two)
-    #     self.assertNotEqual(hash(binding_key_one), hash(binding_key_two))
-    #     self.assertNotEqual(str(binding_key_one), str(binding_key_two))
+    def test_unequal_if_not_same_arg_name(self):
+        arg_binding_key_one = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
+            provider_indirections.INDIRECTION)
+        arg_binding_key_two = arg_binding_keys.ArgBindingKey(
+            'other-arg-name', binding_keys.new('other-arg-name', 'an-annotation'),
+            provider_indirections.INDIRECTION)
+        self.assertNotEqual(arg_binding_key_one, arg_binding_key_two)
+        self.assertNotEqual(hash(arg_binding_key_one), hash(arg_binding_key_two))
+        self.assertNotEqual(str(arg_binding_key_one), str(arg_binding_key_two))
 
-    # def test_unequal_if_not_same_annotation(self):
-    #     binding_key_one = binding_keys.BindingKey(
-    #         'arg-name-one', annotations.Annotation('an-annotation'))
-    #     binding_key_two = binding_keys.BindingKey(
-    #         'arg-name-two', annotations.Annotation('another-annotation'))
-    #     self.assertNotEqual(binding_key_one, binding_key_two)
-    #     self.assertNotEqual(hash(binding_key_one), hash(binding_key_two))
-    #     self.assertNotEqual(str(binding_key_one), str(binding_key_two))
+    def test_unequal_if_not_same_annotation(self):
+        arg_binding_key_one = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
+            provider_indirections.INDIRECTION)
+        arg_binding_key_two = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'other-annotation'),
+            provider_indirections.INDIRECTION)
+        self.assertNotEqual(arg_binding_key_one, arg_binding_key_two)
+        self.assertNotEqual(hash(arg_binding_key_one), hash(arg_binding_key_two))
+        self.assertNotEqual(str(arg_binding_key_one), str(arg_binding_key_two))
+
+    def test_unequal_if_not_same_indirection(self):
+        arg_binding_key_one = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
+            provider_indirections.INDIRECTION)
+        arg_binding_key_two = arg_binding_keys.ArgBindingKey(
+            'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
+            provider_indirections.NO_INDIRECTION)
+        self.assertNotEqual(arg_binding_key_one, arg_binding_key_two)
+        self.assertNotEqual(hash(arg_binding_key_one), hash(arg_binding_key_two))
+        # Strings will be equal, since indirection isn't part of the string.
+        self.assertEqual(str(arg_binding_key_one), str(arg_binding_key_two))
 
     def test_can_apply_to_one_of_arg_names(self):
         arg_binding_key = arg_binding_keys.new(
@@ -125,13 +147,20 @@ class CreateKwargsTest(unittest.TestCase):
                                            ProviderFn))
 
 
-# class NewArgBindingKeyTest(unittest.TestCase):
+class NewArgBindingKeyTest(unittest.TestCase):
 
-#     def test_without_annotation(self):
-#         binding_key = binding_keys.new('an-arg-name')
-#         self.assertEqual('the arg name "an-arg-name" unannotated', str(binding_key))
+    def test_with_no_bells_or_whistles(self):
+        arg_binding_key = arg_binding_keys.new('an-arg-name')
+        self.assertEqual('the arg named "an-arg-name" unannotated',
+                         str(arg_binding_key))
 
-#     def test_with_annotation(self):
-#         binding_key = binding_keys.new('an-arg-name', 'an-annotation')
-#         self.assertEqual('the arg name "an-arg-name" annotated with "an-annotation"',
-#                          str(binding_key))
+    def test_with_annotation(self):
+        arg_binding_key = arg_binding_keys.new('an-arg-name', 'an-annotation')
+        self.assertEqual(
+            'the arg named "an-arg-name" annotated with "an-annotation"',
+            str(arg_binding_key))
+
+    def test_as_provider_fn(self):
+        arg_binding_key = arg_binding_keys.new('provide_foo')
+        self.assertEqual('the arg named "provide_foo" unannotated',
+                         str(arg_binding_key))

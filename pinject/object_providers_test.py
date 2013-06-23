@@ -28,9 +28,7 @@ from pinject import scoping
 
 
 def new_test_obj_provider(arg_binding_key, instance, allow_injecting_none=True):
-    # TODO(kurts): no accessing internals.
-    binding_key = arg_binding_key._binding_key
-
+    binding_key = arg_binding_key.binding_key
     binding = bindings.Binding(
         binding_key, lambda injection_context, obj_provider: instance,
         'a-scope', 'unused-desc')
@@ -52,6 +50,13 @@ class ObjectProviderTest(unittest.TestCase):
         self.assertEqual('an-instance',
                          obj_provider.provide_from_arg_binding_key(
                              arg_binding_key, new_injection_context()))
+
+    def test_provides_provider_fn_from_arg_binding_key_successfully(self):
+        arg_binding_key = arg_binding_keys.new('provide_foo')
+        obj_provider = new_test_obj_provider(arg_binding_key, 'an-instance')
+        provide_fn = obj_provider.provide_from_arg_binding_key(
+            arg_binding_key, new_injection_context())
+        self.assertEqual('an-instance', provide_fn())
 
     def test_can_provide_none_from_arg_binding_key_when_allowed(self):
         arg_binding_key = arg_binding_keys.new('an-arg-name')
