@@ -20,84 +20,35 @@ from . import annotations
 class BindingKey(object):
     """The key for a binding."""
 
-    def __init__(self, arg_name, annotation):
+    def __init__(self, name, annotation):
         """Initializer.
 
         Args:
-          arg_name: the name of the bound arg
+          name: the name of the bound arg
           annotation: an Annotation
         """
-        self._arg_name = arg_name
+        self._name = name
         self._annotation = annotation
 
     def __repr__(self):
         return '<{0}>'.format(self)
 
     def __str__(self):
+        # TODO(kurts): this can't be correct after renaming self._arg_name to
+        # _name, but what's now correct?
         return 'the arg name "{0}" {1}'.format(
-            self._arg_name, self._annotation.as_adjective())
+            self._name, self._annotation.as_adjective())
 
     def __eq__(self, other):
         return (isinstance(other, BindingKey) and
-                self._arg_name == other._arg_name and
+                self._name == other._name and
                 self._annotation == other._annotation)
 
     def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):
-        return hash(self._arg_name) ^ hash(self._annotation)
-
-    def can_apply_to_one_of_arg_names(self, arg_names):
-        """Returns whether this binding key can apply to one of the arg names."""
-        return self._arg_name in arg_names
-
-    def conflicts_with_any_binding_key(self, binding_keys):
-        """Returns whether this binding key conflicts with others.
-
-        One binding key conflicts with another if they are for the same arg,
-        regardless of whether they have the same annotation (or lack thereof).
-
-        Args:
-          binding_keys: a sequence of BindingKey
-        Returns:
-          True iff some element of binding_keys is for the same arg name as
-              this binding key
-        """
-        return self._arg_name in [bk._arg_name for bk in binding_keys]
-
-
-# TODO(kurts): Get a second opinion on module-level methods operating on
-# internal state of classes.  In another language, this would be a static
-# member and so allowed access to internals.
-def get_unbound_arg_names(arg_names, arg_binding_keys):
-    """Determines which args have no binding keys.
-
-    Args:
-      arg_names: a sequence of the names of possibly bound args
-      arg_binding_keys: a sequence of BindingKey each of whose arg names is in
-          arg_names
-    Returns:
-      a sequence of arg names that is a (possibly empty, possibly non-proper)
-          subset of arg_names
-    """
-    bound_arg_names = [bk._arg_name for bk in arg_binding_keys]
-    return [arg_name for arg_name in arg_names
-            if arg_name not in bound_arg_names]
-
-
-def create_kwargs(arg_binding_keys, provider_fn):
-    """Creates a kwargs map for the given arg binding keys.
-
-    Args:
-      arg_binding_keys: a sequence of BindingKey for some function's args
-      provider_fn: a function that takes a BindingKey and returns whatever
-          is bound to that binding key
-    Returns:
-      a (possibly empty) map from arg name to provided value
-    """
-    return {arg_binding_key._arg_name: provider_fn(arg_binding_key)
-            for arg_binding_key in arg_binding_keys}
+        return hash(self._name) ^ hash(self._annotation)
 
 
 def new(arg_name, annotated_with=None):

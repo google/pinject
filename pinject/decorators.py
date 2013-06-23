@@ -18,6 +18,7 @@ import inspect
 
 from .third_party import decorator
 
+from . import arg_binding_keys
 from . import binding_keys
 from . import errors
 from . import scoping
@@ -50,8 +51,8 @@ def annotate_arg(arg_name, with_annotation):
     Returns:
       a function that will decorate functions passed to it
     """
-    binding_key = binding_keys.new(arg_name, with_annotation)
-    return _get_pinject_wrapper(arg_binding_key=binding_key)
+    arg_binding_key = arg_binding_keys.new(arg_name, with_annotation)
+    return _get_pinject_wrapper(arg_binding_key=arg_binding_key)
 
 
 def injectable(fn):
@@ -161,7 +162,7 @@ def _get_pinject_wrapper(arg_binding_key=None, provider_arg_name=None,
                 inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
             if not arg_binding_key.can_apply_to_one_of_arg_names(arg_names):
                 raise errors.NoSuchArgToInjectError(arg_binding_key, fn)
-            if arg_binding_key.conflicts_with_any_binding_key(
+            if arg_binding_key.conflicts_with_any_arg_binding_key(
                     getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
                 raise errors.MultipleAnnotationsForSameArgError(arg_binding_key)
             getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(arg_binding_key)
@@ -194,23 +195,23 @@ def is_explicitly_injectable(cls):
 
 def get_injectable_arg_binding_keys(fn):
     if hasattr(fn, _IS_WRAPPER_ATTR):
-        arg_binding_keys = getattr(fn, _ARG_BINDING_KEYS_ATTR)
+        existing_arg_binding_keys = getattr(fn, _ARG_BINDING_KEYS_ATTR)
         arg_names, unused_varargs, unused_keywords, defaults = (
             inspect.getargspec(getattr(fn, _ORIG_FN_ATTR)))
         num_to_keep = (len(arg_names) - len(defaults)) if defaults else len(arg_names)
         arg_names = arg_names[:num_to_keep]
-        unbound_arg_names = binding_keys.get_unbound_arg_names(
+        unbound_arg_names = arg_binding_keys.get_unbound_arg_names(
             [arg_name for arg_name in _remove_self_if_exists(arg_names)],
-            arg_binding_keys)
+            existing_arg_binding_keys)
     else:
-        arg_binding_keys = []
+        existing_arg_binding_keys = []
         arg_names, unused_varargs, unused_keywords, defaults = (
             inspect.getargspec(fn))
         num_to_keep = (len(arg_names) - len(defaults)) if defaults else len(arg_names)
         arg_names = arg_names[:num_to_keep]
         unbound_arg_names = _remove_self_if_exists(arg_names)
-    all_arg_binding_keys = list(arg_binding_keys)
-    all_arg_binding_keys.extend([binding_keys.new(arg_name)
+    all_arg_binding_keys = list(existing_arg_binding_keys)
+    all_arg_binding_keys.extend([arg_binding_keys.new(arg_name)
                                  for arg_name in unbound_arg_names])
     return all_arg_binding_keys
 

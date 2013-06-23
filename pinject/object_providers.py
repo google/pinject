@@ -16,7 +16,7 @@ limitations under the License.
 
 import types
 
-from . import binding_keys
+from . import arg_binding_keys
 from . import decorators
 from . import errors
 
@@ -28,7 +28,11 @@ class ObjectProvider(object):
         self._bindable_scopes = bindable_scopes
         self._allow_injecting_none = allow_injecting_none
 
-    def provide_from_binding_key(self, binding_key, injection_context):
+    def provide_from_arg_binding_key(self, arg_binding_key, injection_context):
+        # TODO(kurts): make this not access internals, and use the provider
+        # indirection.
+        binding_key = arg_binding_key._binding_key
+
         binding = self._binding_mapping.get(binding_key)
         scope = self._bindable_scopes.get_sub_scope(binding)
         provided = scope.provide(
@@ -51,6 +55,6 @@ class ObjectProvider(object):
         return provider_fn(**kwargs)
 
     def get_injection_kwargs(self, fn, injection_context):
-        return binding_keys.create_kwargs(
+        return arg_binding_keys.create_kwargs(
             decorators.get_injectable_arg_binding_keys(fn),
-            lambda bk: self.provide_from_binding_key(bk, injection_context))
+            lambda abk: self.provide_from_arg_binding_key(abk, injection_context))

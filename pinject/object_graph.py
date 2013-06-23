@@ -18,8 +18,8 @@ import functools
 import inspect
 import types
 
+from . import arg_binding_keys
 from . import bindings
-from . import binding_keys
 from . import decorators
 from . import errors
 from . import finding
@@ -136,8 +136,8 @@ class ObjectGraph(object):
             if injected_arg_names:
                 kwargs = dict(kwargs)
                 for arg_name in injected_arg_names:
-                    kwargs[arg_name] = self._obj_provider.provide_from_binding_key(
-                        binding_keys.new(arg_name),
+                    kwargs[arg_name] = self._obj_provider.provide_from_arg_binding_key(
+                        arg_binding_keys.new(arg_name),
                         self._injection_context_factory.new())
             return fn(*pargs, **kwargs)
         return WrappedFn

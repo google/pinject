@@ -102,6 +102,8 @@ class InvalidProviderFnError(Error):
 class MultipleAnnotationsForSameArgError(Error):
 
     def __init__(self, arg_name):
+        # TODO(kurts): what's actually passed in is an ArgBindingKey, not an
+        # arg name!
         Error.__init__(
             self, 'multiple annotations for arg {0}'.format(arg_name))
 
@@ -124,6 +126,8 @@ class NoBindingTargetError(Error):
 class NoSuchArgToInjectError(Error):
 
     def __init__(self, arg_name, fn):
+        # TODO(kurts): what's actually passed in is an ArgBindingKey, not an
+        # arg name!
         Error.__init__(
             self, 'no such arg {0} to inject into {1}'.format(arg_name, fn))
 

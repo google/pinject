@@ -17,6 +17,7 @@ limitations under the License.
 import inspect
 import unittest
 
+from pinject import arg_binding_keys
 from pinject import bindings
 from pinject import binding_keys
 from pinject import decorators
@@ -51,7 +52,7 @@ class AnnotateArgTest(unittest.TestCase):
         @decorators.annotate_arg('foo', 'an-annotation')
         def some_function(foo):
             return foo
-        self.assertEqual([binding_keys.new('foo', 'an-annotation')],
+        self.assertEqual([arg_binding_keys.new('foo', 'an-annotation')],
                          [binding_key for binding_key in getattr(some_function,
                                                                  decorators._ARG_BINDING_KEYS_ATTR)])
 
@@ -184,8 +185,8 @@ class GetPinjectWrapperTest(unittest.TestCase):
         @decorators.annotate_arg('bar', 'an-annotation')
         def some_function(foo, bar):
             return foo + bar
-        self.assertEqual([binding_keys.new('bar', 'an-annotation'),
-                          binding_keys.new('foo', 'an-annotation')],
+        self.assertEqual([arg_binding_keys.new('bar', 'an-annotation'),
+                          arg_binding_keys.new('foo', 'an-annotation')],
                          [binding_key
                           for binding_key in getattr(some_function,
                                                      decorators._ARG_BINDING_KEYS_ATTR)])
@@ -243,14 +244,14 @@ class GetInjectableArgBindingKeysTest(unittest.TestCase):
 
     def test_fn_with_unannotated_arg_returns_unannotated_binding_key(self):
         self.assert_fn_has_injectable_arg_binding_keys(
-            lambda foo: None, [binding_keys.new('foo')])
+            lambda foo: None, [arg_binding_keys.new('foo')])
 
     def test_fn_with_annotated_arg_returns_annotated_binding_key(self):
         @decorators.annotate_arg('foo', 'an-annotation')
         def fn(foo):
             pass
         self.assert_fn_has_injectable_arg_binding_keys(
-            fn, [binding_keys.new('foo', 'an-annotation')])
+            fn, [arg_binding_keys.new('foo', 'an-annotation')])
 
     def test_fn_with_arg_with_default_returns_nothing(self):
         self.assert_fn_has_injectable_arg_binding_keys(lambda foo=42: None, [])
@@ -260,5 +261,5 @@ class GetInjectableArgBindingKeysTest(unittest.TestCase):
         def fn(foo, bar, baz='baz'):
             pass
         self.assert_fn_has_injectable_arg_binding_keys(
-            fn, [binding_keys.new('foo', 'an-annotation'),
-                 binding_keys.new('bar')])
+            fn, [arg_binding_keys.new('foo', 'an-annotation'),
+                 arg_binding_keys.new('bar')])

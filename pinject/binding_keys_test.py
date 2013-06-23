@@ -61,67 +61,6 @@ class BindingKeyTest(unittest.TestCase):
         self.assertNotEqual(hash(binding_key_one), hash(binding_key_two))
         self.assertNotEqual(str(binding_key_one), str(binding_key_two))
 
-    def test_can_apply_to_one_of_arg_names(self):
-        binding_key = binding_keys.BindingKey(
-            'an-arg-name', annotations.Annotation('unused'))
-        self.assertTrue(binding_key.can_apply_to_one_of_arg_names(
-            ['foo', 'an-arg-name', 'bar']))
-
-    def test_cannot_apply_to_one_of_arg_names(self):
-        binding_key = binding_keys.BindingKey(
-            'an-arg-name', annotations.Annotation('unused'))
-        self.assertFalse(binding_key.can_apply_to_one_of_arg_names(
-            ['foo', 'other-arg-name', 'bar']))
-
-    def test_conflicts_with_some_binding_key(self):
-        binding_key = binding_keys.BindingKey(
-            'an-arg-name', annotations.Annotation('ann1'))
-        non_conflicting_binding_key = binding_keys.BindingKey(
-            'other-arg-name', annotations.Annotation('unused'))
-        conflicting_binding_key = binding_keys.BindingKey(
-            'an-arg-name', annotations.Annotation('ann2'))
-        self.assertTrue(binding_key.conflicts_with_any_binding_key(
-            [non_conflicting_binding_key, conflicting_binding_key]))
-
-    def test_doesnt_conflict_with_any_binding_key(self):
-        binding_key = binding_keys.BindingKey(
-            'an-arg-name', annotations.Annotation('ann1'))
-        non_conflicting_binding_key = binding_keys.BindingKey(
-            'other-arg-name', annotations.Annotation('unused'))
-        self.assertFalse(binding_key.conflicts_with_any_binding_key(
-            [non_conflicting_binding_key]))
-
-
-class GetUnboundArgNamesTest(unittest.TestCase):
-
-    def test_all_arg_names_bound(self):
-        self.assertEqual(
-            [],
-            binding_keys.get_unbound_arg_names(
-                ['bound1', 'bound2'],
-                [binding_keys.new('bound1'), binding_keys.new('bound2')]))
-
-    def test_some_arg_name_unbound(self):
-        self.assertEqual(
-            ['unbound'],
-            binding_keys.get_unbound_arg_names(
-                ['bound', 'unbound'], [binding_keys.new('bound')]))
-
-
-class CreateKwargsTest(unittest.TestCase):
-
-    def test_returns_nothing_for_no_input(self):
-        self.assertEqual({}, binding_keys.create_kwargs([], provider_fn=None))
-
-    def test_returns_provided_value_for_arg(self):
-        def ProviderFn(binding_key):
-            return ('an-arg-value' if binding_key == binding_keys.new('an-arg')
-                    else None)
-        self.assertEqual(
-            {'an-arg': 'an-arg-value'},
-            binding_keys.create_kwargs([binding_keys.new('an-arg')],
-                                       ProviderFn))
-
 
 class NewBindingKeyTest(unittest.TestCase):
 

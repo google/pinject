@@ -17,6 +17,7 @@ limitations under the License.
 import inspect
 import unittest
 
+from pinject import arg_binding_keys
 from pinject import binding_keys
 from pinject import bindings
 from pinject import decorators
@@ -26,7 +27,10 @@ from pinject import object_providers
 from pinject import scoping
 
 
-def new_test_obj_provider(binding_key, instance, allow_injecting_none=True):
+def new_test_obj_provider(arg_binding_key, instance, allow_injecting_none=True):
+    # TODO(kurts): no accessing internals.
+    binding_key = arg_binding_key._binding_key
+
     binding = bindings.Binding(
         binding_key, lambda injection_context, obj_provider: instance,
         'a-scope', 'unused-desc')
@@ -42,49 +46,49 @@ def new_injection_context():
 
 class ObjectProviderTest(unittest.TestCase):
 
-    def test_provides_from_binding_key_successfully(self):
-        binding_key = binding_keys.new('an-arg-name')
-        obj_provider = new_test_obj_provider(binding_key, 'an-instance')
+    def test_provides_from_arg_binding_key_successfully(self):
+        arg_binding_key = arg_binding_keys.new('an-arg-name')
+        obj_provider = new_test_obj_provider(arg_binding_key, 'an-instance')
         self.assertEqual('an-instance',
-                         obj_provider.provide_from_binding_key(
-                             binding_key, new_injection_context()))
+                         obj_provider.provide_from_arg_binding_key(
+                             arg_binding_key, new_injection_context()))
 
-    def test_can_provide_none_from_binding_key_when_allowed(self):
-        binding_key = binding_keys.new('an-arg-name')
-        obj_provider = new_test_obj_provider(binding_key, None)
-        self.assertIsNone(obj_provider.provide_from_binding_key(
-            binding_key, new_injection_context()))
+    def test_can_provide_none_from_arg_binding_key_when_allowed(self):
+        arg_binding_key = arg_binding_keys.new('an-arg-name')
+        obj_provider = new_test_obj_provider(arg_binding_key, None)
+        self.assertIsNone(obj_provider.provide_from_arg_binding_key(
+            arg_binding_key, new_injection_context()))
 
     def test_cannot_provide_none_from_binding_key_when_disallowed(self):
-        binding_key = binding_keys.new('an-arg-name')
-        obj_provider = new_test_obj_provider(binding_key, None,
+        arg_binding_key = arg_binding_keys.new('an-arg-name')
+        obj_provider = new_test_obj_provider(arg_binding_key, None,
                                              allow_injecting_none=False)
         self.assertRaises(errors.InjectingNoneDisallowedError,
-                          obj_provider.provide_from_binding_key,
-                          binding_key, new_injection_context())
+                          obj_provider.provide_from_arg_binding_key,
+                          arg_binding_key, new_injection_context())
 
     def test_provides_class_with_init_as_method_injects_args_successfully(self):
         class Foo(object):
             def __init__(self, bar):
                 self.bar = bar
-        binding_key = binding_keys.new('bar')
-        obj_provider = new_test_obj_provider(binding_key, 'a-bar')
+        arg_binding_key = arg_binding_keys.new('bar')
+        obj_provider = new_test_obj_provider(arg_binding_key, 'a-bar')
         foo = obj_provider.provide_class(Foo, new_injection_context())
         self.assertEqual('a-bar', foo.bar)
 
     def test_provides_class_with_init_as_method_wrapper_successfully(self):
         class Foo(object):
             pass
-        binding_key = binding_keys.new('unused')
-        obj_provider = new_test_obj_provider(binding_key, 'unused')
+        arg_binding_key = arg_binding_keys.new('unused')
+        obj_provider = new_test_obj_provider(arg_binding_key, 'unused')
         self.assertIsInstance(
             obj_provider.provide_class(Foo, new_injection_context()), Foo)
 
     def test_calls_with_injection_successfully(self):
         def foo(bar):
             return 'a-foo-and-' + bar
-        binding_key = binding_keys.new('bar')
-        obj_provider = new_test_obj_provider(binding_key, 'a-bar')
+        arg_binding_key = arg_binding_keys.new('bar')
+        obj_provider = new_test_obj_provider(arg_binding_key, 'a-bar')
         self.assertEqual('a-foo-and-a-bar',
                          obj_provider.call_with_injection(
                              foo, new_injection_context()))
@@ -92,8 +96,8 @@ class ObjectProviderTest(unittest.TestCase):
     def test_gets_injection_kwargs_successfully(self):
         def foo(bar):
             pass
-        binding_key = binding_keys.new('bar')
-        obj_provider = new_test_obj_provider(binding_key, 'a-bar')
+        arg_binding_key = arg_binding_keys.new('bar')
+        obj_provider = new_test_obj_provider(arg_binding_key, 'a-bar')
         self.assertEqual({'bar': 'a-bar'},
                          obj_provider.get_injection_kwargs(
                              foo, new_injection_context()))
