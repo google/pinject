@@ -601,6 +601,7 @@ to inject an instance of a class named ``ProvideFooBar`` into an arg named
 instead of verb phrases, this shouldn't be a problem.
 
 Watch out: don't confuse
+
 * *provider bindings*, which let you inject args named ``provide_something`` with provider functions; and
 * *provider methods*, which are methods of binding specs that provide instances of some arg name.
 
