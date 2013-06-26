@@ -92,38 +92,6 @@ If two classes map to the same arg name, whether those classes are in the same
 module or different modules, Pinject will not create an implicit binding for
 that arg name (though it will not raise an error).
 
-If your code follows PIP8 naming coventions and these implicit bindings work
-for you, then you can skip the rest of this section.  If not, read on!
-
-``new_object_graph()`` takes a ``get_arg_names_from_class_name`` arg.  This is
-a function that takes in a class name (e.g., ``FooBar``) and returns the arg
-names to which that class should be implicitly bound (e.g., ``foo_bar``).  It
-has the behavior above by default but can be overridden.
-
-.. code-block:: python
-
-    >>> class OuterClass(object):
-    ...     def __init__(self, my_InnerClass):
-    ...         self.my_InnerClass = my_InnerClass
-    ...
-    >>> class InnerClass(object):
-    ...     def __init__(self):
-    ...         self.forty_two = 42
-    ...
-    >>> def custom_get_arg_names(class_name):
-    ...     return ['my_' + class_name]
-    ...
-    >>> obj_graph = pinject.new_object_graph(
-    ...     get_arg_names_from_class_name=custom_get_arg_names)
-    >>> outer_class = obj_graph.provide(OuterClass)
-    >>> print outer_class.my_InnerClass.forty_two
-    42
-    >>>
-
-The function passed as the ``get_arg_names_from_class_name`` arg can return as
-many or as few arg names as it wants.  If it always returns the empty list
-(i.e., if it is ``lambda _: []``), then that disables implicit class bindings.
-
 Finding classes and providers for implicit bindings
 ===================================================
 
@@ -308,51 +276,10 @@ then creates explicit bindings for them.
     'some-complex-foo'
     >>>
 
-By default, Pinject looks for methods whose names start with ``provide_``, and
-it assumes that the methods are providers for whatever the rest of their
-method names are.  For instance, Pinject assumes that the method
+Pinject looks on binding specs for methods whose names start with
+``provide_``, and it assumes that the methods are providers for whatever the
+rest of their method names are.  For instance, Pinject assumes that the method
 ``provide_foo_bar()`` is a provider method for the arg name ``foo_bar``.
-
-You can override this default behavior by passing an arg named
-``get_arg_names_from_provider_fn_name`` to ``new_object_graph()``.  For
-instance, if you work for a certain large corporation whose python style guide
-makes you name functions in CamelCase, you may want ``ProvideFooBar()`` to be
-a provider method for the arg name ``foo_bar``.
-
-.. code-block:: python
-
-    >>> class SomeClass(object):
-    ...     def __init__(self, foo):
-    ...         self.foo = foo
-    ...
-    >>> class SomeBindingSpec(pinject.BindingSpec):
-    ...     def ProvideFoo(self):
-    ...         return 'some-foo'
-    ...
-    >>> import re
-    >>> def CustomGetArgNames(provider_fn_name):
-    ...     if provider_fn_name.startswith('Provide'):
-    ...         provided_camelcase = provider_fn_name[len('Provide'):]
-    ...         return [re.sub('(?!^)([A-Z]+)', r'_\1', provided_camelcase).lower()]
-    ...     else:
-    ...         return []
-    ...
-    >>> obj_graph = pinject.new_object_graph(
-    ...     binding_specs=[SomeBindingSpec()],
-    ...     get_arg_names_from_provider_fn_name=CustomGetArgNames)
-    >>> some_class = obj_graph.provide(SomeClass)
-    >>> print some_class.foo
-    'some-foo'
-    >>>
-
-A function passed as the ``get_arg_names_from_provider_fn_name`` arg to
-``new_object_graph()`` takes the name of a potential provider method and
-returns the arg names for which that provider method is a provider (and an
-empty list if it does not seem to name a provider method).
-
-In general, ``get_arg_names_from_provider_fn_name`` is useful at the same time
-that ``get_arg_names_from_class_name`` is useful: when your code doesn't
-follow PEP8 convections.
 
 Pinject injects all args of provider methods that have no default when it
 calls the provider method.
@@ -774,6 +701,113 @@ scope can be injected into an object of the second scope.
 
 The default scope accessibility validator allows objects from any scope to be
 injected into objects from any other scope.
+
+Changing naming conventions
+===========================
+
+If your code follows PEP8 naming coventions, then you're likely happy with the
+default implicit bindings (where the class ``FooBar`` gets bound to the arg
+name ``foo_bar``) and where ``provide_foo_bar()`` is a binding spec's provider
+method for the arg name ``foo_bar``.
+
+But if not, read on!
+
+Customizing implicit bindings
+-----------------------------
+
+``new_object_graph()`` takes a ``get_arg_names_from_class_name`` arg.  This is
+the function that is used to determine implicit class bindings.  This function
+takes in a class name (e.g., ``FooBar``) and returns the arg names to which
+that class should be implicitly bound (e.g., ``['foo_bar']``).  Its default
+behavior is described in the "implicit class bindings" section above, but that
+default behavior can be overridden.
+
+For instance, suppose that your code uses a library that names many classes
+with the leading letter X (e.g., ``XFooBar``), and you'd like to be able to
+bind that to a corresponding arg name without the leading X (e.g.,
+``foo_bar``).
+
+.. code-block:: python
+
+    >>> import re
+    >>> def custom_get_arg_names(class_name):
+    ...     stripped_class_name = re.sub('^_?X?', '', class_name)
+    ...     return [re.sub('(?!^)([A-Z]+)', r'_\1', stripped_class_name).lower()]
+    ...
+    >>> print custom_get_arg_names('XFooBar')
+    ['foo_bar']
+    >>> print custom_get_arg_names('XLibraryClass')
+    ['library_class']
+    >>> class OuterClass(object):
+    ...     def __init__(self, library_class):
+    ...         self.library_class = library_class
+    ...
+    >>> class XLibraryClass(object):
+    ...     def __init__(self):
+    ...         self.forty_two = 42
+    ...
+    >>> obj_graph = pinject.new_object_graph(
+    ...     get_arg_names_from_class_name=custom_get_arg_names)
+    >>> outer_class = obj_graph.provide(OuterClass)
+    >>> print outer_class.library_class.forty_two
+    42
+    >>>
+
+The function passed as the ``get_arg_names_from_class_name`` arg to
+``new_object_graph()`` can return as many or as few arg names as it wants.  If
+it always returns the empty list (i.e., if it is ``lambda _: []``), then that
+disables implicit class bindings.
+
+Customizing provider method names
+---------------------------------
+
+``new_object_graph()`` takes a ``get_arg_names_from_provider_fn_name`` arg.
+This is the function that is used to identify provider methods on binding
+specs.  This function takes in the name of a potential provider method (e.g.,
+``provide_foo_bar``) and returns the arg names for which the provider method
+is a provider, if any (e.g., ``['foo_bar']``).  Its default behavior is
+described in the "provider methods" section above, but that default behavior
+can be overridden.
+
+For instance, suppose that you work for a certain large corporation whose
+python style guide makes you name functions in ``CamelCase``, and so you need
+to name the provider method for the arg name ``foo_bar`` more like
+``ProvideFooBar`` than ``provide_foo_bar``.
+
+.. code-block:: python
+
+    >>> import re
+    >>> def CustomGetArgNames(provider_fn_name):
+    ...     if provider_fn_name.startswith('Provide'):
+    ...         provided_camelcase = provider_fn_name[len('Provide'):]
+    ...         return [re.sub('(?!^)([A-Z]+)', r'_\1', provided_camelcase).lower()]
+    ...     else:
+    ...         return []
+    ...
+    >>> print CustomGetArgNames('ProvideFooBar')
+    ['foo_bar']
+    >>> print CustomGetArgNames('ProvideFoo')
+    ['foo']
+    >>> class SomeClass(object):
+    ...     def __init__(self, foo):
+    ...         self.foo = foo
+    ...
+    >>> class SomeBindingSpec(pinject.BindingSpec):
+    ...     def ProvideFoo(self):
+    ...         return 'some-foo'
+    ...
+    >>> obj_graph = pinject.new_object_graph(
+    ...     binding_specs=[SomeBindingSpec()],
+    ...     get_arg_names_from_provider_fn_name=CustomGetArgNames)
+    >>> some_class = obj_graph.provide(SomeClass)
+    >>> print some_class.foo
+    'some-foo'
+    >>>
+
+The function passed as the ``get_arg_names_from_provider_fn_name`` arg to
+``new_object_graph()`` can return as many or as few arg names as it wants.  If
+it returns an empty list, then that potential provider method is assumed not
+actually to be a provider method.
 
 Gotchas
 =======
