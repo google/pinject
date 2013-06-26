@@ -1,5 +1,4 @@
 TODO:
-- make it easy to declare injected provider functions, not just instances
 - disallow multiple @provides() decorators on same function
 - allow DAG binding spec dependencies
 - reasonable error messages for all exceptions

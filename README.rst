@@ -550,6 +550,60 @@ what you mean if you bind two different arg names to the same class in
 singleton scope: you want only one instance of the class, even though it may
 be injected in multiple places.
 
+Provider bindings
+=================
+
+Sometimes, you need to inject not just a single instance of some class, but
+rather you need to inject the ability to create instances on demand.
+(Clearly, this is most useful when the binding you're using is not in the
+singleton scope, otherwise you'll always get the same instance, and you may as
+well just inject that..)
+
+You could inject the Pinject object graph, but you'd have to do that
+dependency injection manually (Pinject doesn't inject itself!), and you'd be
+injecting a huge set of capabilities when your class really only needs to
+instantiate objects of one type.
+
+To solve this, Pinject creates *provider bindings* for each bound arg name.
+It will look at the arg name for the prefix ``provide_``, and if it finds that
+prefix, it assumes you want to inject a provider function for whatever the
+rest of the arg name is.  For instance, if you have an arg named
+``provide_foo_bar``, then Pinject will inject a zero-arg function that, when
+called, provides whatever the arg name ``foo_bar`` is bound to.
+
+.. code-block:: python
+
+    >>> class Foo(object):
+    ...   def __init__(self):
+    ...     self.forty_two = 42
+    ...
+    >>> class SomeBindingSpec(pinject.BindingSpec):
+    ...     def configure(self, bind):
+    ...         bind('foo', to_class=Foo, in_scope=pinject.PROTOTYPE)
+    ...
+    >>> class NeedsProvider(object):
+    ...     def __init__(self, provide_foo):
+    ...         self.provide_foo = provide_foo
+    ...
+    >>> obj_graph = pinject.new_object_graph(binding_specs=[SomeBindingSpec()])
+    >>> needs_provider = obj_graph.provide(NeedsProvider)
+    >>> print needs_provider.provide_foo() is needs_provider.provide_foo()
+    False
+    >>> print needs_provider.provide_foo().forty_two
+    42
+    >>>
+
+Pinject will always look for the ``provide_`` prefix as a signal to inject a
+provider function, anywhere it injects dependencies (initializer args, binding
+spec provider methods, etc.).  This does mean that it's quite difficult, say,
+to inject an instance of a class named ``ProvideFooBar`` into an arg named
+``provide_foo_bar``, but assuming you're naming your classes as noun phrases
+instead of verb phrases, this shouldn't be a problem.
+
+Watch out don't confuse *provider bindings*, which let you inject args named
+``provide_something`` with provider functions, and *provider methods*, which
+are methods of binding specs that provide instances of some arg name.
+
 Custom scopes
 =============
 
