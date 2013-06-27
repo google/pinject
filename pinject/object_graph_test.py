@@ -72,6 +72,28 @@ class NewObjectGraphTest(unittest.TestCase):
         some_class = obj_graph.provide(SomeClass)
         self.assertEqual('a-fooa-bar', some_class.foobar)
 
+    def test_allows_dag_binding_spec_dependencies(self):
+        class CommonBindingSpec(bindings.BindingSpec):
+            def configure(self, bind):
+                bind('foo', to_instance='a-foo')
+        a_common_binding_spec = CommonBindingSpec()
+        class BindingSpecOne(bindings.BindingSpec):
+            def dependencies(self):
+                return [a_common_binding_spec]
+        class BindingSpecTwo(bindings.BindingSpec):
+            def dependencies(self):
+                return [a_common_binding_spec]
+        class RootBindingSpec(bindings.BindingSpec):
+            def dependencies(self):
+                return [BindingSpecOne(), BindingSpecTwo()]
+        class SomeClass(object):
+            def __init__(self, foo):
+                self.foo = foo
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass], binding_specs=[RootBindingSpec()])
+        some_class = obj_graph.provide(SomeClass)
+        self.assertEqual('a-foo', some_class.foo)
+
     def test_raises_error_if_binding_spec_is_empty(self):
         class EmptyBindingSpec(bindings.BindingSpec):
             pass

@@ -249,6 +249,11 @@ never be a choice about using.  If there may be a choice, then it is better to
 list the binding specs separately and explicitly when calling
 ``new_object_graph()``.
 
+The binding spec dependencies can be a directed acyclic graph (DAG); that is,
+binding spec A can be a dependency of B and of C, and binding spec D can have
+dependencies on B and C.  Even though there are multiple dependency paths from
+D to A, the bindings in binding spec A will only be evaluated once.
+
 Provider methods
 ----------------
 

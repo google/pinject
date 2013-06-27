@@ -63,8 +63,12 @@ def new_object_graph(
         binder = bindings.Binder(explicit_bindings, known_scope_ids)
         if binding_specs is not None:
             binding_specs = list(binding_specs)
+            processed_binding_specs = set()
             while binding_specs:
                 binding_spec = binding_specs.pop()
+                if binding_spec in processed_binding_specs:
+                    continue
+                processed_binding_specs.add(binding_spec)
                 try:
                     binding_spec.configure(binder.bind)
                     has_configure = True
