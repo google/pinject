@@ -31,14 +31,14 @@ class BadDependencyScopeError(Error):
     def __init__(self, from_scope_id, to_scope_id, binding_key):
         Error.__init__(
             self, 'scope "{0}" is not usable when binding {1} from'
-            ' {2}'.format(to_scope_id, binding_key, from_scope_id))
+            ' "{2}"'.format(to_scope_id, binding_key, from_scope_id))
 
 
 class ConflictingBindingsError(Error):
 
     def __init__(self, colliding_bindings):
         Error.__init__(
-            self, 'multiple bindings for same arg name:\n{0}'.format(
+            self, 'multiple bindings for same binding name:\n{0}'.format(
                 '\n'.join('  {0}'.format(b) for b in colliding_bindings)))
 
 

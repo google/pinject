@@ -36,7 +36,7 @@ def new_in_default_scope(binding_key, proviser_fn):
       a Binding
     """
     return bindings_lib.Binding(
-        binding_key, proviser_fn, scoping.DEFAULT_SCOPE, desc='unknown')
+        binding_key, proviser_fn, scoping.DEFAULT_SCOPE, binding_location='unknown')
 
 
 class GetBindingKeyToBindingMapsTest(unittest.TestCase):
@@ -102,9 +102,13 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
             pass
         self.some_binding_key = binding_keys.new('some_class')
         self.some_binding = new_in_default_scope(
-            self.some_binding_key, 'a-proviser-fn')
+            self.some_binding_key,
+            bindings_lib.create_instance_proviser_fn(
+                self.some_binding_key, 'unused'))
         self.another_some_binding = new_in_default_scope(
-            self.some_binding_key, 'another-proviser-fn')
+            self.some_binding_key,
+            bindings_lib.create_instance_proviser_fn(
+                self.some_binding_key, 'also-unused'))
 
     def assertBindingsListsReturnMaps(
             self, bindings_lists,

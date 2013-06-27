@@ -30,15 +30,16 @@ from . import scoping
 
 class Binding(object):
 
-    def __init__(self, binding_key, proviser_fn, scope_id, desc):
+    def __init__(self, binding_key, proviser_fn, scope_id, binding_location):
         self.binding_key = binding_key
         self.proviser_fn = proviser_fn
         self.scope_id = scope_id
-        self._desc = desc
+        self._binding_location = binding_location
 
     def __str__(self):
-        # TODO(kurts): shouldn't this contain the scope?
-        return 'the binding from {0} to {1}'.format(self.binding_key, self._desc)
+        return 'the binding at {0}, from {1} to {2}, in "{3}" scope'.format(
+            self._binding_location, self.binding_key,
+            self.proviser_fn._pinject_desc, self.scope_id)
 
 
 def _handle_explicit_binding_collision(
@@ -154,7 +155,7 @@ def get_explicit_class_bindings(
                 proviser_fn = create_class_proviser_fn(binding_key, cls)
                 explicit_bindings.append(Binding(
                     binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
-                    desc='the explicitly injectable class {0}'.format(cls)))
+                    _get_obj_location(cls)))
     return explicit_bindings
 
 
@@ -183,7 +184,7 @@ def get_implicit_class_bindings(
             proviser_fn = create_class_proviser_fn(binding_key, cls)
             implicit_bindings.append(Binding(
                 binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
-                desc='the implicitly bound class {0}'.format(cls)))
+                _get_obj_location(cls)))
     return implicit_bindings
 
 
@@ -222,7 +223,7 @@ class Binder(object):
                     self._collected_bindings.append(Binding(
                         binding_keys.new('_pinject_class', (to_class, in_scope)),
                         create_class_proviser_fn(binding_key, to_class),
-                        in_scope, desc='TODO(kurts)'))
+                        in_scope, _get_obj_location(to_class)))
                     self._class_bindings_created.append((to_class, in_scope))
         else:
             proviser_fn = create_instance_proviser_fn(binding_key, to_instance)
@@ -230,8 +231,24 @@ class Binder(object):
             with self._lock:
                 self._collected_bindings.append(Binding(
                     binding_key, proviser_fn, in_scope,
-                    desc='the explicit binding target at line {0} of {1}'.format(
-                        back_frame.f_lineno, back_frame.f_code.co_filename)))
+                    '{0}:{1}'.format(back_frame.f_code.co_filename,
+                                     back_frame.f_lineno)))
+
+
+def _get_obj_location(cls):
+    try:
+        return '{0}:{1}'.format(
+            inspect.getfile(cls), inspect.getsourcelines(cls)[1])
+    except (TypeError, IOError):
+        return 'unknown location'
+
+
+def _get_class_name_and_loc(cls):
+    try:
+        return '{0} at {1}:{2}'.format(
+            cls.__name__, inspect.getfile(cls), inspect.getsourcelines(cls)[1])
+    except (TypeError, IOError):
+        return '{0}.{1}'.format(inspect.getmodule(cls).__name__, cls.__name__)
 
 
 def create_class_proviser_fn(binding_key, to_class):
@@ -240,13 +257,7 @@ def create_class_proviser_fn(binding_key, to_class):
             binding_key, to_class, 'class')
     proviser_fn = lambda injection_context, obj_provider: obj_provider.provide_class(
         to_class, injection_context)
-    try:
-        class_name_and_loc = '{0} at {1}:{2}'.format(
-            to_class.__name__, inspect.getfile(to_class),
-            inspect.getsourcelines(to_class)[1])
-    except (TypeError, IOError):
-        class_name_and_loc = '{0}.{1}'.format(
-            inspect.getmodule(to_class).__name__, to_class.__name__)
+    class_name_and_loc = _get_class_name_and_loc(to_class)
     proviser_fn._pinject_desc = 'the class {0}'.format(class_name_and_loc)
     return proviser_fn
 
@@ -273,9 +284,6 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
         obj_provider.call_with_injection(provider_fn, injection_context))
     proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
     return [
-        Binding(
-            binding_keys.new(arg_name, annotated_with),
-            proviser_fn, in_scope_id,
-            desc='the provider function {0} from module {1}'.format(
-                provider_fn, provider_fn.__module__))
+        Binding(binding_keys.new(arg_name, annotated_with), proviser_fn,
+                in_scope_id, _get_obj_location(provider_fn))
         for arg_name in arg_names]

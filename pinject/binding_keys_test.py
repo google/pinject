@@ -25,19 +25,22 @@ class BindingKeyTest(unittest.TestCase):
     def test_repr(self):
         binding_key = binding_keys.BindingKey(
             'an-arg-name', annotations.Annotation('an-annotation'))
-        self.assertEqual('<the binding name "an-arg-name" annotated with "an-annotation">',
-                         repr(binding_key))
+        self.assertEqual(
+            '<the binding name "an-arg-name" (annotated with "an-annotation")>',
+            repr(binding_key))
 
     def test_str(self):
         binding_key = binding_keys.BindingKey(
             'an-arg-name', annotations.Annotation('an-annotation'))
-        self.assertEqual('the binding name "an-arg-name" annotated with "an-annotation"',
-                         str(binding_key))
+        self.assertEqual(
+            'the binding name "an-arg-name" (annotated with "an-annotation")',
+            str(binding_key))
 
     def test_annotation_as_adjective(self):
         binding_key = binding_keys.BindingKey(
             'an-arg-name', annotations.Annotation('an-annotation'))
-        self.assertEqual('annotated with "an-annotation"', binding_key.annotation_as_adjective())
+        self.assertEqual('annotated with "an-annotation"',
+                         binding_key.annotation_as_adjective())
 
     def test_equal_if_same_arg_name_and_annotation(self):
         binding_key_one = binding_keys.BindingKey(
@@ -71,11 +74,11 @@ class NewBindingKeyTest(unittest.TestCase):
 
     def test_without_annotation(self):
         binding_key = binding_keys.new('an-arg-name')
-        self.assertEqual('the binding name "an-arg-name" unannotated',
+        self.assertEqual('the binding name "an-arg-name" (unannotated)',
                          str(binding_key))
 
     def test_with_annotation(self):
         binding_key = binding_keys.new('an-arg-name', 'an-annotation')
         self.assertEqual(
-            'the binding name "an-arg-name" annotated with "an-annotation"',
+            'the binding name "an-arg-name" (annotated with "an-annotation")',
             str(binding_key))

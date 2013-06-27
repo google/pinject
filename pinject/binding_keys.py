@@ -34,7 +34,7 @@ class BindingKey(object):
         return '<{0}>'.format(self)
 
     def __str__(self):
-        return 'the binding name "{0}" {1}'.format(
+        return 'the binding name "{0}" ({1})'.format(
             self._name, self.annotation_as_adjective())
 
     def annotation_as_adjective(self):
