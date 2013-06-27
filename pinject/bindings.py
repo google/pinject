@@ -240,7 +240,14 @@ def create_class_proviser_fn(binding_key, to_class):
             binding_key, to_class, 'class')
     proviser_fn = lambda injection_context, obj_provider: obj_provider.provide_class(
         to_class, injection_context)
-    proviser_fn._pinject_desc = 'the class {0!r}'.format(to_class)
+    try:
+        class_name_and_loc = '{0} at {1}:{2}'.format(
+            to_class.__name__, inspect.getfile(to_class),
+            inspect.getsourcelines(to_class)[1])
+    except (TypeError, IOError):
+        class_name_and_loc = '{0}.{1}'.format(
+            inspect.getmodule(to_class).__name__, to_class.__name__)
+    proviser_fn._pinject_desc = 'the class {0}'.format(class_name_and_loc)
     return proviser_fn
 
 
