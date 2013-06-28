@@ -43,7 +43,12 @@ class ConflictingBindingsError(Error):
 
 
 class CyclicInjectionError(Error):
-    pass
+
+    def __init__(self, binding_key_stack):
+        Error.__init__(
+            self, 'cyclic injections:\n{0}'.format(
+                ', injected with\n'.join(
+                    '  {0}'.format(bk) for bk in binding_key_stack)))
 
 
 class DuplicateDecoratorError(Error):

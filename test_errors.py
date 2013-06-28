@@ -69,6 +69,22 @@ def print_conflicting_bindings_error():
                             binding_specs=[SomeBindingSpec()])
 
 
+def print_cyclic_injection_error():
+    class ClassOne(object):
+        def __init__(self, class_two):
+            pass
+    class ClassTwo(object):
+        def __init__(self, class_three):
+            pass
+    class ClassThree(object):
+        def __init__(self, class_one):
+            pass
+    obj_graph = object_graph.new_object_graph(
+        modules=None, classes=[ClassOne, ClassTwo, ClassThree])
+    _print_raised_exception(errors.CyclicInjectionError,
+                            obj_graph.provide, ClassOne)
+
+
 all_print_method_pairs = inspect.getmembers(
     sys.modules[__name__],
     lambda x: (type(x) == types.FunctionType and
