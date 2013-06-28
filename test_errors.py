@@ -42,7 +42,8 @@ def print_ambiguous_arg_name_error():
         pass
     class _Foo():
         pass
-    obj_graph = object_graph.new_object_graph(classes=[SomeClass, Foo, _Foo])
+    obj_graph = object_graph.new_object_graph(
+        modules=None, classes=[SomeClass, Foo, _Foo])
     _print_raised_exception(errors.AmbiguousArgNameError,
                             obj_graph.provide, SomeClass)
 
@@ -54,7 +55,8 @@ def print_bad_dependency_scope_error():
         def __init__(self, foo):
             pass
     obj_graph = object_graph.new_object_graph(
-        classes=[Foo, Bar], is_scope_usable_from_scope=lambda _1, _2: False)
+        modules=None, classes=[Foo, Bar],
+        is_scope_usable_from_scope=lambda _1, _2: False)
     _print_raised_exception(errors.BadDependencyScopeError,
                             obj_graph.provide, Bar)
 
@@ -64,9 +66,9 @@ def print_conflicting_bindings_error():
         def configure(self, bind):
             bind('foo', to_instance=1)
             bind('foo', to_instance=2)
-    _print_raised_exception(errors.ConflictingBindingsError,
-                            object_graph.new_object_graph,
-                            binding_specs=[SomeBindingSpec()])
+    _print_raised_exception(
+        errors.ConflictingBindingsError, object_graph.new_object_graph,
+        modules=None, binding_specs=[SomeBindingSpec()])
 
 
 def print_cyclic_injection_error():
