@@ -40,10 +40,35 @@ def new_object_graph(
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name),
         id_to_scope=None, is_scope_usable_from_scope=lambda _1, _2: True):
-    """
-          is_scope_usable_from_scope_fn: a function taking two scope IDs and
-              returning whether an object in the first scope can be injected
-              into an object from the second scope
+    """Creates a new object graph.
+
+    Args:
+      modules: the modules in which to search for classes for which to create
+          implicit bindings; if None, then no modules; by default, all
+          modules imported at the time of calling this method
+      classes: the classes for which to create implicit bindings; if None (the
+          default), then no classes
+      binding_specs: the BindingSpec subclasses to get bindings and provider
+          methods from; if None (the default), then no binding specs
+      only_use_explicit_bindings: whether to use only explicit bindings (i.e.,
+          created by binding specs or @pinject.injectable, etc.)
+      allow_injecting_none: whether to allow a provider method to provide None
+      get_arg_names_from_class_name: a function mapping a class name to a
+          sequence of the arg names to which those classes should be
+          implicitly bound (if any)
+      get_arg_names_from_provider_fn_name: a function mapping a provider
+          method name to a sequence of the arg names for which that method is
+          a provider (if any)
+      id_to_scope: a map from scope ID to the concrete Scope implementation
+          instance for that scope
+      is_scope_usable_from_scope_fn: a function taking two scope IDs and
+          returning whether an object in the first scope can be injected into
+          an object from the second scope; by default, injection is allowed
+          from any scope into any other scope
+    Returns:
+      an ObjectGraph
+    Raises:
+      Error: the object graph is not creatable as specified
     """
     try:
         injection_context_factory = injection_contexts.InjectionContextFactory(
@@ -102,6 +127,7 @@ def new_object_graph(
 
 
 class ObjectGraph(object):
+    """A graph of objects instantiable with dependency injection."""
 
     def __init__(self, obj_provider, injection_context_factory,
                  is_injectable_fn):
@@ -110,6 +136,15 @@ class ObjectGraph(object):
         self._is_injectable_fn = is_injectable_fn
 
     def provide(self, cls):
+        """Provides an instance of the given class.
+
+        Args:
+          cls: a class (not an instance)
+        Returns:
+          an instance of cls
+        Raises:
+          Error: an instance of cls is not providable
+        """
         if not self._is_injectable_fn(cls):
             raise errors.NonExplicitlyBoundClassError(cls)
         try:
