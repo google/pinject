@@ -19,11 +19,11 @@ from distutils.core import setup
 
 
 setup(name='pinject',
-      version='1.0',
+      version='0.8',
       description='A pythonic dependency injection library',
       author='Kurt Steinkraus',
       author_email='kurt@steinkraus.us',
-      url='https://github.com/KurtSteinkraus/pinject',
+      url='https://github.com/google/pinject',
       license='Apache License 2.0',
       long_description=open('README.rst').read(),
       platforms='all',
