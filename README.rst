@@ -79,14 +79,17 @@ class names to injectable arg names by lowercasing words and connecting them
 with underscores.  It will also ignore any leading underscore on the class
 name.
 
-==========   ===========
-Class name   Arg name
-==========   ===========
-``Foo``      ``foo``
-``FooBar``   ``foo_bar``
-``_Foo``     ``foo``
-``_FooBar``  ``foo_bar``
-==========   ===========
++-------------+-------------+
+| Class name  | Arg name    |
++=============+=============+
+| ``Foo``     | ``foo``     |
++-------------+-------------+
+| ``FooBar``  | ``foo_bar`` |
++-------------+-------------+
+| ``_Foo``    | ``foo``     |
++-------------+-------------+
+| ``_FooBar`` | ``foo_bar`` |
++-------------+-------------+
 
 If two classes map to the same arg name, whether those classes are in the same
 module or different modules, Pinject will not create an implicit binding for
