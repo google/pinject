@@ -278,12 +278,14 @@ class BindingSpec(object):
 
 
 def get_provider_fn_bindings(provider_fn, default_arg_names):
-    annotated_with, arg_names, in_scope_id = (
-        decorators._get_provider_fn_decorations(provider_fn, default_arg_names))
+    provider_decorations = decorators.get_provider_fn_decorations(
+        provider_fn, default_arg_names)
     proviser_fn = lambda injection_context, obj_provider: (
         obj_provider.call_with_injection(provider_fn, injection_context))
     proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
     return [
-        Binding(binding_keys.new(arg_name, annotated_with), proviser_fn,
-                in_scope_id, _get_obj_location(provider_fn))
-        for arg_name in arg_names]
+        Binding(binding_keys.new(provider_decoration.arg_name,
+                                 provider_decoration.annotated_with),
+                proviser_fn, provider_decoration.in_scope_id,
+                _get_obj_location(provider_fn))
+        for provider_decoration in provider_decorations]

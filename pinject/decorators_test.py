@@ -104,14 +104,14 @@ class ProvidesTest(unittest.TestCase):
         self.assertRaises(errors.EmptyProvidesDecoratorError,
                           do_bad_annotated_with)
 
-    def test_cannot_be_applied_twice(self):
-        def do_bad_annotated_with():
-            @decorators.provides(annotated_with='an-annotation')
-            @decorators.provides(annotated_with='an-annotation')
-            def provide_foo():
-                pass
-        self.assertRaises(errors.DuplicateDecoratorError,
-                          do_bad_annotated_with)
+    # def test_cannot_be_applied_twice(self):
+    #     def do_bad_annotated_with():
+    #         @decorators.provides(annotated_with='an-annotation')
+    #         @decorators.provides(annotated_with='an-annotation')
+    #         def provide_foo():
+    #             pass
+    #     self.assertRaises(errors.DuplicateDecoratorError,
+    #                       do_bad_annotated_with)
 
     def test_uses_default_binding_when_arg_name_and_annotation_omitted(self):
         @decorators.provides(in_scope='unused')
@@ -128,41 +128,53 @@ class ProvidesTest(unittest.TestCase):
         [provider_fn_binding] = bindings.get_provider_fn_bindings(provide_foo, ['foo'])
         self.assertEqual(scoping.DEFAULT_SCOPE, provider_fn_binding.scope_id)
 
+    def test_multiple_provides_gives_multiple_bindings(self):
+        @decorators.provides('foo', annotated_with='foo-annot')
+        @decorators.provides('bar', annotated_with='bar-annot')
+        def provide_something(self):
+            pass
+        provider_fn_bindings = bindings.get_provider_fn_bindings(
+            provide_something, ['something'])
+        self.assertEqual(set([binding_keys.new('foo', annotated_with='foo-annot'),
+                              binding_keys.new('bar', annotated_with='bar-annot')]),
+                         set([provider_fn_binding.binding_key
+                              for provider_fn_binding in provider_fn_bindings]))
+
 
 class GetProviderFnDecorationsTest(unittest.TestCase):
 
     def test_returns_defaults_for_undecorated_fn(self):
         def provide_foo():
             pass
-        annotated_with, arg_names, in_scope_id = (
-            decorators._get_provider_fn_decorations(
-                provide_foo, ['default-arg-name']))
-        self.assertEqual(None, annotated_with)
-        self.assertEqual(['default-arg-name'], arg_names)
-        self.assertEqual(scoping.DEFAULT_SCOPE, in_scope_id)
+        provider_decorations = decorators.get_provider_fn_decorations(
+            provide_foo, ['default-arg-name'])
+        self.assertEqual(
+            [decorators.ProviderDecoration(
+                'default-arg-name', None, scoping.DEFAULT_SCOPE)],
+            provider_decorations)
 
     def test_returns_defaults_if_no_values_set(self):
-        @decorators.annotate_arg('foo', 'unused')
-        def provide_foo(foo):
+        @decorators.annotate_arg('bar', 'unused')
+        def provide_foo(bar):
             pass
-        annotated_with, arg_names, in_scope_id = (
-            decorators._get_provider_fn_decorations(
-                provide_foo, ['default-arg-name']))
-        self.assertEqual(None, annotated_with)
-        self.assertEqual(['default-arg-name'], arg_names)
-        self.assertEqual(scoping.DEFAULT_SCOPE, in_scope_id)
+        provider_decorations = decorators.get_provider_fn_decorations(
+            provide_foo, ['default-arg-name'])
+        self.assertEqual(
+            [decorators.ProviderDecoration(
+                'default-arg-name', None, scoping.DEFAULT_SCOPE)],
+            provider_decorations)
 
     def test_returns_set_values_if_set(self):
         @decorators.provides('foo', annotated_with='an-annotation',
                              in_scope='a-scope-id')
         def provide_foo():
             pass
-        annotated_with, arg_names, in_scope_id = (
-            decorators._get_provider_fn_decorations(
-                provide_foo, ['default-arg-name']))
-        self.assertEqual('an-annotation', annotated_with)
-        self.assertEqual(['foo'], arg_names)
-        self.assertEqual('a-scope-id', in_scope_id)
+        provider_decorations = decorators.get_provider_fn_decorations(
+            provide_foo, ['default-arg-name'])
+        self.assertEqual(
+            [decorators.ProviderDecoration(
+                'foo', 'an-annotation', 'a-scope-id')],
+            provider_decorations)
 
 
 class GetPinjectWrapperTest(unittest.TestCase):

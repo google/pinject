@@ -27,9 +27,7 @@ from . import scoping
 _ARG_BINDING_KEYS_ATTR = '_pinject_arg_binding_keys'
 _IS_WRAPPER_ATTR = '_pinject_is_wrapper'
 _ORIG_FN_ATTR = '_pinject_orig_fn'
-_PROVIDER_ANNOTATED_WITH_ATTR = '_pinject_provider_annotated_with'
-_PROVIDER_ARG_NAME_ATTR = '_pinject_provider_arg_name'
-_PROVIDER_IN_SCOPE_ID_ATTR = '_pinject_in_scope_id'
+_PROVIDER_DECORATIONS_ATTR = '_pinject_provider_decorations'
 
 
 def annotate_arg(arg_name, with_annotation):
@@ -103,7 +101,34 @@ def provides(arg_name=None, annotated_with=None, in_scope=None):
                                 provider_in_scope_id=in_scope)
 
 
-def _get_provider_fn_decorations(provider_fn, default_arg_names):
+class ProviderDecoration(object):
+    """The provider method-relevant info set by @provides.
+
+    Attributes:
+      arg_name: the name of the arg provided by the provider function
+      annotated_with: an annotation object
+      in_scope_id: a scope ID
+    """
+
+    def __init__(self, arg_name, annotated_with, in_scope_id):
+        self.arg_name = arg_name
+        self.annotated_with = annotated_with
+        self.in_scope_id = in_scope_id
+
+    def __eq__(self, other):
+        return (self.arg_name == other.arg_name and
+                self.annotated_with == other.annotated_with and
+                self.in_scope_id == other.in_scope_id)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __hash__(self):
+        return (hash(self.arg_name) ^ hash(self.annotated_with) ^
+                hash(self.in_scope_id))
+
+
+def get_provider_fn_decorations(provider_fn, default_arg_names):
     """Retrieves the provider method-relevant info set by decorators.
 
     If any info wasn't set by decorators, then defaults are returned.
@@ -113,26 +138,30 @@ def _get_provider_fn_decorations(provider_fn, default_arg_names):
       default_arg_names: the (possibly empty) arg names to use if none were
           specified via @provides()
     Returns:
-      a tuple (annotated_with, arg_names, in_scope_id) where
-          annotated_with: an annotation object
-          arg_name: the name of the arg provided by the provider function
-          in_scope: a scope ID
+      a sequence of ProviderDecoration
     """
     if hasattr(provider_fn, _IS_WRAPPER_ATTR):
-        annotated_with = getattr(provider_fn, _PROVIDER_ANNOTATED_WITH_ATTR)
-        arg_name = getattr(provider_fn, _PROVIDER_ARG_NAME_ATTR)
-        if arg_name is not None:
-            arg_names = [arg_name]
-        else:
-            arg_names = default_arg_names
-        in_scope_id = getattr(provider_fn, _PROVIDER_IN_SCOPE_ID_ATTR)
-        if in_scope_id is None:
-            in_scope_id = scoping.DEFAULT_SCOPE
-    else:
-        annotated_with = None
-        arg_names = default_arg_names
-        in_scope_id = scoping.DEFAULT_SCOPE
-    return annotated_with, arg_names, in_scope_id
+        provider_decorations = getattr(provider_fn, _PROVIDER_DECORATIONS_ATTR)
+        if provider_decorations:
+            expanded_provider_decorations = []
+            for provider_decoration in provider_decorations:
+                # TODO(kurts): seems like default scope should be done at
+                # ProviderDecoration instantiation time.
+                if provider_decoration.in_scope_id is None:
+                    provider_decoration.in_scope_id = scoping.DEFAULT_SCOPE
+                if provider_decoration.arg_name is not None:
+                    expanded_provider_decorations.append(provider_decoration)
+                else:
+                    expanded_provider_decorations.extend(
+                        [ProviderDecoration(default_arg_name,
+                                            provider_decoration.annotated_with,
+                                            provider_decoration.in_scope_id)
+                         for default_arg_name in default_arg_names])
+            return expanded_provider_decorations
+    return [ProviderDecoration(default_arg_name,
+                               annotated_with=None,
+                               in_scope_id=scoping.DEFAULT_SCOPE)
+            for default_arg_name in default_arg_names]
 
 
 def _get_pinject_decorated_fn(fn):
@@ -143,13 +172,11 @@ def _get_pinject_decorated_fn(fn):
             return fn_to_wrap(*pargs, **kwargs)
         pinject_decorated_fn = decorator.decorator(_pinject_decorated_fn, fn)
         # TODO(kurts): split this so that __init__() decorators don't get
-        # provider attributes.
+        # the provider attribute.
         setattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR, [])
         setattr(pinject_decorated_fn, _IS_WRAPPER_ATTR, True)
         setattr(pinject_decorated_fn, _ORIG_FN_ATTR, fn)
-        setattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR, None)
-        setattr(pinject_decorated_fn, _PROVIDER_ARG_NAME_ATTR, None)
-        setattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR, None)
+        setattr(pinject_decorated_fn, _PROVIDER_DECORATIONS_ATTR, [])
     return pinject_decorated_fn
 
 
@@ -166,24 +193,14 @@ def _get_pinject_wrapper(arg_binding_key=None, provider_arg_name=None,
                     getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
                 raise errors.MultipleAnnotationsForSameArgError(arg_binding_key)
             getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(arg_binding_key)
-        if provider_arg_name is not None:
-            if getattr(pinject_decorated_fn, _PROVIDER_ARG_NAME_ATTR) is not None:
-                raise errors.DuplicateDecoratorError(
-                    'arg_name', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
-            setattr(pinject_decorated_fn, _PROVIDER_ARG_NAME_ATTR,
-                    provider_arg_name)
-        if provider_annotated_with is not None:
-            if getattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR) is not None:
-                raise errors.DuplicateDecoratorError(
-                    'annotated_with', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
-            setattr(pinject_decorated_fn, _PROVIDER_ANNOTATED_WITH_ATTR,
-                    provider_annotated_with)
-        if provider_in_scope_id is not None:
-            if getattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR) is not None:
-                raise errors.DuplicateDecoratorError(
-                    'in_scope', getattr(pinject_decorated_fn, _ORIG_FN_ATTR))
-            setattr(pinject_decorated_fn, _PROVIDER_IN_SCOPE_ID_ATTR,
-                    provider_in_scope_id)
+        if (provider_arg_name is not None or
+            provider_annotated_with is not None or
+            provider_in_scope_id is not None):
+            provider_decorations = getattr(
+                pinject_decorated_fn, _PROVIDER_DECORATIONS_ATTR)
+            provider_decorations.append(ProviderDecoration(
+                provider_arg_name, provider_annotated_with,
+                provider_in_scope_id))
         return pinject_decorated_fn
     return get_pinject_decorated_fn_with_additions
 

@@ -1,5 +1,4 @@
 TODO:
-- disallow multiple @provides() decorators on same function
 - reasonable error messages for all exceptions
 - validate python types of all input
 - either allow binding specs to declare required bindings, or else declare
