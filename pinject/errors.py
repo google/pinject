@@ -14,6 +14,9 @@ limitations under the License.
 """
 
 
+import locations
+
+
 class Error(Exception):
     pass
 
@@ -44,33 +47,28 @@ class ConflictingBindingsError(Error):
 
 class CyclicInjectionError(Error):
 
-    def __init__(self, binding_key_stack):
+    def __init__(self, binding_stack):
         Error.__init__(
             self, 'cyclic injections:\n{0}'.format(
-                ', injected with\n'.join(
-                    '  {0}'.format(bk) for bk in binding_key_stack)))
-
-
-class DuplicateDecoratorError(Error):
-
-    def __init__(self, decorator_name, fn):
-        Error.__init__(
-            self, '@provides({0}) applied twice to {1}'.format(decorator_name, fn))
+                '\n'.join('  {0}'.format(b) for b in binding_stack)))
 
 
 class EmptyBindingSpecError(Error):
 
     def __init__(self, binding_spec):
         Error.__init__(
-            self, '{0} listed as a binding spec, but it has neither a'
-            ' configure() method nor any provider methods'.format(
-                binding_spec))
+            self, 'binding spec {0} at {1} must have either a configure()'
+            ' method or a provider method but has neither'.format(
+                binding_spec.__class__.__name__,
+                locations.get_type_loc(binding_spec.__class__)))
 
 
 class EmptyProvidesDecoratorError(Error):
 
-    def __init__(self):
-        Error.__init__(self, '@provides() needs at least one non-default arg')
+    def __init__(self, at_provides_loc):
+        Error.__init__(
+            self, '@provides() at {0} needs at least one non-default'
+            ' arg'.format(at_provides_loc))
 
 
 class InjectableDecoratorAppliedToNonInitError(Error):

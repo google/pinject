@@ -104,15 +104,6 @@ class ProvidesTest(unittest.TestCase):
         self.assertRaises(errors.EmptyProvidesDecoratorError,
                           do_bad_annotated_with)
 
-    # def test_cannot_be_applied_twice(self):
-    #     def do_bad_annotated_with():
-    #         @decorators.provides(annotated_with='an-annotation')
-    #         @decorators.provides(annotated_with='an-annotation')
-    #         def provide_foo():
-    #             pass
-    #     self.assertRaises(errors.DuplicateDecoratorError,
-    #                       do_bad_annotated_with)
-
     def test_uses_default_binding_when_arg_name_and_annotation_omitted(self):
         @decorators.provides(in_scope='unused')
         def provide_foo(self):

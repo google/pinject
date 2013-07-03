@@ -24,6 +24,7 @@ from .third_party import decorator
 from . import binding_keys
 from . import decorators
 from . import errors
+from . import locations
 from . import providing
 from . import scoping
 
@@ -155,7 +156,7 @@ def get_explicit_class_bindings(
                 proviser_fn = create_class_proviser_fn(binding_key, cls)
                 explicit_bindings.append(Binding(
                     binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
-                    _get_obj_location(cls)))
+                    locations.get_type_loc(cls)))
     return explicit_bindings
 
 
@@ -184,7 +185,7 @@ def get_implicit_class_bindings(
             proviser_fn = create_class_proviser_fn(binding_key, cls)
             implicit_bindings.append(Binding(
                 binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
-                _get_obj_location(cls)))
+                locations.get_type_loc(cls)))
     return implicit_bindings
 
 
@@ -223,32 +224,14 @@ class Binder(object):
                     self._collected_bindings.append(Binding(
                         binding_keys.new('_pinject_class', (to_class, in_scope)),
                         create_class_proviser_fn(binding_key, to_class),
-                        in_scope, _get_obj_location(to_class)))
+                        in_scope, locations.get_type_loc(to_class)))
                     self._class_bindings_created.append((to_class, in_scope))
         else:
             proviser_fn = create_instance_proviser_fn(binding_key, to_instance)
-            back_frame = inspect.currentframe().f_back
+            back_frame_loc = locations.get_back_frame_loc()
             with self._lock:
                 self._collected_bindings.append(Binding(
-                    binding_key, proviser_fn, in_scope,
-                    '{0}:{1}'.format(back_frame.f_code.co_filename,
-                                     back_frame.f_lineno)))
-
-
-def _get_obj_location(cls):
-    try:
-        return '{0}:{1}'.format(
-            inspect.getfile(cls), inspect.getsourcelines(cls)[1])
-    except (TypeError, IOError):
-        return 'unknown location'
-
-
-def _get_class_name_and_loc(cls):
-    try:
-        return '{0} at {1}:{2}'.format(
-            cls.__name__, inspect.getfile(cls), inspect.getsourcelines(cls)[1])
-    except (TypeError, IOError):
-        return '{0}.{1}'.format(inspect.getmodule(cls).__name__, cls.__name__)
+                    binding_key, proviser_fn, in_scope, back_frame_loc))
 
 
 def create_class_proviser_fn(binding_key, to_class):
@@ -257,7 +240,7 @@ def create_class_proviser_fn(binding_key, to_class):
             binding_key, to_class, 'class')
     proviser_fn = lambda injection_context, obj_provider: obj_provider.provide_class(
         to_class, injection_context)
-    class_name_and_loc = _get_class_name_and_loc(to_class)
+    class_name_and_loc = locations.get_class_name_and_loc(to_class)
     proviser_fn._pinject_desc = 'the class {0}'.format(class_name_and_loc)
     return proviser_fn
 
@@ -287,5 +270,5 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
         Binding(binding_keys.new(provider_decoration.arg_name,
                                  provider_decoration.annotated_with),
                 proviser_fn, provider_decoration.in_scope_id,
-                _get_obj_location(provider_fn))
+                locations.get_type_loc(provider_fn))
         for provider_decoration in provider_decorations]

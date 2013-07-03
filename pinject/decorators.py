@@ -21,6 +21,7 @@ from .third_party import decorator
 from . import arg_binding_keys
 from . import binding_keys
 from . import errors
+from . import locations
 from . import scoping
 
 
@@ -95,7 +96,7 @@ def provides(arg_name=None, annotated_with=None, in_scope=None):
       a function that will decorate functions passed to it
     """
     if arg_name is None and annotated_with is None and in_scope is None:
-        raise errors.EmptyProvidesDecoratorError()
+        raise errors.EmptyProvidesDecoratorError(locations.get_back_frame_loc())
     return _get_pinject_wrapper(provider_arg_name=arg_name,
                                 provider_annotated_with=annotated_with,
                                 provider_in_scope_id=in_scope)

@@ -38,27 +38,27 @@ class InjectionContextFactory(object):
           a new empty _InjectionContext in the default scope
         """
         return _InjectionContext(
-            binding_key_stack=[], scope_id=scoping.UNSCOPED,
+            binding_stack=[], scope_id=scoping.UNSCOPED,
             is_scope_usable_from_scope_fn=self._is_scope_usable_from_scope_fn)
 
 
 class _InjectionContext(object):
     """The context of dependency-injecting some bound value."""
 
-    def __init__(self, binding_key_stack, scope_id,
+    def __init__(self, binding_stack, scope_id,
                  is_scope_usable_from_scope_fn):
         """Initializer.
 
         Args:
-          binding_key_stack: a sequence of the binding keys for the bindings
-              whose use in injection is in-progress, from the highest level
-              (first) to the current level (last)
+          binding_stack: a sequence of the bindings whose use in injection is
+              in-progress, from the highest level (first) to the current level
+              (last)
           scope_id: the scope ID of the current (last) binding's scope
           is_scope_usable_from_scope_fn: a function taking two scope IDs and
               returning whether an object in the first scope can be injected
               into an object from the second scope
         """
-        self._binding_key_stack = binding_key_stack
+        self._binding_stack = binding_stack
         self._scope_id = scope_id
         self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
@@ -73,14 +73,13 @@ class _InjectionContext(object):
         Returns:
           a new _InjectionContext
         """
-        child_binding_key = binding.binding_key
         child_scope_id = binding.scope_id
-        new_binding_key_stack = self._binding_key_stack + [child_binding_key]
-        if child_binding_key in self._binding_key_stack:
-            raise errors.CyclicInjectionError(new_binding_key_stack)
+        new_binding_stack = self._binding_stack + [binding]
+        if binding in self._binding_stack:
+            raise errors.CyclicInjectionError(new_binding_stack)
         if not self._is_scope_usable_from_scope_fn(
                 child_scope_id, self._scope_id):
             raise errors.BadDependencyScopeError(
-                self._scope_id, child_scope_id, child_binding_key)
-        return _InjectionContext(new_binding_key_stack, child_scope_id,
+                self._scope_id, child_scope_id, binding.binding_key)
+        return _InjectionContext(new_binding_stack, child_scope_id,
                                  self._is_scope_usable_from_scope_fn)

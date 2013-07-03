@@ -22,6 +22,7 @@ import traceback
 import types
 
 from pinject import bindings
+from pinject import decorators
 from pinject import errors
 from pinject import object_graph
 
@@ -85,6 +86,26 @@ def print_cyclic_injection_error():
         modules=None, classes=[ClassOne, ClassTwo, ClassThree])
     _print_raised_exception(errors.CyclicInjectionError,
                             obj_graph.provide, ClassOne)
+    # TODO(kurts): make the file:line not get printed twice on each line.
+
+
+def print_empty_binding_spec_error():
+    class EmptyBindingSpec(bindings.BindingSpec):
+        pass
+    _print_raised_exception(
+        errors.EmptyBindingSpecError, object_graph.new_object_graph,
+        modules=None, binding_specs=[EmptyBindingSpec()])
+
+
+def print_empty_provides_decorator_error():
+    class SomeBindingSpec(bindings.BindingSpec):
+        @decorators.provides()
+        def provide_foo():
+            pass
+    _print_raised_exception(
+        errors.EmptyProvidesDecoratorError, object_graph.new_object_graph,
+        modules=None, binding_specs=[SomeBindingSpec()])
+
 
 
 all_print_method_pairs = inspect.getmembers(

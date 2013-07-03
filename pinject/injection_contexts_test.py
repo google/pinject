@@ -26,12 +26,15 @@ class InjectionContextTest(unittest.TestCase):
 
     def setUp(self):
         self.binding_key = binding_keys.new('foo')
+        self.binding = bindings.Binding(
+            self.binding_key,
+            bindings.create_instance_proviser_fn(
+                self.binding_key, 'an-instance'),
+            'curr-scope', 'unused-desc')
         injection_context_factory = injection_contexts.InjectionContextFactory(
             lambda to_scope, from_scope: to_scope != 'unusable-scope')
         top_injection_context = injection_context_factory.new()
-        self.injection_context = top_injection_context.get_child(
-            bindings.Binding(self.binding_key, 'unused-proviser-fn',
-                             'curr-scope', 'unused-desc'))
+        self.injection_context = top_injection_context.get_child(self.binding)
 
     def test_get_child_successfully(self):
         other_binding_key = binding_keys.new('bar')
@@ -39,11 +42,9 @@ class InjectionContextTest(unittest.TestCase):
             bindings.Binding(other_binding_key, 'unused-proviser-fn',
                              'new-scope', 'unused-desc'))
 
-    def test_get_child_raises_error_when_binding_key_already_seen(self):
-        self.assertRaises(
-            errors.CyclicInjectionError, self.injection_context.get_child,
-            bindings.Binding(self.binding_key, 'unused-proviser-fn',
-                             'new-scope', 'unused-desc'))
+    def test_get_child_raises_error_when_binding_already_seen(self):
+        self.assertRaises(errors.CyclicInjectionError,
+                          self.injection_context.get_child, self.binding)
 
     def test_get_child_raises_error_when_scope_not_usable(self):
         other_binding_key = binding_keys.new('bar')
