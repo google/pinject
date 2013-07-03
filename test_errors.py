@@ -98,14 +98,22 @@ def print_empty_binding_spec_error():
 
 
 def print_empty_provides_decorator_error():
-    class SomeBindingSpec(bindings.BindingSpec):
-        @decorators.provides()
-        def provide_foo():
-            pass
+    def define_binding_spec():
+        class SomeBindingSpec(bindings.BindingSpec):
+            @decorators.provides()
+            def provide_foo():
+                pass
     _print_raised_exception(
-        errors.EmptyProvidesDecoratorError, object_graph.new_object_graph,
-        modules=None, binding_specs=[SomeBindingSpec()])
+        errors.EmptyProvidesDecoratorError, define_binding_spec)
 
+
+def print_injectable_decorator_applied_to_non_init_error():
+    def apply_injectable_to_random_fn():
+        @decorators.injectable
+        def random_fn():
+            pass
+    _print_raised_exception(errors.InjectableDecoratorAppliedToNonInitError,
+                            apply_injectable_to_random_fn)
 
 
 all_print_method_pairs = inspect.getmembers(

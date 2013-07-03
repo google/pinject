@@ -76,7 +76,7 @@ class InjectableDecoratorAppliedToNonInitError(Error):
     def __init__(self, fn):
         Error.__init__(
             self, '@injectable cannot be applied to non-initializer {0}'.format(
-                fn.__name__))
+                locations.get_class_name_and_loc(fn)))
 
 
 class InjectingNoneDisallowedError(Error):

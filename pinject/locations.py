@@ -25,6 +25,7 @@ def get_type_loc(typ):
         return 'unknown location'
 
 
+# TODO(kurts): rename to get_type_name_and_loc().
 def get_class_name_and_loc(cls):
     try:
         return '{0} at {1}:{2}'.format(
