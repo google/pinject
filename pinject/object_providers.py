@@ -36,11 +36,9 @@ class ObjectProvider(object):
             provided = scope.provide(
                 binding_key,
                 lambda: binding.proviser_fn(injection_context.get_child(binding), self))
-            # TODO(kurts): document that setting allow_injecting_none to False
-            # means that provide_foo injected providers also cannot return
-            # None.
             if (provided is None) and not self._allow_injecting_none:
-                raise errors.InjectingNoneDisallowedError()
+                raise errors.InjectingNoneDisallowedError(
+                    binding.proviser_fn._pinject_desc)
             return provided
         provider_indirection = arg_binding_key.provider_indirection
         provided = provider_indirection.StripIndirectionIfNeeded(Provide)

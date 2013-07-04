@@ -116,6 +116,29 @@ def print_injectable_decorator_applied_to_non_init_error():
                             apply_injectable_to_random_fn)
 
 
+def print_injecting_none_disallowed_error():
+    class SomeClass(object):
+        def __init__(self, foo):
+            self.foo = foo
+    class SomeBindingSpec(bindings.BindingSpec):
+        def provide_foo(self):
+            return None
+    obj_graph = object_graph.new_object_graph(
+        modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()],
+        allow_injecting_none=False)
+    _print_raised_exception(errors.InjectingNoneDisallowedError,
+                            obj_graph.provide, SomeClass)
+
+
+def print_invalid_binding_target_error():
+    class SomeBindingSpec(bindings.BindingSpec):
+        def configure(self, bind):
+            bind('foo', to_class='not-a-class')
+    _print_raised_exception(
+        errors.InvalidBindingTargetError, object_graph.new_object_graph,
+        modules=None, binding_specs=[SomeBindingSpec()])
+
+
 all_print_method_pairs = inspect.getmembers(
     sys.modules[__name__],
     lambda x: (type(x) == types.FunctionType and

@@ -81,17 +81,20 @@ class InjectableDecoratorAppliedToNonInitError(Error):
 
 class InjectingNoneDisallowedError(Error):
 
-    def __init__(self):
+    def __init__(self, proviser_desc):
         Error.__init__(
-            self, 'cannot inject None because allow_injecting_none=False')
+            self, 'cannot inject None (returned from {0}) because'
+            ' allow_injecting_none=False'.format(proviser_desc))
 
 
 class InvalidBindingTargetError(Error):
 
-    def __init__(self, binding_key, binding_target, expected_type_str):
+    def __init__(self, binding_loc, binding_key, binding_target, expected_type_str):
         Error.__init__(
-            self, '{0} cannot be bound to {1} because the latter is not a'
-            ' {2}'.format(binding_key, binding_target, expected_type_str))
+            self, '{0} cannot be bound to {1} at {2} because the latter is of'
+            ' type {3}, not {4}'.format(
+                binding_key, binding_target, binding_loc,
+                type(binding_target).__name__, expected_type_str))
 
 
 class InvalidProviderFnError(Error):

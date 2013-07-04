@@ -153,7 +153,8 @@ def get_explicit_class_bindings(
         if decorators.is_explicitly_injectable(cls):
             for arg_name in get_arg_names_from_class_name(cls.__name__):
                 binding_key = binding_keys.new(arg_name)
-                proviser_fn = create_class_proviser_fn(binding_key, cls)
+                proviser_fn = create_class_proviser_fn(
+                    locations.get_type_loc(cls), binding_key, cls)
                 explicit_bindings.append(Binding(
                     binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
                     locations.get_type_loc(cls)))
@@ -182,7 +183,8 @@ def get_implicit_class_bindings(
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
             binding_key = binding_keys.new(arg_name)
-            proviser_fn = create_class_proviser_fn(binding_key, cls)
+            proviser_fn = create_class_proviser_fn(
+                locations.get_type_loc(cls), binding_key, cls)
             implicit_bindings.append(Binding(
                 binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
                 locations.get_type_loc(cls)))
@@ -223,7 +225,8 @@ class Binder(object):
                 if (to_class, in_scope) not in self._class_bindings_created:
                     self._collected_bindings.append(Binding(
                         binding_keys.new('_pinject_class', (to_class, in_scope)),
-                        create_class_proviser_fn(binding_key, to_class),
+                        create_class_proviser_fn(locations.get_back_frame_loc(),
+                                                 binding_key, to_class),
                         in_scope, locations.get_type_loc(to_class)))
                     self._class_bindings_created.append((to_class, in_scope))
         else:
@@ -234,10 +237,10 @@ class Binder(object):
                     binding_key, proviser_fn, in_scope, back_frame_loc))
 
 
-def create_class_proviser_fn(binding_key, to_class):
+def create_class_proviser_fn(binding_loc, binding_key, to_class):
     if not inspect.isclass(to_class):
         raise errors.InvalidBindingTargetError(
-            binding_key, to_class, 'class')
+            binding_loc, binding_key, to_class, 'class')
     proviser_fn = lambda injection_context, obj_provider: obj_provider.provide_class(
         to_class, injection_context)
     class_name_and_loc = locations.get_class_name_and_loc(to_class)
