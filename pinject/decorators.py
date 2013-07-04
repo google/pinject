@@ -51,7 +51,8 @@ def annotate_arg(arg_name, with_annotation):
       a function that will decorate functions passed to it
     """
     arg_binding_key = arg_binding_keys.new(arg_name, with_annotation)
-    return _get_pinject_wrapper(arg_binding_key=arg_binding_key)
+    return _get_pinject_wrapper(locations.get_back_frame_loc(),
+                                arg_binding_key=arg_binding_key)
 
 
 def injectable(fn):
@@ -97,7 +98,8 @@ def provides(arg_name=None, annotated_with=None, in_scope=None):
     """
     if arg_name is None and annotated_with is None and in_scope is None:
         raise errors.EmptyProvidesDecoratorError(locations.get_back_frame_loc())
-    return _get_pinject_wrapper(provider_arg_name=arg_name,
+    return _get_pinject_wrapper(locations.get_back_frame_loc(),
+                                provider_arg_name=arg_name,
                                 provider_annotated_with=annotated_with,
                                 provider_in_scope_id=in_scope)
 
@@ -181,8 +183,9 @@ def _get_pinject_decorated_fn(fn):
     return pinject_decorated_fn
 
 
-def _get_pinject_wrapper(arg_binding_key=None, provider_arg_name=None,
-                         provider_annotated_with=None, provider_in_scope_id=None):
+def _get_pinject_wrapper(
+        decorator_loc, arg_binding_key=None, provider_arg_name=None,
+        provider_annotated_with=None, provider_in_scope_id=None):
     def get_pinject_decorated_fn_with_additions(fn):
         pinject_decorated_fn = _get_pinject_decorated_fn(fn)
         if arg_binding_key is not None:
@@ -192,7 +195,8 @@ def _get_pinject_wrapper(arg_binding_key=None, provider_arg_name=None,
                 raise errors.NoSuchArgToInjectError(arg_binding_key, fn)
             if arg_binding_key.conflicts_with_any_arg_binding_key(
                     getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
-                raise errors.MultipleAnnotationsForSameArgError(arg_binding_key)
+                raise errors.MultipleAnnotationsForSameArgError(
+                    arg_binding_key, decorator_loc)
             getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(arg_binding_key)
         if (provider_arg_name is not None or
             provider_annotated_with is not None or

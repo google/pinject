@@ -97,21 +97,12 @@ class InvalidBindingTargetError(Error):
                 type(binding_target).__name__, expected_type_str))
 
 
-class InvalidProviderFnError(Error):
-
-    def __init__(self, fn):
-        Error.__init__(
-            self, 'function {0} is not a provider function, though it was'
-            ' passed to new_object_graph() in provider_fns'.format(fn))
-
-
 class MultipleAnnotationsForSameArgError(Error):
 
-    def __init__(self, arg_name):
-        # TODO(kurts): what's actually passed in is an ArgBindingKey, not an
-        # arg name!
+    def __init__(self, arg_binding_key, decorator_loc):
         Error.__init__(
-            self, 'multiple annotations for arg {0}'.format(arg_name))
+            self, 'multiple annotations for {0} at {1}'.format(
+                arg_binding_key, decorator_loc))
 
 
 class MultipleBindingTargetsError(Error):

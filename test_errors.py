@@ -139,6 +139,17 @@ def print_invalid_binding_target_error():
         modules=None, binding_specs=[SomeBindingSpec()])
 
 
+def print_multiple_annotations_for_same_arg_error():
+    def define_some_class():
+        class SomeClass(object):
+            @decorators.annotate_arg('foo', 'an-annotation')
+            @decorators.annotate_arg('foo', 'an-annotation')
+            def __init__(self, foo):
+                return foo
+    _print_raised_exception(
+        errors.MultipleAnnotationsForSameArgError, define_some_class)
+
+
 all_print_method_pairs = inspect.getmembers(
     sys.modules[__name__],
     lambda x: (type(x) == types.FunctionType and
