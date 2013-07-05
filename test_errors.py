@@ -170,6 +170,16 @@ def print_no_binding_target_args_error():
         modules=None, binding_specs=[SomeBindingSpec()])
 
 
+def print_no_such_arg_to_inject_error():
+    def do_bad_annotate_arg():
+        @decorators.annotate_arg('foo', 'an-annotation')
+        def some_function(bar):
+            return bar
+    _print_raised_exception(
+        errors.NoSuchArgToInjectError, do_bad_annotate_arg)
+
+
+
 all_print_method_pairs = inspect.getmembers(
     sys.modules[__name__],
     lambda x: (type(x) == types.FunctionType and

@@ -123,11 +123,10 @@ class NoBindingTargetArgsError(Error):
 
 class NoSuchArgToInjectError(Error):
 
-    def __init__(self, arg_name, fn):
-        # TODO(kurts): what's actually passed in is an ArgBindingKey, not an
-        # arg name!
+    def __init__(self, decorator_loc, arg_binding_key, fn):
         Error.__init__(
-            self, 'no such arg {0} to inject into {1}'.format(arg_name, fn))
+            self, 'cannot inject {0} into {1} at {2}: no such arg name'.format(
+                arg_binding_key, fn.__name__, decorator_loc))
 
 
 class NonExplicitlyBoundClassError(Error):

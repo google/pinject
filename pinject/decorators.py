@@ -192,7 +192,8 @@ def _get_pinject_wrapper(
             arg_names, unused_varargs, unused_keywords, unused_defaults = (
                 inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
             if not arg_binding_key.can_apply_to_one_of_arg_names(arg_names):
-                raise errors.NoSuchArgToInjectError(arg_binding_key, fn)
+                raise errors.NoSuchArgToInjectError(
+                    decorator_loc, arg_binding_key, fn)
             if arg_binding_key.conflicts_with_any_arg_binding_key(
                     getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
                 raise errors.MultipleAnnotationsForSameArgError(

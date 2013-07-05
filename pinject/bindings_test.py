@@ -351,7 +351,7 @@ class BinderTest(unittest.TestCase):
             to_instance='unused-instance', in_scope='unknown-scope')
 
     def test_binding_to_nothing_raises_error(self):
-        self.assertRaises(errors.NoBindingTargetError,
+        self.assertRaises(errors.NoBindingTargetArgsError,
                           self.binder.bind, 'unused-arg-name')
 
     def test_binding_to_multiple_things_raises_error(self):
