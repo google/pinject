@@ -150,6 +150,17 @@ def print_multiple_annotations_for_same_arg_error():
         errors.MultipleAnnotationsForSameArgError, define_some_class)
 
 
+def print_multiple_binding_target_args_error():
+    class SomeClass(object):
+        pass
+    class SomeBindingSpec(bindings.BindingSpec):
+        def configure(self, bind):
+            bind('foo', to_class=SomeClass, to_instance=SomeClass())
+    _print_raised_exception(
+        errors.MultipleBindingTargetArgsError, object_graph.new_object_graph,
+        modules=None, binding_specs=[SomeBindingSpec()])
+
+
 all_print_method_pairs = inspect.getmembers(
     sys.modules[__name__],
     lambda x: (type(x) == types.FunctionType and

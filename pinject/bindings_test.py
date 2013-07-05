@@ -357,7 +357,7 @@ class BinderTest(unittest.TestCase):
     def test_binding_to_multiple_things_raises_error(self):
         class SomeClass(object):
             pass
-        self.assertRaises(errors.MultipleBindingTargetsError,
+        self.assertRaises(errors.MultipleBindingTargetArgsError,
                           self.binder.bind, 'unused-arg-name',
                           to_class=SomeClass, to_instance=object())
 

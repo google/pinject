@@ -210,8 +210,9 @@ class Binder(object):
         if not specified_to_params:
             raise errors.NoBindingTargetError(binding_key)
         elif len(specified_to_params) > 1:
-            raise errors.MultipleBindingTargetsError(
-                binding_key, specified_to_params)
+            binding_loc = locations.get_back_frame_loc()
+            raise errors.MultipleBindingTargetArgsError(
+                binding_loc, binding_key, specified_to_params)
 
         # TODO(kurts): this is such a hack; isn't there a better way?
         if to_class is not None:

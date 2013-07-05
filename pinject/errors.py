@@ -105,12 +105,12 @@ class MultipleAnnotationsForSameArgError(Error):
                 arg_binding_key, decorator_loc))
 
 
-class MultipleBindingTargetsError(Error):
+class MultipleBindingTargetArgsError(Error):
 
-    def __init__(self, binding_key, specified_to_params):
+    def __init__(self, binding_loc, binding_key, arg_names):
         Error.__init__(
-            self, 'multiple binding targets {0} given for {1}'.format(
-                specified_to_params, binding_key))
+            self, 'multiple binding target args {0} given for {1} at'
+            ' {2}'.format(arg_names, binding_key, binding_loc))
 
 
 class NoBindingTargetError(Error):
