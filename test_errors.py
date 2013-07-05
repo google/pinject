@@ -161,6 +161,15 @@ def print_multiple_binding_target_args_error():
         modules=None, binding_specs=[SomeBindingSpec()])
 
 
+def print_no_binding_target_args_error():
+    class SomeBindingSpec(bindings.BindingSpec):
+        def configure(self, bind):
+            bind('foo')
+    _print_raised_exception(
+        errors.NoBindingTargetArgsError, object_graph.new_object_graph,
+        modules=None, binding_specs=[SomeBindingSpec()])
+
+
 all_print_method_pairs = inspect.getmembers(
     sys.modules[__name__],
     lambda x: (type(x) == types.FunctionType and

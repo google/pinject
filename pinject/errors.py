@@ -113,11 +113,12 @@ class MultipleBindingTargetArgsError(Error):
             ' {2}'.format(arg_names, binding_key, binding_loc))
 
 
-class NoBindingTargetError(Error):
+class NoBindingTargetArgsError(Error):
 
-    def __init__(self, binding_key):
+    def __init__(self, binding_loc, binding_key):
         Error.__init__(
-            self, 'no binding target given for {0}'.format(binding_key))
+            self, 'no binding target arg given for {0} at {1}'.format(
+                binding_key, binding_loc))
 
 
 class NoSuchArgToInjectError(Error):

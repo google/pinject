@@ -208,7 +208,8 @@ class Binder(object):
                                'to_instance' if to_instance is not None else None]
         specified_to_params = [x for x in specified_to_params if x is not None]
         if not specified_to_params:
-            raise errors.NoBindingTargetError(binding_key)
+            binding_loc = locations.get_back_frame_loc()
+            raise errors.NoBindingTargetArgsError(binding_loc, binding_key)
         elif len(specified_to_params) > 1:
             binding_loc = locations.get_back_frame_loc()
             raise errors.MultipleBindingTargetArgsError(
