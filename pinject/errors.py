@@ -131,11 +131,11 @@ class NoSuchArgToInjectError(Error):
 
 class NonExplicitlyBoundClassError(Error):
 
-    def __init__(self, cls):
+    def __init__(self, provide_loc, cls):
         Error.__init__(
-            self, 'cannot instantiate class {0}, which is not explicitly'
-            ' marked as injectable, when only_use_explicit_bindings is set'
-            ' to True'.format(cls.__name__))
+            self, 'at {0}, cannot instantiate class {1}, since it is not'
+            ' explicitly marked as injectable and only_use_explicit_bindings'
+            ' is set to True'.format(provide_loc, cls.__name__))
 
 
 class NothingInjectableForArgError(Error):

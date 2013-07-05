@@ -24,6 +24,7 @@ from . import decorators
 from . import errors
 from . import finding
 from . import injection_contexts
+from . import locations
 from . import object_providers
 from . import providing
 from . import scoping
@@ -146,7 +147,8 @@ class ObjectGraph(object):
           Error: an instance of cls is not providable
         """
         if not self._is_injectable_fn(cls):
-            raise errors.NonExplicitlyBoundClassError(cls)
+            provide_loc = locations.get_back_frame_loc()
+            raise errors.NonExplicitlyBoundClassError(provide_loc, cls)
         try:
             return self._obj_provider.provide_class(
                 cls, self._injection_context_factory.new())

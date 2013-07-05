@@ -179,6 +179,16 @@ def print_no_such_arg_to_inject_error():
         errors.NoSuchArgToInjectError, do_bad_annotate_arg)
 
 
+def print_non_explicitly_bound_class_error():
+    class ImplicitlyBoundClass(object):
+        pass
+    obj_graph = object_graph.new_object_graph(
+        modules=None, classes=[ImplicitlyBoundClass],
+        only_use_explicit_bindings=True)
+    _print_raised_exception(
+        errors.NonExplicitlyBoundClassError, obj_graph.provide, ImplicitlyBoundClass)
+
+
 
 all_print_method_pairs = inspect.getmembers(
     sys.modules[__name__],
