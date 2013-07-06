@@ -11,6 +11,9 @@ If you are already familiar with other dependency injection libraries, you may
 want to read the condensed summary section at the end, so that you get an idea
 of what Pinject is like and how it might differ from libraries you're used to.
 
+There is a changelog of differences between released versions near the end of
+this README.
+
 Why Pinject?
 ============
 
@@ -931,6 +934,17 @@ everything listed here.)
 * Pinject has two built-in scopes: "singleton" (always memoized; the default) and "prototype" (never memoized).
 * You can define custom scopes, and you can configure which scopes are accessible from which other scopes.
 * Pinject doesn't allow injecting ``None`` by default, but you can turn off that check.
+
+Changelog
+=========
+
+Since v0.8
+* Improved error messages for all Pinject-raised exceptions.
+* Added use_short_stack_traces arg to ``new_object_graph()``.
+* Allowed multiple ``@provides`` on single provider method.
+
+v0.8
+* First released version.
 
 Pinject and Google
 ==================
