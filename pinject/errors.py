@@ -158,5 +158,6 @@ class OverridingDefaultScopeError(Error):
 
 class UnknownScopeError(Error):
 
-    def __init__(self, scope_id):
-        Error.__init__(self, 'no such scope with ID {0}'.format(scope_id))
+    def __init__(self, scope_id, binding_loc):
+        Error.__init__(self, 'unknown scope ID {0} in binding created at'
+                       ' {1}'.format(scope_id, binding_loc))

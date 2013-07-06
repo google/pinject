@@ -64,10 +64,14 @@ def new_object_graph(
           returning whether an object in the first scope can be injected into
           an object from the second scope; by default, injection is allowed
           from any scope into any other scope
+      use_short_stack_traces: whether to shorten the stack traces for
+          exceptions that Pinject raises, so that they don't contain the
+          innards of Pinject
     Returns:
       an ObjectGraph
     Raises:
       Error: the object graph is not creatable as specified
+
     """
     try:
         injection_context_factory = injection_contexts.InjectionContextFactory(
@@ -101,7 +105,8 @@ def new_object_graph(
                 dependencies = binding_spec.dependencies()
                 binding_specs.extend(dependencies)
                 provider_bindings = bindings.get_provider_bindings(
-                    binding_spec, get_arg_names_from_provider_fn_name)
+                    binding_spec, known_scope_ids,
+                    get_arg_names_from_provider_fn_name)
                 explicit_bindings.extend(provider_bindings)
                 if not has_configure and not dependencies and not provider_bindings:
                     raise errors.EmptyBindingSpecError(binding_spec)

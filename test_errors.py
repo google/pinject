@@ -25,6 +25,7 @@ from pinject import bindings
 from pinject import decorators
 from pinject import errors
 from pinject import object_graph
+from pinject import scoping
 
 
 def _print_raised_exception(exc, fn, *pargs, **kwargs):
@@ -197,6 +198,21 @@ def print_nothing_injectable_for_arg_error():
         modules=None, classes=[UnknownParamClass])
     _print_raised_exception(errors.NothingInjectableForArgError,
                             obj_graph.provide, UnknownParamClass)
+
+
+def print_overriding_default_scope_error():
+    _print_raised_exception(
+        errors.OverridingDefaultScopeError, object_graph.new_object_graph,
+        modules=None, id_to_scope={scoping.DEFAULT_SCOPE: 'a-scope'})
+
+
+def print_unknown_scope_error():
+    class SomeBindingSpec(bindings.BindingSpec):
+        def configure(self, bind):
+            bind('foo', to_instance='a-foo', in_scope='unknown-scope')
+    _print_raised_exception(
+        errors.UnknownScopeError, object_graph.new_object_graph,
+        modules=None, binding_specs=[SomeBindingSpec()])
 
 
 all_print_method_pairs = inspect.getmembers(

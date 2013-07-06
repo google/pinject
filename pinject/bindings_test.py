@@ -245,14 +245,15 @@ class GetProviderBindingsTest(unittest.TestCase):
     def test_returns_no_bindings_for_non_binding_spec(self):
         class SomeClass(object):
             pass
-        self.assertEqual(
-            [], bindings_lib.get_provider_bindings(SomeClass()))
+        self.assertEqual([], bindings_lib.get_provider_bindings(
+            SomeClass(), scoping._BUILTIN_SCOPES))
 
     def test_returns_binding_for_provider_fn(self):
         class SomeBindingSpec(bindings_lib.BindingSpec):
             def provide_foo(self):
                 return 'a-foo'
-        [implicit_binding] = bindings_lib.get_provider_bindings(SomeBindingSpec())
+        [implicit_binding] = bindings_lib.get_provider_bindings(
+            SomeBindingSpec(), scoping._BUILTIN_SCOPES)
         self.assertEqual(binding_keys.new('foo'),
                          implicit_binding.binding_key)
         self.assertEqual('a-foo', call_provisor_fn(implicit_binding))
@@ -264,10 +265,18 @@ class GetProviderBindingsTest(unittest.TestCase):
         def get_arg_names(fn_name):
             return ['foo'] if fn_name == 'some_foo' else []
         [implicit_binding] = bindings_lib.get_provider_bindings(
-            SomeBindingSpec(),
+            SomeBindingSpec(), scoping._BUILTIN_SCOPES,
             get_arg_names_from_provider_fn_name=get_arg_names)
         self.assertEqual(binding_keys.new('foo'),
                          implicit_binding.binding_key)
+
+    def test_raises_exception_if_scope_unknown(self):
+        class SomeBindingSpec(bindings_lib.BindingSpec):
+            def provide_foo(self):
+                return 'a-foo'
+        self.assertRaises(errors.UnknownScopeError,
+                          bindings_lib.get_provider_bindings,
+                          SomeBindingSpec(), known_scope_ids=[])
 
 
 class GetImplicitClassBindingsTest(unittest.TestCase):

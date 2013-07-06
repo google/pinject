@@ -163,15 +163,19 @@ def get_explicit_class_bindings(
 
 
 def get_provider_bindings(
-        binding_spec,
+        binding_spec, known_scope_ids,
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name)):
     provider_bindings = []
     fns = inspect.getmembers(binding_spec, lambda x: type(x) == types.MethodType)
     for _, fn in fns:
         default_arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
-        provider_bindings.extend(
-            get_provider_fn_bindings(fn, default_arg_names))
+        fn_bindings = get_provider_fn_bindings(fn, default_arg_names)
+        for binding in fn_bindings:
+            if binding.scope_id not in known_scope_ids:
+                raise errors.UnknownScopeError(
+                    binding.scope_id, locations.get_class_name_and_loc(fn))
+        provider_bindings.extend(fn_bindings)
     return provider_bindings
 
 
@@ -203,7 +207,7 @@ class Binder(object):
     def bind(self, arg_name, annotated_with=None,
              to_class=None, to_instance=None, in_scope=scoping.DEFAULT_SCOPE):
         if in_scope not in self._scope_ids:
-            raise errors.UnknownScopeError(in_scope)
+            raise errors.UnknownScopeError(in_scope, locations.get_back_frame_loc())
         binding_key = binding_keys.new(arg_name, annotated_with)
         specified_to_params = ['to_class' if to_class is not None else None,
                                'to_instance' if to_instance is not None else None]
