@@ -1,0 +1,38 @@
+Verifying injectability
+=======================
+
+Choices:
+1. Allow binding specs to require but not actually declare bindings.
+2. Require declaring everything to be instantiated when calling new_object_graph().
+
+Benefits of ``require()``
+-------------------------
+
+You distribute the requirements to the binding specs that need them.  For
+example, if program A depends on library B, which depends on library C, which
+depends on library D, and library D takes an object graph and instantiates
+something, then you don't need to modify program A when instantiating
+something new in library D.  (Though, this may be a spurious reason, since why
+would program A be passing an object graph through several layers of library?)
+
+You don't have to declare up front everything that you may inject.  Doing so
+may be difficult to do in a large program modified by many people.
+
+You find out about missing dependencies for everything instantiable when the
+object graph is created, as opposed to finding out about missing "I'm going to
+instantiate this" declarations only when you actually try to instantiate
+something (and fail).
+
+Benefits of declaring instantiables
+-----------------------------------
+
+You don't have to satisfy requirements, declared by binding specs, for things
+you're not actually going to instantiate.  (Though, this may be a spurious
+reason, since binding specs are really supposed to declare bindings that you'd
+use all together, and you could always break up a binding spec with unwanted
+requirements.)
+
+Decision
+--------
+
+Use ``require()``.

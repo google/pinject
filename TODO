@@ -1,8 +1,7 @@
 TODO:
 - reasonable error messages for all exceptions
 - validate python types of all input
-- either allow binding specs to declare required bindings, or else declare
-    all entry points up front
+- allow binding specs to declare required bindings
 - standard tests for scopes (reentrant? thread-safe?), annotations (eq?
      hash?), etc.
 - describe features specifically omitted, e.g.,
