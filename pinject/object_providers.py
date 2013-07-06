@@ -28,14 +28,18 @@ class ObjectProvider(object):
         self._bindable_scopes = bindable_scopes
         self._allow_injecting_none = allow_injecting_none
 
-    def provide_from_arg_binding_key(self, arg_binding_key, injection_context):
+    def provide_from_arg_binding_key(
+            self, injection_site_fn, arg_binding_key, injection_context):
         binding_key = arg_binding_key.binding_key
-        binding = self._binding_mapping.get(binding_key)
+        binding = self._binding_mapping.get(
+            binding_key, injection_context.get_injection_site_desc())
         scope = self._bindable_scopes.get_sub_scope(binding)
         def Provide():
+            child_injection_context = injection_context.get_child(
+                injection_site_fn, binding)
             provided = scope.provide(
                 binding_key,
-                lambda: binding.proviser_fn(injection_context.get_child(binding), self))
+                lambda: binding.proviser_fn(child_injection_context, self))
             if (provided is None) and not self._allow_injecting_none:
                 raise errors.InjectingNoneDisallowedError(
                     binding.proviser_fn._pinject_desc)
@@ -59,4 +63,5 @@ class ObjectProvider(object):
     def get_injection_kwargs(self, fn, injection_context):
         return arg_binding_keys.create_kwargs(
             decorators.get_injectable_arg_binding_keys(fn),
-            lambda abk: self.provide_from_arg_binding_key(abk, injection_context))
+            lambda abk: self.provide_from_arg_binding_key(
+                fn, abk, injection_context))

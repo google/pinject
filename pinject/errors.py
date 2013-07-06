@@ -23,10 +23,13 @@ class Error(Exception):
 
 class AmbiguousArgNameError(Error):
 
-    def __init__(self, binding_key, bindings):
+    def __init__(self, injection_site_desc, binding_key, bindings):
         Error.__init__(
-            self, '{0} ambiguously refers to any of:\n{1}'.format(
-                binding_key, '\n'.join('  {0}'.format(b.proviser_fn._pinject_desc) for b in bindings)))
+            self, 'when injecting {0}, {1} ambiguously refers to any'
+            ' of:\n{2}'.format(
+                injection_site_desc, binding_key, '\n'.join(
+                    '  {0}'.format(b.proviser_fn._pinject_desc)
+                    for b in bindings)))
 
 
 class BadDependencyScopeError(Error):
@@ -140,9 +143,10 @@ class NonExplicitlyBoundClassError(Error):
 
 class NothingInjectableForArgError(Error):
 
-    def __init__(self, binding_key):
+    def __init__(self, binding_key, injection_site_desc):
         Error.__init__(
-            self, 'there is no injectable class for {0}'.format(binding_key))
+            self, ' when injecting {0}, nothing injectable for {1}'.format(
+                injection_site_desc, binding_key))
 
 
 class OverridingDefaultScopeError(Error):

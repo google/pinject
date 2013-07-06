@@ -189,6 +189,15 @@ def print_non_explicitly_bound_class_error():
         errors.NonExplicitlyBoundClassError, obj_graph.provide, ImplicitlyBoundClass)
 
 
+def print_nothing_injectable_for_arg_error():
+    class UnknownParamClass(object):
+        def __init__(self, unknown_class):
+            pass
+    obj_graph = object_graph.new_object_graph(
+        modules=None, classes=[UnknownParamClass])
+    _print_raised_exception(errors.NothingInjectableForArgError,
+                            obj_graph.provide, UnknownParamClass)
+
 
 all_print_method_pairs = inspect.getmembers(
     sys.modules[__name__],

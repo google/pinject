@@ -40,6 +40,15 @@ class GetClassNameAndLocTest(unittest.TestCase):
         self.assertIn('OtherObject', class_name_and_loc)
         self.assertIn('locations_test.py', class_name_and_loc)
 
+    def test_known_as_part_of_class(self):
+        class OtherObject(object):
+            def a_method(self):
+                pass
+        class_name_and_loc = locations.get_class_name_and_loc(
+            OtherObject.a_method)
+        self.assertIn('OtherObject.a_method', class_name_and_loc)
+        self.assertIn('locations_test.py', class_name_and_loc)
+
     def test_unknown(self):
         self.assertEqual('unittest.case.TestCase',
                          locations.get_class_name_and_loc(unittest.TestCase))

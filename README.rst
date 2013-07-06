@@ -872,6 +872,20 @@ The function passed as the ``get_arg_names_from_provider_fn_name`` arg to
 it returns an empty list, then that potential provider method is assumed not
 actually to be a provider method.
 
+Miscellaneous
+=============
+
+Pinject raises helpful exceptions whose messages include the file and line
+number of errors.  So, Pinject by default will shorten the stack trace of
+exceptions that it raises, so that you don't see the many levels of function
+calls within the Pinject library.
+
+In some situations, though, the complete stack trace is helpful, e.g., when
+debugging Pinject, or when your code calls Pinject, which calls back into your
+code, which calls back into Pinject.  In such cases, to disable exception
+stack shortening, you can pass ``use_short_stack_traces=False`` to
+``new_object_graph()``.
+
 Gotchas
 =======
 

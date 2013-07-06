@@ -41,7 +41,11 @@ def new_test_obj_provider(arg_binding_key, instance, allow_injecting_none=True):
 
 
 def new_injection_context():
-    return injection_contexts.InjectionContextFactory(lambda _1, _2: True).new()
+    return injection_contexts.InjectionContextFactory(lambda _1, _2: True).new(
+        lambda: None)
+
+
+_UNUSED_INJECTION_SITE_FN = lambda: None
 
 
 class ObjectProviderTest(unittest.TestCase):
@@ -51,12 +55,14 @@ class ObjectProviderTest(unittest.TestCase):
         obj_provider = new_test_obj_provider(arg_binding_key, 'an-instance')
         self.assertEqual('an-instance',
                          obj_provider.provide_from_arg_binding_key(
+                             _UNUSED_INJECTION_SITE_FN,
                              arg_binding_key, new_injection_context()))
 
     def test_provides_provider_fn_from_arg_binding_key_successfully(self):
         arg_binding_key = arg_binding_keys.new('provide_foo')
         obj_provider = new_test_obj_provider(arg_binding_key, 'an-instance')
         provide_fn = obj_provider.provide_from_arg_binding_key(
+            _UNUSED_INJECTION_SITE_FN,
             arg_binding_key, new_injection_context())
         self.assertEqual('an-instance', provide_fn())
 
@@ -64,6 +70,7 @@ class ObjectProviderTest(unittest.TestCase):
         arg_binding_key = arg_binding_keys.new('an-arg-name')
         obj_provider = new_test_obj_provider(arg_binding_key, None)
         self.assertIsNone(obj_provider.provide_from_arg_binding_key(
+            _UNUSED_INJECTION_SITE_FN,
             arg_binding_key, new_injection_context()))
 
     def test_cannot_provide_none_from_binding_key_when_disallowed(self):
@@ -72,6 +79,7 @@ class ObjectProviderTest(unittest.TestCase):
                                              allow_injecting_none=False)
         self.assertRaises(errors.InjectingNoneDisallowedError,
                           obj_provider.provide_from_arg_binding_key,
+                          _UNUSED_INJECTION_SITE_FN,
                           arg_binding_key, new_injection_context())
 
     def test_provides_class_with_init_as_method_injects_args_successfully(self):

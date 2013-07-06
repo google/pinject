@@ -30,9 +30,6 @@ from . import providing
 from . import scoping
 
 
-_SHORT_USER_VISIBLE_STACK_TRACE = True
-
-
 def new_object_graph(
         modules=finding.ALL_IMPORTED_MODULES, classes=None, binding_specs=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
@@ -40,7 +37,8 @@ def new_object_graph(
             bindings.default_get_arg_names_from_class_name),
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name),
-        id_to_scope=None, is_scope_usable_from_scope=lambda _1, _2: True):
+        id_to_scope=None, is_scope_usable_from_scope=lambda _1, _2: True,
+        use_short_stack_traces=True):
     """Creates a new object graph.
 
     Args:
@@ -114,7 +112,7 @@ def new_object_graph(
         binding_mapping = bindings.BindingMapping(
             binding_key_to_binding, collided_binding_key_to_bindings)
     except errors.Error as e:
-        if _SHORT_USER_VISIBLE_STACK_TRACE:
+        if use_short_stack_traces:
             raise e
         else:
             raise
@@ -124,17 +122,19 @@ def new_object_graph(
     obj_provider = object_providers.ObjectProvider(
         binding_mapping, bindable_scopes, allow_injecting_none)
     return ObjectGraph(
-        obj_provider, injection_context_factory, is_injectable_fn)
+        obj_provider, injection_context_factory, is_injectable_fn,
+        use_short_stack_traces)
 
 
 class ObjectGraph(object):
     """A graph of objects instantiable with dependency injection."""
 
     def __init__(self, obj_provider, injection_context_factory,
-                 is_injectable_fn):
+                 is_injectable_fn, use_short_stack_traces):
         self._obj_provider = obj_provider
         self._injection_context_factory = injection_context_factory
         self._is_injectable_fn = is_injectable_fn
+        self._use_short_stack_traces = use_short_stack_traces
 
     def provide(self, cls):
         """Provides an instance of the given class.
@@ -151,9 +151,9 @@ class ObjectGraph(object):
             raise errors.NonExplicitlyBoundClassError(provide_loc, cls)
         try:
             return self._obj_provider.provide_class(
-                cls, self._injection_context_factory.new())
+                cls, self._injection_context_factory.new(cls.__init__))
         except errors.Error as e:
-            if _SHORT_USER_VISIBLE_STACK_TRACE:
+            if self._use_short_stack_traces:
                 raise e
             else:
                 raise
@@ -178,7 +178,7 @@ class ObjectGraph(object):
                 kwargs = dict(kwargs)
                 for arg_name in injected_arg_names:
                     kwargs[arg_name] = self._obj_provider.provide_from_arg_binding_key(
-                        arg_binding_keys.new(arg_name),
-                        self._injection_context_factory.new())
+                        fn,  arg_binding_keys.new(arg_name),
+                        self._injection_context_factory.new(fn))
             return fn(*pargs, **kwargs)
         return WrappedFn

@@ -157,14 +157,16 @@ class BindingMappingTest(unittest.TestCase):
     def test_success(self):
         binding_mapping = bindings_lib.BindingMapping(
             {'a-binding-key': 'a-binding'}, {})
-        self.assertEqual('a-binding',
-                         binding_mapping.get('a-binding-key'))
+        self.assertEqual(
+            'a-binding',
+            binding_mapping.get('a-binding-key', 'injection-site-desc'))
 
     def test_unknown_binding_raises_error(self):
         binding_mapping = bindings_lib.BindingMapping(
             {'a-binding-key': 'a-binding'}, {})
         self.assertRaises(errors.NothingInjectableForArgError,
-                          binding_mapping.get, 'unknown-binding-key')
+                          binding_mapping.get,
+                          'unknown-binding-key', 'injection-site-desc')
 
     def test_colliding_bindings_raises_error(self):
         binding_key = binding_keys.new('unused')
@@ -176,8 +178,8 @@ class BindingMappingTest(unittest.TestCase):
             bindings_lib.create_instance_proviser_fn(binding_key, 'unused'))
         binding_mapping = bindings_lib.BindingMapping(
             {}, {'colliding-binding-key': [binding_one, binding_two]})
-        self.assertRaises(errors.AmbiguousArgNameError,
-                          binding_mapping.get, 'colliding-binding-key')
+        self.assertRaises(errors.AmbiguousArgNameError, binding_mapping.get,
+                          'colliding-binding-key', 'injection-site-desc')
 
 
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
@@ -204,8 +206,10 @@ class FakeObjectProvider(object):
         return provider_fn()
 
 
+_UNUSED_INJECTION_SITE_FN = lambda: None
 _UNUSED_INJECTION_CONTEXT = (
-    injection_contexts.InjectionContextFactory('unused').new())
+    injection_contexts.InjectionContextFactory('unused').new(
+        _UNUSED_INJECTION_SITE_FN))
 def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(_UNUSED_INJECTION_CONTEXT, FakeObjectProvider())
 

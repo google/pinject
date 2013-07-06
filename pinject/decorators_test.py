@@ -39,13 +39,6 @@ class FakeObjectProvider(object):
         return provider_fn()
 
 
-# TODO(kurts): have only one call_provisor_fn() for tests.
-_UNUSED_INJECTION_CONTEXT = (
-    injection_contexts.InjectionContextFactory('unused').new())
-def call_provisor_fn(a_binding):
-    return a_binding.proviser_fn(_UNUSED_INJECTION_CONTEXT, FakeObjectProvider())
-
-
 class AnnotateArgTest(unittest.TestCase):
 
     def test_adds_binding_in_pinject_decorated_fn(self):

@@ -108,15 +108,16 @@ class BindingMapping(object):
         self._collided_binding_key_to_bindings = (
             collided_binding_key_to_bindings)
 
-    def get(self, binding_key):
+    def get(self, binding_key, injection_site_desc):
         if binding_key in self._binding_key_to_binding:
             return self._binding_key_to_binding[binding_key]
         elif binding_key in self._collided_binding_key_to_bindings:
             raise errors.AmbiguousArgNameError(
-                binding_key,
+                injection_site_desc, binding_key,
                 self._collided_binding_key_to_bindings[binding_key])
         else:
-            raise errors.NothingInjectableForArgError(binding_key)
+            raise errors.NothingInjectableForArgError(
+                binding_key, injection_site_desc)
 
 
 def default_get_arg_names_from_class_name(class_name):

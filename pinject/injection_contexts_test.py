@@ -22,6 +22,9 @@ from pinject import errors
 from pinject import injection_contexts
 
 
+_UNUSED_INJECTION_SITE_FN = lambda: None
+
+
 class InjectionContextTest(unittest.TestCase):
 
     def setUp(self):
@@ -33,22 +36,37 @@ class InjectionContextTest(unittest.TestCase):
             'curr-scope', 'unused-desc')
         injection_context_factory = injection_contexts.InjectionContextFactory(
             lambda to_scope, from_scope: to_scope != 'unusable-scope')
-        top_injection_context = injection_context_factory.new()
-        self.injection_context = top_injection_context.get_child(self.binding)
+        top_injection_context = injection_context_factory.new(
+            _UNUSED_INJECTION_SITE_FN)
+        self.injection_context = top_injection_context.get_child(
+            _UNUSED_INJECTION_SITE_FN, self.binding)
 
     def test_get_child_successfully(self):
         other_binding_key = binding_keys.new('bar')
         new_injection_context = self.injection_context.get_child(
+            _UNUSED_INJECTION_SITE_FN,
             bindings.Binding(other_binding_key, 'unused-proviser-fn',
                              'new-scope', 'unused-desc'))
 
     def test_get_child_raises_error_when_binding_already_seen(self):
         self.assertRaises(errors.CyclicInjectionError,
-                          self.injection_context.get_child, self.binding)
+                          self.injection_context.get_child,
+                          _UNUSED_INJECTION_SITE_FN, self.binding)
 
     def test_get_child_raises_error_when_scope_not_usable(self):
         other_binding_key = binding_keys.new('bar')
         self.assertRaises(
             errors.BadDependencyScopeError, self.injection_context.get_child,
+            _UNUSED_INJECTION_SITE_FN,
             bindings.Binding(other_binding_key, 'unused-proviser-fn',
                              'unusable-scope', 'unused-desc'))
+
+    def test_get_injection_site_desc(self):
+        injection_context_factory = injection_contexts.InjectionContextFactory(
+            lambda _1, _2: True)
+        def InjectionSite(foo):
+            pass
+        injection_context = injection_context_factory.new(InjectionSite)
+        injection_site_desc = injection_context.get_injection_site_desc()
+        self.assertIn('InjectionSite', injection_site_desc)
+        self.assertIn('injection_contexts_test.py', injection_site_desc)

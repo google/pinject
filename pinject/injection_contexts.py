@@ -15,6 +15,7 @@ limitations under the License.
 
 
 from . import errors
+from . import locations
 from . import scoping
 
 
@@ -31,25 +32,28 @@ class InjectionContextFactory(object):
         """
         self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
-    def new(self):
+    def new(self, injection_site_fn):
         """Creates a _InjectionContext.
 
+        Args:
+          injection_site_fn: the initial function being injected into
         Returns:
           a new empty _InjectionContext in the default scope
         """
         return _InjectionContext(
-            binding_stack=[], scope_id=scoping.UNSCOPED,
+            injection_site_fn, binding_stack=[], scope_id=scoping.UNSCOPED,
             is_scope_usable_from_scope_fn=self._is_scope_usable_from_scope_fn)
 
 
 class _InjectionContext(object):
     """The context of dependency-injecting some bound value."""
 
-    def __init__(self, binding_stack, scope_id,
+    def __init__(self, injection_site_fn, binding_stack, scope_id,
                  is_scope_usable_from_scope_fn):
         """Initializer.
 
         Args:
+          injection_site_fn: the function currently being injected into
           binding_stack: a sequence of the bindings whose use in injection is
               in-progress, from the highest level (first) to the current level
               (last)
@@ -58,17 +62,19 @@ class _InjectionContext(object):
               returning whether an object in the first scope can be injected
               into an object from the second scope
         """
+        self._injection_site_fn = injection_site_fn
         self._binding_stack = binding_stack
         self._scope_id = scope_id
         self._is_scope_usable_from_scope_fn = is_scope_usable_from_scope_fn
 
-    def get_child(self, binding):
+    def get_child(self, injection_site_fn, binding):
         """Creates a child injection context.
 
         A "child" injection context is a context for a binding used to
         inject something into the current binding's provided value.
 
         Args:
+          injection_site_fn: the child function being injected into
           binding: a Binding
         Returns:
           a new _InjectionContext
@@ -81,5 +87,10 @@ class _InjectionContext(object):
                 child_scope_id, self._scope_id):
             raise errors.BadDependencyScopeError(
                 self._scope_id, child_scope_id, binding.binding_key)
-        return _InjectionContext(new_binding_stack, child_scope_id,
-                                 self._is_scope_usable_from_scope_fn)
+        return _InjectionContext(
+            injection_site_fn, new_binding_stack, child_scope_id,
+            self._is_scope_usable_from_scope_fn)
+
+    def get_injection_site_desc(self):
+        """Returns a description of the current injection site."""
+        return locations.get_class_name_and_loc(self._injection_site_fn)
