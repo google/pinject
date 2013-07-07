@@ -63,13 +63,13 @@ def print_bad_dependency_scope_error():
                             obj_graph.provide, Bar)
 
 
-def print_conflicting_bindings_error():
+def print_conflicting_explicit_bindings_error():
     class SomeBindingSpec(bindings.BindingSpec):
         def configure(self, bind):
             bind('foo', to_instance=1)
             bind('foo', to_instance=2)
     _print_raised_exception(
-        errors.ConflictingBindingsError, object_graph.new_object_graph,
+        errors.ConflictingExplicitBindingsError, object_graph.new_object_graph,
         modules=None, binding_specs=[SomeBindingSpec()])
 
 

@@ -1,5 +1,4 @@
 TODO:
-- reasonable error messages for all exceptions
 - validate python types of all input
 - allow binding specs to declare required bindings
 - standard tests for scopes (reentrant? thread-safe?), annotations (eq?

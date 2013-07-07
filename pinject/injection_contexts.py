@@ -86,6 +86,7 @@ class _InjectionContext(object):
         if not self._is_scope_usable_from_scope_fn(
                 child_scope_id, self._scope_id):
             raise errors.BadDependencyScopeError(
+                self.get_injection_site_desc(),
                 self._scope_id, child_scope_id, binding.binding_key)
         return _InjectionContext(
             injection_site_fn, new_binding_stack, child_scope_id,

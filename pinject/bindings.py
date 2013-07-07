@@ -46,7 +46,7 @@ class Binding(object):
 def _handle_explicit_binding_collision(
         colliding_binding, binding_key_to_binding, *pargs):
     other_binding = binding_key_to_binding[colliding_binding.binding_key]
-    raise errors.ConflictingBindingsError([colliding_binding, other_binding])
+    raise errors.ConflictingExplicitBindingsError([colliding_binding, other_binding])
 
 
 def _handle_implicit_binding_collision(

@@ -149,7 +149,7 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
     def test_colliding_highest_priority_bindings_raises_error(self):
         self.assertBindingsListsRaise(
             bindings_lists=[[self.some_binding, self.another_some_binding]],
-            error_type=errors.ConflictingBindingsError)
+            error_type=errors.ConflictingExplicitBindingsError)
 
 
 class BindingMappingTest(unittest.TestCase):
