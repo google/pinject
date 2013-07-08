@@ -29,7 +29,7 @@ injection library, a few of reasons are:
 
 * Pinject is much easier to get started with.  Forget having to decorate your code with ``@inject_this`` and ``@annotate_that`` just to get started.  With Pinject, you call ``new_object_graph()``, one line, and you're good to go.
 * Pinject is a *pythonic* dependency injection library.  Python ports of other libraries, like Spring or Guice, retain the feel (and verbosity) of being designed for a statically typed language.  Pinject was designed from the ground up for python.
-* The design choices in Pinject are informed by several dependency injection experts working Google, based on many years of experience.  Several common confusing or misguided features are omitted altogether from Pinject.
+* The design choices in Pinject are informed by several dependency injection experts working at Google, based on many years of experience.  Several common confusing or misguided features are omitted altogether from Pinject.
 * Pinject has great error messages.  They tell you exactly what you did wrong, and exactly where.  This should be a welcome change from other dependency frameworks, with their voluminous and yet inscrutable stack traces.
 
 Look at the simplest getting-started examples for Pinject and for other
@@ -943,7 +943,7 @@ v0.9:
 
 * Added validation of python types of public args.
 * Improved error messages for all Pinject-raised exceptions.
-* Added use_short_stack_traces arg to ``new_object_graph()``.
+* Added ``use_short_stack_traces`` arg to ``new_object_graph()``.
 * Allowed multiple ``@provides`` on single provider method.
 
 v0.8:
