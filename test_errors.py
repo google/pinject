@@ -37,12 +37,12 @@ def _print_raised_exception(exc, fn, *pargs, **kwargs):
 
 
 def print_ambiguous_arg_name_error():
-    class SomeClass():
+    class SomeClass(object):
         def __init__(self, foo):
             pass
-    class Foo():
+    class Foo(object):
         pass
-    class _Foo():
+    class _Foo(object):
         pass
     obj_graph = object_graph.new_object_graph(
         modules=None, classes=[SomeClass, Foo, _Foo])
@@ -213,6 +213,17 @@ def print_unknown_scope_error():
     _print_raised_exception(
         errors.UnknownScopeError, object_graph.new_object_graph,
         modules=None, binding_specs=[SomeBindingSpec()])
+
+
+def print_wrong_arg_element_type_error():
+    _print_raised_exception(
+        errors.WrongArgElementTypeError, object_graph.new_object_graph,
+        modules=[42])
+
+
+def print_wrong_arg_type_error():
+    _print_raised_exception(
+        errors.WrongArgTypeError, object_graph.new_object_graph, modules=42)
 
 
 all_print_method_pairs = inspect.getmembers(

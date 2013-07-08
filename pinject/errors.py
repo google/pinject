@@ -164,3 +164,19 @@ class UnknownScopeError(Error):
     def __init__(self, scope_id, binding_loc):
         Error.__init__(self, 'unknown scope ID {0} in binding created at'
                        ' {1}'.format(scope_id, binding_loc))
+
+
+class WrongArgElementTypeError(Error):
+
+    def __init__(self, arg_name, idx, expected_type_desc, actual_type_desc):
+        Error.__init__(
+            self, 'wrong type for element {0} of arg {1}: expected {2} but got'
+            ' {3}'.format(idx, arg_name, expected_type_desc, actual_type_desc))
+
+
+class WrongArgTypeError(Error):
+
+    def __init__(self, arg_name, expected_type_desc, actual_type_desc):
+        Error.__init__(
+            self, 'wrong type for arg {0}: expected {1} but got {2}'.format(
+                arg_name, expected_type_desc, actual_type_desc))

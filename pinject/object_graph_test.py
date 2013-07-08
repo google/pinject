@@ -15,6 +15,7 @@ limitations under the License.
 
 
 import inspect
+import types
 import unittest
 
 from pinject import bindings
@@ -115,6 +116,85 @@ class NewObjectGraphTest(unittest.TestCase):
         some_class_one = obj_graph.provide(SomeClass)
         some_class_two = obj_graph.provide(SomeClass)
         self.assertIs(some_class_one.foo, some_class_two.foo)
+
+    def test_raises_exception_if_modules_is_wrong_type(self):
+        self.assertRaises(errors.WrongArgTypeError,
+                          object_graph.new_object_graph, modules=42)
+
+    def test_raises_exception_if_classes_is_wrong_type(self):
+        self.assertRaises(errors.WrongArgTypeError,
+                          object_graph.new_object_graph, classes=42)
+
+    def test_raises_exception_if_binding_specs_is_wrong_type(self):
+        self.assertRaises(errors.WrongArgTypeError,
+                          object_graph.new_object_graph, binding_specs=42)
+
+    def test_raises_exception_if_get_arg_names_from_class_name_is_wrong_type(self):
+        self.assertRaises(errors.WrongArgTypeError,
+                          object_graph.new_object_graph,
+                          get_arg_names_from_class_name=42)
+
+    def test_raises_exception_if_get_arg_names_from_provider_fn_name_is_wrong_type(self):
+        self.assertRaises(errors.WrongArgTypeError,
+                          object_graph.new_object_graph,
+                          get_arg_names_from_provider_fn_name=42)
+
+    def test_raises_exception_if_is_scope_usable_from_scope_is_wrong_type(self):
+        self.assertRaises(errors.WrongArgTypeError,
+                          object_graph.new_object_graph,
+                          is_scope_usable_from_scope=42)
+
+
+class VerifyTypesTest(unittest.TestCase):
+
+    def test_verifies_empty_sequence_ok(self):
+        object_graph._verify_types([], types.ModuleType, 'unused')
+
+    def test_verifies_correct_type_ok(self):
+        object_graph._verify_types([types], types.ModuleType, 'unused')
+
+    def test_raises_exception_if_not_sequence(self):
+        self.assertRaises(errors.WrongArgTypeError, object_graph._verify_types,
+                          42, types.ModuleType, 'an-arg-name')
+
+    def test_raises_exception_if_element_is_incorrect_type(self):
+        self.assertRaises(errors.WrongArgElementTypeError,
+                          object_graph._verify_types,
+                          ['not-a-module'], types.ModuleType, 'an-arg-name')
+
+
+class VerifySubclassesTest(unittest.TestCase):
+
+    def test_verifies_empty_sequence_ok(self):
+        object_graph._verify_subclasses([], bindings.BindingSpec, 'unused')
+
+    def test_verifies_correct_type_ok(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            pass
+        object_graph._verify_subclasses(
+            [SomeBindingSpec()], bindings.BindingSpec, 'unused')
+
+    def test_raises_exception_if_not_sequence(self):
+        self.assertRaises(errors.WrongArgTypeError,
+                          object_graph._verify_subclasses,
+                          42, bindings.BindingSpec, 'an-arg-name')
+
+    def test_raises_exception_if_element_is_not_subclass(self):
+        class NotBindingSpec(object):
+            pass
+        self.assertRaises(
+            errors.WrongArgElementTypeError, object_graph._verify_subclasses,
+            [NotBindingSpec()], bindings.BindingSpec, 'an-arg-name')
+
+
+class VerifyCallable(unittest.TestCase):
+
+    def test_verifies_callable_ok(self):
+        object_graph._verify_callable(lambda: None, 'unused')
+
+    def test_raises_exception_if_not_callable(self):
+        self.assertRaises(errors.WrongArgTypeError,
+                          object_graph._verify_callable, 42, 'an-arg-name')
 
 
 class ObjectGraphProvideTest(unittest.TestCase):
