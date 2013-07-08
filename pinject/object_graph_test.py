@@ -145,6 +145,16 @@ class NewObjectGraphTest(unittest.TestCase):
                           is_scope_usable_from_scope=42)
 
 
+class VerifyTypeTest(unittest.TestCase):
+
+    def test_verifies_correct_type_ok(self):
+        object_graph._verify_type(types, types.ModuleType, 'unused')
+
+    def test_raises_exception_if_incorrect_type(self):
+        self.assertRaises(errors.WrongArgTypeError, object_graph._verify_type,
+                          'not-a-module', types.ModuleType, 'an-arg-name')
+
+
 class VerifyTypesTest(unittest.TestCase):
 
     def test_verifies_empty_sequence_ok(self):
@@ -539,6 +549,13 @@ class ObjectGraphProvideTest(unittest.TestCase):
             allow_injecting_none=False)
         self.assertRaises(errors.InjectingNoneDisallowedError,
                           obj_graph.provide, SomeClass)
+
+    def test_raises_exception_if_trying_to_provide_nonclass(self):
+        class SomeClass(object):
+            pass
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass])
+        self.assertRaises(errors.WrongArgTypeError, obj_graph.provide, 42)
 
 
 class ObjectGraphWrapTest(unittest.TestCase):

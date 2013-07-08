@@ -1,8 +1,5 @@
 TODO:
-- validate python types of all input
 - allow binding specs to declare required bindings
-- standard tests for scopes (reentrant? thread-safe?), annotations (eq?
-     hash?), etc.
 - describe features specifically omitted, e.g.,
   - field injection
   - circular injection
@@ -10,6 +7,8 @@ TODO:
 - figure out whether/how Pinject works with inheritance
 
 Maybe TODO:
+- standard tests for scopes (reentrant? thread-safe?), annotations (eq?
+     hash?), etc.
 - change default scope back to prototype?
 - eager singletons
 - allow field injection

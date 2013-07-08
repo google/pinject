@@ -148,6 +148,12 @@ def new_object_graph(
         use_short_stack_traces)
 
 
+def _verify_type(elt, required_type, arg_name):
+    if type(elt) != required_type:
+        raise errors.WrongArgTypeError(
+            arg_name, required_type.__name__, type(elt).__name__)
+
+
 def _verify_types(seq, required_type, arg_name):
     if not isinstance(seq, collections.Sequence):
         raise errors.WrongArgTypeError(
@@ -199,6 +205,7 @@ class ObjectGraph(object):
         Raises:
           Error: an instance of cls is not providable
         """
+        _verify_type(cls, types.TypeType, 'cls')
         if not self._is_injectable_fn(cls):
             provide_loc = locations.get_back_frame_loc()
             raise errors.NonExplicitlyBoundClassError(provide_loc, cls)
