@@ -939,8 +939,9 @@ everything listed here.)
 Changelog
 =========
 
-Since v0.8:
+v0.9:
 
+* Added validation of python types of public args.
 * Improved error messages for all Pinject-raised exceptions.
 * Added use_short_stack_traces arg to ``new_object_graph()``.
 * Allowed multiple ``@provides`` on single provider method.
