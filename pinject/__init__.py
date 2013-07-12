@@ -31,3 +31,12 @@ from .object_graph import new_object_graph
 __all__.extend(['new_object_graph'])
 from .scoping import PROTOTYPE, Scope, SINGLETON
 __all__.extend(['PROTOTYPE', 'Scope', 'SINGLETON'])
+
+this_module = sys.modules[__name__]
+for thing_name in dir(this_module):
+    if (thing_name != 'this_module' and
+        type(getattr(this_module, thing_name)) == type(this_module)):
+        delattr(this_module, thing_name)
+delattr(this_module, '__builtins__')
+delattr(this_module, 'thing_name')
+delattr(this_module, 'this_module')

@@ -1,6 +1,5 @@
 TODO:
 - allow binding specs to declare required bindings
-- delete unwanted __init__ attributes
 - describe features specifically omitted, e.g.,
   - field injection
   - circular injection
