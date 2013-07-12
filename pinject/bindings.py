@@ -108,6 +108,19 @@ class BindingMapping(object):
         self._collided_binding_key_to_bindings = (
             collided_binding_key_to_bindings)
 
+    def verify_requirements(self, required_bindings):
+        for required_binding in required_bindings:
+            required_binding_key = required_binding.binding_key
+            if required_binding_key not in self._binding_key_to_binding:
+                if (required_binding_key in
+                    self._collided_binding_key_to_bindings):
+                    raise errors.ConflictingRequiredBindingError(
+                        required_binding,
+                        self._collided_binding_key_to_bindings[
+                            required_binding_key])
+                else:
+                    raise errors.MissingRequiredBindingError(required_binding)
+
     def get(self, binding_key, injection_site_desc):
         if binding_key in self._binding_key_to_binding:
             return self._binding_key_to_binding[binding_key]

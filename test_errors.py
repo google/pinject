@@ -63,6 +63,15 @@ def print_bad_dependency_scope_error():
                             obj_graph.provide, Bar)
 
 
+def print_configure_method_missing_args_error():
+    class SomeBindingSpec(bindings.BindingSpec):
+        def configure(self):
+            pass
+    _print_raised_exception(
+        errors.ConfigureMethodMissingArgsError, object_graph.new_object_graph,
+        modules=None, binding_specs=[SomeBindingSpec()])
+
+
 def print_conflicting_explicit_bindings_error():
     class SomeBindingSpec(bindings.BindingSpec):
         def configure(self, bind):
@@ -71,6 +80,19 @@ def print_conflicting_explicit_bindings_error():
     _print_raised_exception(
         errors.ConflictingExplicitBindingsError, object_graph.new_object_graph,
         modules=None, binding_specs=[SomeBindingSpec()])
+
+
+def print_conflicting_required_binding_error():
+    class SomeBindingSpec(bindings.BindingSpec):
+        def configure(self, require):
+            require('foo')
+    class Foo(object):
+        pass
+    class _Foo(object):
+        pass
+    _print_raised_exception(
+        errors.ConflictingRequiredBindingError, object_graph.new_object_graph,
+        modules=None, classes=[Foo, _Foo], binding_specs=[SomeBindingSpec()])
 
 
 def print_cyclic_injection_error():
@@ -137,6 +159,15 @@ def print_invalid_binding_target_error():
             bind('foo', to_class='not-a-class')
     _print_raised_exception(
         errors.InvalidBindingTargetError, object_graph.new_object_graph,
+        modules=None, binding_specs=[SomeBindingSpec()])
+
+
+def print_missing_required_binding_error():
+    class SomeBindingSpec(bindings.BindingSpec):
+        def configure(self, require):
+            require('foo')
+    _print_raised_exception(
+        errors.MissingRequiredBindingError, object_graph.new_object_graph,
         modules=None, binding_specs=[SomeBindingSpec()])
 
 

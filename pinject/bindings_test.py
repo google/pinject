@@ -22,6 +22,7 @@ from pinject import binding_keys
 from pinject import decorators
 from pinject import errors
 from pinject import injection_contexts
+from pinject import required_bindings
 from pinject import scoping
 
 
@@ -180,6 +181,27 @@ class BindingMappingTest(unittest.TestCase):
             {}, {'colliding-binding-key': [binding_one, binding_two]})
         self.assertRaises(errors.AmbiguousArgNameError, binding_mapping.get,
                           'colliding-binding-key', 'injection-site-desc')
+
+    def test_verifying_ok_bindings_passes(self):
+        binding_mapping = bindings_lib.BindingMapping(
+            {'a-binding-key': 'a-binding'}, {})
+        binding_mapping.verify_requirements([required_bindings.RequiredBinding(
+            'a-binding-key', 'unused-require-loc')])
+
+    def test_verifying_conflicting_required_binding_raises_error(self):
+        binding_mapping = bindings_lib.BindingMapping(
+            {}, {'conflicting-binding-key': ['a-binding', 'another-binding']})
+        self.assertRaises(errors.ConflictingRequiredBindingError,
+                          binding_mapping.verify_requirements,
+                          [required_bindings.RequiredBinding(
+                              'conflicting-binding-key', 'unused-require-loc')])
+
+    def test_verifying_missing_required_binding_raises_error(self):
+        binding_mapping = bindings_lib.BindingMapping({}, {})
+        self.assertRaises(errors.MissingRequiredBindingError,
+                          binding_mapping.verify_requirements,
+                          [required_bindings.RequiredBinding(
+                              'unknown-binding-key', 'a-require-loc')])
 
 
 class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):

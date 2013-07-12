@@ -42,6 +42,15 @@ class BadDependencyScopeError(Error):
                 injection_site_desc, binding_key, to_scope_id, from_scope_id))
 
 
+class ConfigureMethodMissingArgsError(Error):
+
+    def __init__(self, configure_fn, possible_args):
+        Error.__init__(
+            self, 'binding spec method {0} must have at least'
+            ' one of the expected args {1}'.format(
+                locations.get_class_name_and_loc(configure_fn), possible_args))
+
+
 class ConflictingExplicitBindingsError(Error):
 
     def __init__(self, colliding_bindings):
@@ -49,6 +58,16 @@ class ConflictingExplicitBindingsError(Error):
             self, 'multiple explicit bindings for same binding name:\n'
             '{0}'.format('\n'.join('  {0}'.format(b)
                                    for b in colliding_bindings)))
+
+
+class ConflictingRequiredBindingError(Error):
+
+    def __init__(self, required_binding, colliding_bindings):
+        Error.__init__(
+            self, 'conflicting implicit bindings for binding required at {0}'
+            ' for {1}:\n{2}'.format(
+                required_binding.require_loc, required_binding.binding_key,
+                '\n'.join('  {0}'.format(b) for b in colliding_bindings)))
 
 
 class CyclicInjectionError(Error):
@@ -101,6 +120,15 @@ class InvalidBindingTargetError(Error):
             ' type {3}, not {4}'.format(
                 binding_key, binding_target, binding_loc,
                 type(binding_target).__name__, expected_type_str))
+
+
+class MissingRequiredBindingError(Error):
+
+    def __init__(self, required_binding):
+        Error.__init__(
+            self, 'at {0}, binding required for {1}, but no such binding was'
+            ' ever created'.format(required_binding.require_loc,
+                                   required_binding.binding_key))
 
 
 class MultipleAnnotationsForSameArgError(Error):

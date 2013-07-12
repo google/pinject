@@ -28,6 +28,7 @@ from . import injection_contexts
 from . import locations
 from . import object_providers
 from . import providing
+from . import required_bindings as required_bindings_lib
 from . import scoping
 
 
@@ -106,6 +107,7 @@ def new_object_graph(
         explicit_bindings = bindings.get_explicit_class_bindings(
             found_classes, get_arg_names_from_class_name)
         binder = bindings.Binder(explicit_bindings, known_scope_ids)
+        required_bindings = required_bindings_lib.RequiredBindings()
         if binding_specs is not None:
             binding_specs = list(binding_specs)
             processed_binding_specs = set()
@@ -114,8 +116,15 @@ def new_object_graph(
                 if binding_spec in processed_binding_specs:
                     continue
                 processed_binding_specs.add(binding_spec)
+                all_kwargs = {'bind': binder.bind,
+                              'require': required_bindings.require}
+                configure_kwargs = _pare_to_present_args(
+                    all_kwargs, binding_spec.configure)
+                if not configure_kwargs:
+                    raise errors.ConfigureMethodMissingArgsError(
+                        binding_spec.configure, all_kwargs.keys())
                 try:
-                    binding_spec.configure(binder.bind)
+                    binding_spec.configure(**configure_kwargs)
                     has_configure = True
                 except NotImplementedError:
                     has_configure = False
@@ -127,12 +136,12 @@ def new_object_graph(
                 explicit_bindings.extend(provider_bindings)
                 if not has_configure and not dependencies and not provider_bindings:
                     raise errors.EmptyBindingSpecError(binding_spec)
-
         binding_key_to_binding, collided_binding_key_to_bindings = (
             bindings.get_overall_binding_key_to_binding_maps(
                 [implicit_class_bindings, explicit_bindings]))
         binding_mapping = bindings.BindingMapping(
             binding_key_to_binding, collided_binding_key_to_bindings)
+        binding_mapping.verify_requirements(required_bindings.get())
     except errors.Error as e:
         if use_short_stack_traces:
             raise e
@@ -183,6 +192,11 @@ def _verify_subclasses(seq, required_superclass, arg_name):
 def _verify_callable(fn, arg_name):
     if not callable(fn):
         raise errors.WrongArgTypeError(arg_name, 'callable', type(fn).__name__)
+
+
+def _pare_to_present_args(kwargs, fn):
+    arg_names, _, _, _ = inspect.getargspec(fn)
+    return {arg: value for arg, value in kwargs.iteritems() if arg in arg_names}
 
 
 class ObjectGraph(object):

@@ -144,6 +144,34 @@ class NewObjectGraphTest(unittest.TestCase):
                           object_graph.new_object_graph,
                           is_scope_usable_from_scope=42)
 
+    def test_raises_exception_if_configure_method_has_no_expected_args(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            def configure(self):
+                pass
+        self.assertRaises(errors.ConfigureMethodMissingArgsError,
+                          object_graph.new_object_graph,
+                          modules=None, binding_specs=[SomeBindingSpec()])
+
+    def test_raises_exception_if_required_binding_missing(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            def configure(self, require):
+                require('foo')
+        self.assertRaises(
+            errors.MissingRequiredBindingError, object_graph.new_object_graph,
+            modules=None, binding_specs=[SomeBindingSpec()])
+
+    def test_raises_exception_if_required_binding_conflicts(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            def configure(self, require):
+                require('foo')
+        class Foo(object):
+            pass
+        class _Foo(object):
+            pass
+        self.assertRaises(
+            errors.ConflictingRequiredBindingError, object_graph.new_object_graph,
+            modules=None, classes=[Foo, _Foo], binding_specs=[SomeBindingSpec()])
+
 
 class VerifyTypeTest(unittest.TestCase):
 
@@ -197,7 +225,7 @@ class VerifySubclassesTest(unittest.TestCase):
             [NotBindingSpec()], bindings.BindingSpec, 'an-arg-name')
 
 
-class VerifyCallable(unittest.TestCase):
+class VerifyCallableTest(unittest.TestCase):
 
     def test_verifies_callable_ok(self):
         object_graph._verify_callable(lambda: None, 'unused')
@@ -205,6 +233,17 @@ class VerifyCallable(unittest.TestCase):
     def test_raises_exception_if_not_callable(self):
         self.assertRaises(errors.WrongArgTypeError,
                           object_graph._verify_callable, 42, 'an-arg-name')
+
+
+class PareToPresentArgsTest(unittest.TestCase):
+
+    def test_removes_only_args_not_present(self):
+        def fn(self, present):
+            pass
+        self.assertEqual(
+            {'present': 'a-present-value'},
+            object_graph._pare_to_present_args(
+                {'present': 'a-present-value', 'missing': 'a-missing-value'}, fn))
 
 
 class ObjectGraphProvideTest(unittest.TestCase):
