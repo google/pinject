@@ -1,5 +1,5 @@
 TODO:
-- allow binding specs to declare required bindings
+- defer computing introspected location info until needed
 - describe features specifically omitted, e.g.,
   - field injection
   - circular injection

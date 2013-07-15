@@ -133,7 +133,7 @@ To create any bindings more complex than the implicit class bindings described
 above, you use a *binding spec*.  A binding spec is any python class that
 inherits from ``BindingSpec``.  A binding spec can do three things:
 
-* Its ``configure()`` method can create explicit bindings to classes or instances.
+* Its ``configure()`` method can create explicit bindings to classes or instances, as well as requiring bindings without creating them.
 * Its ``dependencies()`` method can return depended-on binding specs.
 * It can have provider methods, for which explicit bindings are created.
 
@@ -206,6 +206,53 @@ things.
     >>> print some_class.foo
     'a-foo'
     >>>
+
+The ``configure()`` method of a binding spec also may take a function
+``require()`` as an arg and use that function to require that a binding be
+present without actually defining that binding.  ``require()`` takes as args
+the name of the arg for which to require a binding.
+
+.. code-block:: python
+
+    >>> class MainBindingSpec(pinject.BindingSpec):
+    ...     def configure(self, require):
+    ...         require('foo')
+    ...
+    >>> class RealFooBindingSpec(pinject.BindingSpec):
+    ...     def configure(self, bind):
+    ...         bind('foo', to_instance='a-real-foo')
+    ...
+    >>> class StubFooBindingSpec(pinject.BindingSpec):
+    ...     def configure(self, bind):
+    ...         bind('foo', to_instance='a-stub-foo')
+    ...
+    >>> class SomeClass(object):
+    ...     def __init__(self, foo):
+    ...         self.foo = foo
+    ...
+    >>> obj_graph = pinject.new_object_graph(
+    ...     binding_specs=[MainBindingSpec(), RealFooBindingSpec()])
+    >>> some_class = obj_graph.provide(SomeClass)
+    >>> print some_class.foo
+    'a-real-foo'
+    >>> # pinject.new_object_graph(
+    ... #    binding_specs=[MainBindingSpec()])  # would raise a MissingRequiredBindingError
+    ...
+    >>>
+
+Being able to require a binding without defining the binding is useful when
+you know the code will need some dependency satisfied, but there is more than
+one implementation that satisfies that dependency, e.g., there may be a real
+RPC client and a fake RPC client.  Declaring the dependency means that any
+expected but missing bindings will be detected early, when
+``new_object_graph()`` is called, rather than in the middle of running your
+program.
+
+You'll notice that the ``configure()`` methods above have different
+signatures, sometimes taking the arg ``bind`` and sometimes taking the arg
+``require``.  ``configure()`` methods must take at least one arg that is
+either ``bind`` or ``require``, and they may have both args.  Pinject will
+pass whichever arg or args your ``configure()`` method needs.
 
 Binding spec dependencies
 -------------------------
@@ -462,6 +509,31 @@ same arg name.)
     >>> some_class = obj_graph.provide(SomeClass)
     >>> print some_class.foo
     'foo-with-annot'
+    >>>
+
+When requiring a binding, via the ``require`` arg passed into the
+``configure()`` method of a binding spec, you can pass the arg
+``annotated_with`` to require an annotated binding.
+
+.. code-block:: python
+
+    >>> class MainBindingSpec(pinject.BindingSpec):
+    ...     def configure(self, require):
+    ...         require('foo', annotated_with='annot')
+    ...
+    >>> class NonSatisfyingBindingSpec(pinject.BindingSpec):
+    ...     def configure(self, bind):
+    ...         bind('foo', to_instance='an-unannotated-foo')
+    ...
+    >>> class SatisfyingBindingSpec(pinject.BindingSpec):
+    ...     def configure(self, bind):
+    ...         bind('foo', annotated_with='annot', to_instance='an-annotated-foo')
+    ...
+    >>> obj_graph = pinject.new_object_graph(
+    ...     binding_specs=[MainBindingSpec(), SatisfyingBindingSpec()])  # works
+    >>> # obj_graph = pinject.new_object_graph(
+    ... #     binding_specs=[MainBindingSpec(),
+    ... #                    NonSatisfyingBindingSpec()])  # would raise a MissingRequiredBindingError
     >>>
 
 You can use any kind of object as an annotation object as long as it
