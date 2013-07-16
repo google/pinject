@@ -1,7 +1,6 @@
 TODO:
-- defer computing introspected location info until needed
+- add @copy_args_to_members with are_attrs arg
 - describe features specifically omitted, e.g.,
-  - field injection
   - circular injection
   - scope annotations on classes
 - figure out whether/how Pinject works with inheritance
@@ -11,9 +10,6 @@ Maybe TODO:
      hash?), etc.
 - change default scope back to prototype?
 - eager singletons
-- allow field injection
-    (lack of field docstrings is OK because they're the appropriate instances of that type)
-    (but get a second opinion on whether it decreases testability)
 - find modules on PYTHONPATH instead of having to import them
 - automatically instantiate the concrete subclass of an interface?
     (use abc module)
@@ -29,6 +25,3 @@ Questions:
     ObjectGraph method should be wrap() instead of provide_class()??
 - Remove ObjectGraph.wrap()?
 - Why should @inject apply to __init__() rather than the class?
-- What's the advantage of making the user list entry points in order to
-    validate the object graph, instead of, say, doing it the Guice way with
-    require()?

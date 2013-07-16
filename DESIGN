@@ -1,3 +1,4 @@
+
 Verifying injectability
 =======================
 
@@ -36,3 +37,46 @@ Decision
 --------
 
 Use ``require()``.
+
+Field injection
+===============
+
+Choices:
+1. Support field injection.
+2. Require initializer injection.
+
+Benefits of field injection
+---------------------------
+
+You don't need initializer boilerplate.  With initializer injection, you write
+the name of each arg three times. ... Maybe I should add a
+@copy_args_to_members decorator?
+
+Benefits of requiring initializer injection
+-------------------------------------------
+
+With initializers, you have docstrings, a standard place and format for
+documentation, whereas there is no such standard for fields.
+
+An initializer makes it clear when your object is fully initialized and (if
+you design your objects properly) forces full initialization up front.  With
+field injection, there's no single place to look for all fields that need
+injecting, and no way for an object to guarantee that all fields have values
+appropriately set.
+
+Field injection makes manual instantiation more cumbersome.  Instead of
+writing ``SomeObject(foo, bar, baz)`` on a single line, you have to write ``s
+= SomeObject(); s.foo = foo; s.bar = bar; s.baz = baz`` on four lines.  You
+also can't instantiate the object as a single expression, unless you write a
+helper function, in which case you may as well make the helper function be the
+initializer, and use initializer injection.
+
+Field injection makes debugging with manual injection more difficult.  For
+example, because instead of a missing initializer arg being discovered right
+where the object is instantiated, the missing field value is discovered only
+when it's used and found to be unset.
+
+Decision
+--------
+
+Don't support field injection.  Require initializer injection.
