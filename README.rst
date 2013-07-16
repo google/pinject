@@ -37,6 +37,22 @@ similar libraries.  Pinject should be uniformly easier to use, clearer to
 read, and less boilerplate that you need to add.  If you don't find this to be
 the case, email!
 
+Installation
+============
+
+The easiest way is to install it from PyPI:
+
+.. code-block::
+
+    sudo pip install pinject
+
+You can also check out all the source code, including tests, designs, and
+TODOs:
+
+.. code-block::
+
+   git clone https://github.com/google/pinject
+
 Basic dependency injection
 ==========================
 
@@ -1010,6 +1026,12 @@ everything listed here.)
 
 Changelog
 =========
+
+Since v0.9:
+
+* Added ``require`` arg to allow binding spec ``configure`` methods to declare but not define bindings.
+* Sped up tests (and probably general functionality) by 10x.
+* Documented more design decisions.
 
 v0.9:
 
