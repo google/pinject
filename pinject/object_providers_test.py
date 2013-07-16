@@ -29,10 +29,8 @@ from pinject import scoping
 
 def new_test_obj_provider(arg_binding_key, instance, allow_injecting_none=True):
     binding_key = arg_binding_key.binding_key
-    binding = bindings.Binding(
-        binding_key,
-        bindings.create_instance_proviser_fn(binding_key, instance),
-        'a-scope', 'unused-desc')
+    binding = bindings.new_binding_to_instance(
+        binding_key, instance, 'a-scope', lambda: 'unused-desc')
     binding_mapping = bindings.BindingMapping({binding_key: binding}, {})
     bindable_scopes = scoping.BindableScopes(
         {'a-scope': scoping.PrototypeScope()})

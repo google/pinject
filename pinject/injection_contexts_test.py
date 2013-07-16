@@ -29,11 +29,9 @@ class InjectionContextTest(unittest.TestCase):
 
     def setUp(self):
         self.binding_key = binding_keys.new('foo')
-        self.binding = bindings.Binding(
-            self.binding_key,
-            bindings.create_instance_proviser_fn(
-                self.binding_key, 'an-instance'),
-            'curr-scope', 'unused-desc')
+        self.binding = bindings.new_binding_to_instance(
+            self.binding_key, 'an-instance', 'curr-scope',
+            lambda: 'unused-desc')
         injection_context_factory = injection_contexts.InjectionContextFactory(
             lambda to_scope, from_scope: to_scope != 'unusable-scope')
         top_injection_context = injection_context_factory.new(
@@ -45,8 +43,9 @@ class InjectionContextTest(unittest.TestCase):
         other_binding_key = binding_keys.new('bar')
         new_injection_context = self.injection_context.get_child(
             _UNUSED_INJECTION_SITE_FN,
-            bindings.Binding(other_binding_key, 'unused-proviser-fn',
-                             'new-scope', 'unused-desc'))
+            bindings.new_binding_to_instance(
+                other_binding_key, 'unused-instance', 'new-scope',
+                lambda: 'unused-desc'))
 
     def test_get_child_raises_error_when_binding_already_seen(self):
         self.assertRaises(errors.CyclicInjectionError,
@@ -58,8 +57,9 @@ class InjectionContextTest(unittest.TestCase):
         self.assertRaises(
             errors.BadDependencyScopeError, self.injection_context.get_child,
             _UNUSED_INJECTION_SITE_FN,
-            bindings.Binding(other_binding_key, 'unused-proviser-fn',
-                             'unusable-scope', 'unused-desc'))
+            bindings.new_binding_to_instance(
+                other_binding_key, 'unused-instance', 'unusable-scope',
+                lambda: 'unused-desc'))
 
     def test_get_injection_site_desc(self):
         injection_context_factory = injection_contexts.InjectionContextFactory(

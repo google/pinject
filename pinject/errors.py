@@ -28,7 +28,7 @@ class AmbiguousArgNameError(Error):
             self, 'when injecting {0}, {1} ambiguously refers to any'
             ' of:\n{2}'.format(
                 injection_site_desc, binding_key, '\n'.join(
-                    '  {0}'.format(b.proviser_fn._pinject_desc)
+                    '  {0}'.format(b.get_binding_target_desc_fn())
                     for b in bindings)))
 
 

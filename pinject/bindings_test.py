@@ -26,7 +26,7 @@ from pinject import required_bindings
 from pinject import scoping
 
 
-def new_in_default_scope(binding_key, proviser_fn):
+def new_in_default_scope(binding_key):
     """Returns a new Binding in the default scope.
 
     Args:
@@ -36,8 +36,9 @@ def new_in_default_scope(binding_key, proviser_fn):
     Returns:
       a Binding
     """
-    return bindings_lib.Binding(
-        binding_key, proviser_fn, scoping.DEFAULT_SCOPE, binding_location='unknown')
+    return bindings_lib.new_binding_to_instance(
+        binding_key, 'unused', scoping.DEFAULT_SCOPE,
+        get_binding_loc_fn=lambda: 'unknown')
 
 
 class GetBindingKeyToBindingMapsTest(unittest.TestCase):
@@ -46,10 +47,8 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.some_binding_key = binding_keys.new('some_class')
-        self.some_binding = new_in_default_scope(
-            self.some_binding_key, 'a-proviser-fn')
-        self.another_some_binding = new_in_default_scope(
-            self.some_binding_key, 'another-proviser-fn')
+        self.some_binding = new_in_default_scope(self.some_binding_key)
+        self.another_some_binding = new_in_default_scope(self.some_binding_key)
 
     def assertBindingsReturnMaps(
             self, bindings, binding_key_to_binding,
@@ -102,14 +101,8 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
         class SomeClass(object):
             pass
         self.some_binding_key = binding_keys.new('some_class')
-        self.some_binding = new_in_default_scope(
-            self.some_binding_key,
-            bindings_lib.create_instance_proviser_fn(
-                self.some_binding_key, 'unused'))
-        self.another_some_binding = new_in_default_scope(
-            self.some_binding_key,
-            bindings_lib.create_instance_proviser_fn(
-                self.some_binding_key, 'also-unused'))
+        self.some_binding = new_in_default_scope(self.some_binding_key)
+        self.another_some_binding = new_in_default_scope(self.some_binding_key)
 
     def assertBindingsListsReturnMaps(
             self, bindings_lists,
@@ -171,12 +164,8 @@ class BindingMappingTest(unittest.TestCase):
 
     def test_colliding_bindings_raises_error(self):
         binding_key = binding_keys.new('unused')
-        binding_one = new_in_default_scope(
-            binding_key,
-            bindings_lib.create_instance_proviser_fn(binding_key, 'unused'))
-        binding_two = new_in_default_scope(
-            binding_key,
-            bindings_lib.create_instance_proviser_fn(binding_key, 'unused'))
+        binding_one = new_in_default_scope(binding_key)
+        binding_two = new_in_default_scope(binding_key)
         binding_mapping = bindings_lib.BindingMapping(
             {}, {'colliding-binding-key': [binding_one, binding_two]})
         self.assertRaises(errors.AmbiguousArgNameError, binding_mapping.get,

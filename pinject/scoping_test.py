@@ -95,8 +95,8 @@ class BindableScopesTest(unittest.TestCase):
             {'usable-scope-id': 'usable-scope'})
 
     def test_get_sub_scope_successfully(self):
-        usable_binding = bindings.Binding(
-            binding_keys.new('foo'),
-            'unused-proviser-fn', 'usable-scope-id', 'unused-desc')
+        usable_binding = bindings.new_binding_to_instance(
+            binding_keys.new('foo'), 'unused-instance', 'usable-scope-id',
+            lambda: 'unused-desc')
         self.assertEqual(
             'usable-scope', self.bindable_scopes.get_sub_scope(usable_binding))

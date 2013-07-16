@@ -31,16 +31,18 @@ from . import scoping
 
 class Binding(object):
 
-    def __init__(self, binding_key, proviser_fn, scope_id, binding_location):
+    def __init__(self, binding_key, proviser_fn, get_binding_target_desc_fn,
+                 scope_id, get_binding_loc_fn):
         self.binding_key = binding_key
         self.proviser_fn = proviser_fn
+        self.get_binding_target_desc_fn = get_binding_target_desc_fn
         self.scope_id = scope_id
-        self._binding_location = binding_location
+        self._get_binding_loc_fn = get_binding_loc_fn
 
     def __str__(self):
         return 'the binding at {0}, from {1} to {2}, in "{3}" scope'.format(
-            self._binding_location, self.binding_key,
-            self.proviser_fn._pinject_desc, self.scope_id)
+            self._get_binding_loc_fn(), self.binding_key,
+            self.get_binding_target_desc_fn(), self.scope_id)
 
 
 def _handle_explicit_binding_collision(
@@ -166,12 +168,9 @@ def get_explicit_class_bindings(
     for cls in classes:
         if decorators.is_explicitly_injectable(cls):
             for arg_name in get_arg_names_from_class_name(cls.__name__):
-                binding_key = binding_keys.new(arg_name)
-                proviser_fn = create_class_proviser_fn(
-                    locations.get_type_loc(cls), binding_key, cls)
-                explicit_bindings.append(Binding(
-                    binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
-                    locations.get_type_loc(cls)))
+                explicit_bindings.append(new_binding_to_class(
+                    binding_keys.new(arg_name), cls, scoping.DEFAULT_SCOPE,
+                    lambda: locations.get_type_loc(cls)))
     return explicit_bindings
 
 
@@ -200,12 +199,9 @@ def get_implicit_class_bindings(
     for cls in classes:
         arg_names = get_arg_names_from_class_name(cls.__name__)
         for arg_name in arg_names:
-            binding_key = binding_keys.new(arg_name)
-            proviser_fn = create_class_proviser_fn(
-                locations.get_type_loc(cls), binding_key, cls)
-            implicit_bindings.append(Binding(
-                binding_key, proviser_fn, scoping.DEFAULT_SCOPE,
-                locations.get_type_loc(cls)))
+            implicit_bindings.append(new_binding_to_class(
+                binding_keys.new(arg_name), cls, scoping.DEFAULT_SCOPE,
+                lambda: locations.get_type_loc(cls)))
     return implicit_bindings
 
 
@@ -220,10 +216,12 @@ class Binder(object):
     def bind(self, arg_name, annotated_with=None,
              to_class=None, to_instance=None, in_scope=scoping.DEFAULT_SCOPE):
         if in_scope not in self._scope_ids:
-            raise errors.UnknownScopeError(in_scope, locations.get_back_frame_loc())
+            raise errors.UnknownScopeError(
+                in_scope, locations.get_back_frame_loc())
         binding_key = binding_keys.new(arg_name, annotated_with)
-        specified_to_params = ['to_class' if to_class is not None else None,
-                               'to_instance' if to_instance is not None else None]
+        specified_to_params = [
+            'to_class' if to_class is not None else None,
+            'to_instance' if to_instance is not None else None]
         specified_to_params = [x for x in specified_to_params if x is not None]
         if not specified_to_params:
             binding_loc = locations.get_back_frame_loc()
@@ -236,42 +234,48 @@ class Binder(object):
         # TODO(kurts): this is such a hack; isn't there a better way?
         if to_class is not None:
             @decorators.annotate_arg('_pinject_class', (to_class, in_scope))
-            @decorators.provides(annotated_with=annotated_with, in_scope=in_scope)
+            @decorators.provides(annotated_with=annotated_with,
+                                 in_scope=in_scope)
             def provide_it(_pinject_class):
                 return _pinject_class
             with self._lock:
                 self._collected_bindings.extend(
                     get_provider_fn_bindings(provide_it, [arg_name]))
                 if (to_class, in_scope) not in self._class_bindings_created:
-                    self._collected_bindings.append(Binding(
-                        binding_keys.new('_pinject_class', (to_class, in_scope)),
-                        create_class_proviser_fn(locations.get_back_frame_loc(),
-                                                 binding_key, to_class),
-                        in_scope, locations.get_type_loc(to_class)))
+                    back_frame_loc = locations.get_back_frame_loc()
+                    self._collected_bindings.append(new_binding_to_class(
+                        binding_keys.new('_pinject_class',
+                                         (to_class, in_scope)),
+                        to_class, in_scope, lambda: back_frame_loc))
                     self._class_bindings_created.append((to_class, in_scope))
         else:
-            proviser_fn = create_instance_proviser_fn(binding_key, to_instance)
             back_frame_loc = locations.get_back_frame_loc()
             with self._lock:
-                self._collected_bindings.append(Binding(
-                    binding_key, proviser_fn, in_scope, back_frame_loc))
+                self._collected_bindings.append(new_binding_to_instance(
+                    binding_key, to_instance, in_scope,
+                    lambda: back_frame_loc))
 
 
-def create_class_proviser_fn(binding_loc, binding_key, to_class):
+def new_binding_to_class(binding_key, to_class, in_scope, get_binding_loc_fn):
     if not inspect.isclass(to_class):
         raise errors.InvalidBindingTargetError(
-            binding_loc, binding_key, to_class, 'class')
-    proviser_fn = lambda injection_context, obj_provider: obj_provider.provide_class(
-        to_class, injection_context)
-    class_name_and_loc = locations.get_class_name_and_loc(to_class)
-    proviser_fn._pinject_desc = 'the class {0}'.format(class_name_and_loc)
-    return proviser_fn
+            get_binding_loc_fn(), binding_key, to_class, 'class')
+    def Proviser(injection_context, obj_provider):
+        return obj_provider.provide_class(to_class, injection_context)
+    def GetBindingTargetDesc():
+        return 'the class {0}'.format(
+            locations.get_class_name_and_loc(to_class))
+    return Binding(binding_key, Proviser, GetBindingTargetDesc, in_scope,
+                   get_binding_loc_fn)
 
 
-def create_instance_proviser_fn(binding_key, to_instance):
+def new_binding_to_instance(
+        binding_key, to_instance, in_scope, get_binding_loc_fn):
     proviser_fn = lambda injection_context, obj_provider: to_instance
-    proviser_fn._pinject_desc = 'the instance {0!r}'.format(to_instance)
-    return proviser_fn
+    def GetBindingTargetDesc():
+        return 'the instance {0!r}'.format(to_instance)
+    return Binding(binding_key, proviser_fn, GetBindingTargetDesc, in_scope,
+                   get_binding_loc_fn)
 
 
 class BindingSpec(object):
@@ -288,10 +292,13 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
         provider_fn, default_arg_names)
     proviser_fn = lambda injection_context, obj_provider: (
         obj_provider.call_with_injection(provider_fn, injection_context))
-    proviser_fn._pinject_desc = 'the provider {0!r}'.format(provider_fn)
+    def GetBindingTargetDescFn():
+        return 'the provider {0}'.format(
+            locations.get_class_name_and_loc(provider_fn))
     return [
         Binding(binding_keys.new(provider_decoration.arg_name,
                                  provider_decoration.annotated_with),
-                proviser_fn, provider_decoration.in_scope_id,
-                locations.get_type_loc(provider_fn))
+                proviser_fn, GetBindingTargetDescFn,
+                provider_decoration.in_scope_id,
+                lambda: locations.get_type_loc(provider_fn))
         for provider_decoration in provider_decorations]

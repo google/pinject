@@ -42,7 +42,7 @@ class ObjectProvider(object):
                 lambda: binding.proviser_fn(child_injection_context, self))
             if (provided is None) and not self._allow_injecting_none:
                 raise errors.InjectingNoneDisallowedError(
-                    binding.proviser_fn._pinject_desc)
+                    binding.get_binding_target_desc_fn())
             return provided
         provider_indirection = arg_binding_key.provider_indirection
         provided = provider_indirection.StripIndirectionIfNeeded(Provide)
