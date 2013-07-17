@@ -40,7 +40,8 @@ the case, email!
 Installation
 ============
 
-The easiest way is to install it from PyPI:
+The easiest way to install Pinject is to get the latest released version from
+PyPI:
 
 .. code-block::
 
@@ -141,6 +142,51 @@ classes for which ``new_object_graph()`` creates implicit bindings.  If so,
     >>> obj_graph = pinject.new_object_graph(modules=None, classes=[SomeClass, Foo])
     >>> some_class = obj_graph.provide(SomeClass)
     >>>
+
+Auto-copying args to fields
+===========================
+
+One thing that can get tedious about dependency injection via initializers is
+that you need to write ``__init__()`` methods that copy args to fields.  These
+``__init__()`` methods can get repetitive, especially when you have several
+initializer args.
+
+.. code-block:: python
+
+    >>> class ClassWithTediousInitializer(object):
+    ...     def __init__(self, foo, bar, baz, quux):
+    ...         self._foo = foo
+    ...         self._bar = bar
+    ...         self._baz = baz
+    ...         self._quux = quux
+    ...
+    >>>
+
+Pinject provides decorators that you can use to avoid repetitive initializer
+bodies.
+
+* ``@copy_args_to_internal_fields`` prepends an underscore, i.e., it copies an arg named ``foo`` to a field named ``_foo``.  It's useful for normal classes.
+* ``@copy_args_to_public_fields`` copies the arg named as-is, i.e., it copies an arg named ``foo`` to a field named ``foo``.  It's useful for data objects.
+
+.. code-block:: python
+
+    >>> class ClassWithTediousInitializer(object):
+    ...     @pinject.copy_args_to_internal_fields
+    ...     def __init__(self, foo, bar, baz, quux):
+    ...         pass
+    ...
+    >>> cwti = ClassWithTediousInitializer('a-foo', 'a-bar', 'a-baz', 'a-quux')
+    >>> print cwti._foo
+    'a-foo'
+    >>>
+
+When using these decorators, you'll normally ``pass`` in the body of the
+initializer, but you can put other statements there if you need to.  The args
+will be copied to fields before the initializer body is executed.
+
+These decorators can be applied to initializers that take ``**kwargs`` but not
+initializers that take ``*pargs`` (since it would be unclear what field name
+to use).
 
 Binding specs
 =============

@@ -27,6 +27,8 @@ for thing_name in dir(errors):
     if type(thing) == type(str):
         setattr(sys.modules[__name__], thing_name, thing)
         __all__.append(thing_name)
+from .initializers import copy_args_to_internal_fields
+from .initializers import copy_args_to_public_fields
 from .object_graph import new_object_graph
 __all__.extend(['new_object_graph'])
 from .scoping import PROTOTYPE, Scope, SINGLETON

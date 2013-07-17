@@ -1,5 +1,5 @@
 TODO:
-- add @copy_args_to_members with are_attrs arg
+- 80 cols
 - describe features specifically omitted, e.g.,
   - circular injection
   - scope annotations on classes

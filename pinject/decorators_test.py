@@ -65,7 +65,7 @@ class InjectableTest(unittest.TestCase):
                 @decorators.injectable
                 def regular_fn(self, foo):
                     return foo
-        self.assertRaises(errors.InjectableDecoratorAppliedToNonInitError,
+        self.assertRaises(errors.DecoratorAppliedToNonInitError,
                           do_bad_injectable)
 
     def test_cannot_be_applied_to_regular_function(self):
@@ -73,7 +73,7 @@ class InjectableTest(unittest.TestCase):
             @decorators.injectable
             def regular_fn(foo):
                 return foo
-        self.assertRaises(errors.InjectableDecoratorAppliedToNonInitError,
+        self.assertRaises(errors.DecoratorAppliedToNonInitError,
                           do_bad_injectable)
 
 

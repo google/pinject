@@ -67,9 +67,9 @@ def injectable(fn):
       fn, decorated
     """
     if not inspect.isfunction(fn):
-        raise errors.InjectableDecoratorAppliedToNonInitError(fn)
+        raise errors.DecoratorAppliedToNonInitError('injectable', fn)
     if fn.__name__ != '__init__':
-        raise errors.InjectableDecoratorAppliedToNonInitError(fn)
+        raise errors.DecoratorAppliedToNonInitError('injectable', fn)
     return _get_pinject_decorated_fn(fn)
 
 

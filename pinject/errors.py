@@ -78,6 +78,14 @@ class CyclicInjectionError(Error):
                 '\n'.join('  {0}'.format(b) for b in binding_stack)))
 
 
+class DecoratorAppliedToNonInitError(Error):
+
+    def __init__(self, decorator_name, fn):
+        Error.__init__(
+            self, '@{0} cannot be applied to non-initializer {1}'.format(
+                decorator_name, locations.get_class_name_and_loc(fn)))
+
+
 class EmptyBindingSpecError(Error):
 
     def __init__(self, binding_spec):
@@ -94,14 +102,6 @@ class EmptyProvidesDecoratorError(Error):
         Error.__init__(
             self, '@provides() at {0} needs at least one non-default'
             ' arg'.format(at_provides_loc))
-
-
-class InjectableDecoratorAppliedToNonInitError(Error):
-
-    def __init__(self, fn):
-        Error.__init__(
-            self, '@injectable cannot be applied to non-initializer {0}'.format(
-                locations.get_class_name_and_loc(fn)))
 
 
 class InjectingNoneDisallowedError(Error):
@@ -185,6 +185,15 @@ class OverridingDefaultScopeError(Error):
     def __init__(self, scope_id):
         Error.__init__(
             self, 'cannot override default scope {0}'.format(scope_id))
+
+
+class PargsDisallowedWhenCopyingArgsError(Error):
+
+    def __init__(self, decorator_name, fn, pargs_arg_name):
+        Error.__init__(
+            self, 'decorator @{0} cannot be applied to {1} with *{2}'.format(
+                decorator_name, locations.get_class_name_and_loc(fn),
+                pargs_arg_name))
 
 
 class UnknownScopeError(Error):

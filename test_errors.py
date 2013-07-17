@@ -24,6 +24,7 @@ import types
 from pinject import bindings
 from pinject import decorators
 from pinject import errors
+from pinject import initializers
 from pinject import object_graph
 from pinject import scoping
 
@@ -112,6 +113,15 @@ def print_cyclic_injection_error():
     # TODO(kurts): make the file:line not get printed twice on each line.
 
 
+def print_decorator_applied_to_non_init_error():
+    def apply_injectable_to_random_fn():
+        @decorators.injectable
+        def random_fn():
+            pass
+    _print_raised_exception(errors.DecoratorAppliedToNonInitError,
+                            apply_injectable_to_random_fn)
+
+
 def print_empty_binding_spec_error():
     class EmptyBindingSpec(bindings.BindingSpec):
         pass
@@ -128,15 +138,6 @@ def print_empty_provides_decorator_error():
                 pass
     _print_raised_exception(
         errors.EmptyProvidesDecoratorError, define_binding_spec)
-
-
-def print_injectable_decorator_applied_to_non_init_error():
-    def apply_injectable_to_random_fn():
-        @decorators.injectable
-        def random_fn():
-            pass
-    _print_raised_exception(errors.InjectableDecoratorAppliedToNonInitError,
-                            apply_injectable_to_random_fn)
 
 
 def print_injecting_none_disallowed_error():
@@ -235,6 +236,16 @@ def print_overriding_default_scope_error():
     _print_raised_exception(
         errors.OverridingDefaultScopeError, object_graph.new_object_graph,
         modules=None, id_to_scope={scoping.DEFAULT_SCOPE: 'a-scope'})
+
+
+def print_pargs_disallowed_when_copying_args_error():
+    def do_bad_initializer():
+        class SomeClass(object):
+            @initializers.copy_args_to_internal_fields
+            def __init__(self, *pargs):
+                pass
+    _print_raised_exception(
+        errors.PargsDisallowedWhenCopyingArgsError, do_bad_initializer)
 
 
 def print_unknown_scope_error():
