@@ -48,7 +48,8 @@ class Binding(object):
 def _handle_explicit_binding_collision(
         colliding_binding, binding_key_to_binding, *pargs):
     other_binding = binding_key_to_binding[colliding_binding.binding_key]
-    raise errors.ConflictingExplicitBindingsError([colliding_binding, other_binding])
+    raise errors.ConflictingExplicitBindingsError(
+        [colliding_binding, other_binding])
 
 
 def _handle_implicit_binding_collision(
@@ -92,7 +93,8 @@ def get_overall_binding_key_to_binding_maps(bindings_lists):
             True: _handle_explicit_binding_collision,
             False: _handle_implicit_binding_collision}[is_final_index]
         this_binding_key_to_binding, this_collided_binding_key_to_bindings = (
-            _get_binding_key_to_binding_maps(bindings, handle_binding_collision_fn))
+            _get_binding_key_to_binding_maps(
+                bindings, handle_binding_collision_fn))
         for good_binding_key in this_binding_key_to_binding:
             collided_binding_key_to_bindings.pop(good_binding_key, None)
         binding_key_to_binding.update(this_binding_key_to_binding)
@@ -179,7 +181,8 @@ def get_provider_bindings(
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name)):
     provider_bindings = []
-    fns = inspect.getmembers(binding_spec, lambda x: type(x) == types.MethodType)
+    fns = inspect.getmembers(binding_spec,
+                             lambda x: type(x) == types.MethodType)
     for _, fn in fns:
         default_arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         fn_bindings = get_provider_fn_bindings(fn, default_arg_names)

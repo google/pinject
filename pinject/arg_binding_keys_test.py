@@ -28,15 +28,17 @@ class ArgBindingKeyTest(unittest.TestCase):
         arg_binding_key = arg_binding_keys.ArgBindingKey(
             'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
             provider_indirections.INDIRECTION)
-        self.assertEqual('<the arg named "an-arg-name" annotated with "an-annotation">',
-                         repr(arg_binding_key))
+        self.assertEqual(
+            '<the arg named "an-arg-name" annotated with "an-annotation">',
+            repr(arg_binding_key))
 
     def test_str(self):
         arg_binding_key = arg_binding_keys.ArgBindingKey(
             'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
             provider_indirections.INDIRECTION)
-        self.assertEqual('the arg named "an-arg-name" annotated with "an-annotation"',
-                         str(arg_binding_key))
+        self.assertEqual(
+            'the arg named "an-arg-name" annotated with "an-annotation"',
+            str(arg_binding_key))
 
     def test_equal_if_same_field_values(self):
         arg_binding_key_one = arg_binding_keys.ArgBindingKey(
@@ -54,10 +56,12 @@ class ArgBindingKeyTest(unittest.TestCase):
             'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
             provider_indirections.INDIRECTION)
         arg_binding_key_two = arg_binding_keys.ArgBindingKey(
-            'other-arg-name', binding_keys.new('other-arg-name', 'an-annotation'),
+            'other-arg-name',
+            binding_keys.new('other-arg-name', 'an-annotation'),
             provider_indirections.INDIRECTION)
         self.assertNotEqual(arg_binding_key_one, arg_binding_key_two)
-        self.assertNotEqual(hash(arg_binding_key_one), hash(arg_binding_key_two))
+        self.assertNotEqual(hash(arg_binding_key_one),
+                            hash(arg_binding_key_two))
         self.assertNotEqual(str(arg_binding_key_one), str(arg_binding_key_two))
 
     def test_unequal_if_not_same_annotation(self):
@@ -68,7 +72,8 @@ class ArgBindingKeyTest(unittest.TestCase):
             'an-arg-name', binding_keys.new('an-arg-name', 'other-annotation'),
             provider_indirections.INDIRECTION)
         self.assertNotEqual(arg_binding_key_one, arg_binding_key_two)
-        self.assertNotEqual(hash(arg_binding_key_one), hash(arg_binding_key_two))
+        self.assertNotEqual(hash(arg_binding_key_one),
+                            hash(arg_binding_key_two))
         self.assertNotEqual(str(arg_binding_key_one), str(arg_binding_key_two))
 
     def test_unequal_if_not_same_indirection(self):
@@ -79,7 +84,8 @@ class ArgBindingKeyTest(unittest.TestCase):
             'an-arg-name', binding_keys.new('an-arg-name', 'an-annotation'),
             provider_indirections.NO_INDIRECTION)
         self.assertNotEqual(arg_binding_key_one, arg_binding_key_two)
-        self.assertNotEqual(hash(arg_binding_key_one), hash(arg_binding_key_two))
+        self.assertNotEqual(hash(arg_binding_key_one),
+                            hash(arg_binding_key_two))
         # Strings will be equal, since indirection isn't part of the string.
         self.assertEqual(str(arg_binding_key_one), str(arg_binding_key_two))
 
@@ -134,7 +140,8 @@ class GetUnboundArgNamesTest(unittest.TestCase):
 class CreateKwargsTest(unittest.TestCase):
 
     def test_returns_nothing_for_no_input(self):
-        self.assertEqual({}, arg_binding_keys.create_kwargs([], provider_fn=None))
+        self.assertEqual(
+            {}, arg_binding_keys.create_kwargs([], provider_fn=None))
 
     def test_returns_provided_value_for_arg(self):
         def ProviderFn(arg_binding_key):

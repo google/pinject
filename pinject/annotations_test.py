@@ -28,7 +28,8 @@ class AnnotationTest(unittest.TestCase):
                          repr(annotations.Annotation('foo')))
 
     def test_equal(self):
-        self.assertEqual(annotations.Annotation('foo'), annotations.Annotation('foo'))
+        self.assertEqual(annotations.Annotation('foo'),
+                         annotations.Annotation('foo'))
         self.assertEqual(hash(annotations.Annotation('foo')),
                          hash(annotations.Annotation('foo')))
 
@@ -42,11 +43,13 @@ class AnnotationTest(unittest.TestCase):
 class NoAnnotationTest(unittest.TestCase):
 
     def test_as_correct_adjective(self):
-        self.assertEqual('unannotated', annotations._NoAnnotation().as_adjective())
+        self.assertEqual('unannotated',
+                         annotations._NoAnnotation().as_adjective())
         self.assertEqual('<unannotated>', repr(annotations._NoAnnotation()))
 
     def test_equal(self):
-        self.assertEqual(annotations._NoAnnotation(), annotations._NoAnnotation())
+        self.assertEqual(annotations._NoAnnotation(),
+                         annotations._NoAnnotation())
         self.assertEqual(hash(annotations._NoAnnotation()),
                          hash(annotations._NoAnnotation()))
 

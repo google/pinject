@@ -114,7 +114,8 @@ class InjectingNoneDisallowedError(Error):
 
 class InvalidBindingTargetError(Error):
 
-    def __init__(self, binding_loc, binding_key, binding_target, expected_type_str):
+    def __init__(self, binding_loc, binding_key, binding_target,
+                 expected_type_str):
         Error.__init__(
             self, '{0} cannot be bound to {1} at {2} because the latter is of'
             ' type {3}, not {4}'.format(

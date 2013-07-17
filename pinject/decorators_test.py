@@ -46,8 +46,8 @@ class AnnotateArgTest(unittest.TestCase):
         def some_function(foo):
             return foo
         self.assertEqual([arg_binding_keys.new('foo', 'an-annotation')],
-                         [binding_key for binding_key in getattr(some_function,
-                                                                 decorators._ARG_BINDING_KEYS_ATTR)])
+                         [binding_key for binding_key in getattr(
+                             some_function, decorators._ARG_BINDING_KEYS_ATTR)])
 
 
 class InjectableTest(unittest.TestCase):
@@ -57,7 +57,8 @@ class InjectableTest(unittest.TestCase):
             @decorators.injectable
             def __init__(self, foo):
                 return foo
-        self.assertTrue(hasattr(SomeClass.__init__, decorators._IS_WRAPPER_ATTR))
+        self.assertTrue(
+            hasattr(SomeClass.__init__, decorators._IS_WRAPPER_ATTR))
 
     def test_cannot_be_applied_to_non_init_method(self):
         def do_bad_injectable():
@@ -84,7 +85,8 @@ class ProvidesTest(unittest.TestCase):
                            in_scope='a-scope-id')
         def provide_foo():
             pass
-        [provider_fn_binding] = bindings.get_provider_fn_bindings(provide_foo, ['foo'])
+        [provider_fn_binding] = bindings.get_provider_fn_bindings(
+            provide_foo, ['foo'])
         self.assertEqual(binding_keys.new('an-arg-name', 'an-annotation'),
                          provider_fn_binding.binding_key)
         self.assertEqual('a-scope-id', provider_fn_binding.scope_id)
@@ -101,7 +103,8 @@ class ProvidesTest(unittest.TestCase):
         @decorators.provides(in_scope='unused')
         def provide_foo(self):
             pass
-        [provider_fn_binding] = bindings.get_provider_fn_bindings(provide_foo, ['foo'])
+        [provider_fn_binding] = bindings.get_provider_fn_bindings(
+            provide_foo, ['foo'])
         self.assertEqual(binding_keys.new('foo'),
                          provider_fn_binding.binding_key)
 
@@ -109,7 +112,8 @@ class ProvidesTest(unittest.TestCase):
         @decorators.provides('unused')
         def provide_foo(self):
             pass
-        [provider_fn_binding] = bindings.get_provider_fn_bindings(provide_foo, ['foo'])
+        [provider_fn_binding] = bindings.get_provider_fn_bindings(
+            provide_foo, ['foo'])
         self.assertEqual(scoping.DEFAULT_SCOPE, provider_fn_binding.scope_id)
 
     def test_multiple_provides_gives_multiple_bindings(self):
@@ -119,10 +123,11 @@ class ProvidesTest(unittest.TestCase):
             pass
         provider_fn_bindings = bindings.get_provider_fn_bindings(
             provide_something, ['something'])
-        self.assertEqual(set([binding_keys.new('foo', annotated_with='foo-annot'),
-                              binding_keys.new('bar', annotated_with='bar-annot')]),
-                         set([provider_fn_binding.binding_key
-                              for provider_fn_binding in provider_fn_bindings]))
+        self.assertEqual(
+            set([binding_keys.new('foo', annotated_with='foo-annot'),
+                 binding_keys.new('bar', annotated_with='bar-annot')]),
+            set([provider_fn_binding.binding_key
+                 for provider_fn_binding in provider_fn_bindings]))
 
 
 class GetProviderFnDecorationsTest(unittest.TestCase):
@@ -181,11 +186,12 @@ class GetPinjectWrapperTest(unittest.TestCase):
         @decorators.annotate_arg('bar', 'an-annotation')
         def some_function(foo, bar):
             return foo + bar
-        self.assertEqual([arg_binding_keys.new('bar', 'an-annotation'),
-                          arg_binding_keys.new('foo', 'an-annotation')],
-                         [binding_key
-                          for binding_key in getattr(some_function,
-                                                     decorators._ARG_BINDING_KEYS_ATTR)])
+        self.assertEqual(
+            [arg_binding_keys.new('bar', 'an-annotation'),
+             arg_binding_keys.new('foo', 'an-annotation')],
+            [binding_key
+             for binding_key in getattr(some_function,
+                                        decorators._ARG_BINDING_KEYS_ATTR)])
 
     def test_raises_error_if_annotating_arg_twice(self):
         def do_bad_annotate():

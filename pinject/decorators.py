@@ -190,7 +190,8 @@ def _get_pinject_wrapper(
         pinject_decorated_fn = _get_pinject_decorated_fn(fn)
         if arg_binding_key is not None:
             arg_names, unused_varargs, unused_keywords, unused_defaults = (
-                inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
+                inspect.getargspec(
+                    getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
             if not arg_binding_key.can_apply_to_one_of_arg_names(arg_names):
                 raise errors.NoSuchArgToInjectError(
                     decorator_loc, arg_binding_key, fn)
@@ -198,7 +199,8 @@ def _get_pinject_wrapper(
                     getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
                 raise errors.MultipleAnnotationsForSameArgError(
                     arg_binding_key, decorator_loc)
-            getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(arg_binding_key)
+            getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(
+                arg_binding_key)
         if (provider_arg_name is not None or
             provider_annotated_with is not None or
             provider_in_scope_id is not None):
@@ -221,7 +223,8 @@ def get_injectable_arg_binding_keys(fn):
         existing_arg_binding_keys = getattr(fn, _ARG_BINDING_KEYS_ATTR)
         arg_names, unused_varargs, unused_keywords, defaults = (
             inspect.getargspec(getattr(fn, _ORIG_FN_ATTR)))
-        num_to_keep = (len(arg_names) - len(defaults)) if defaults else len(arg_names)
+        num_to_keep = ((len(arg_names) - len(defaults)) if defaults
+                       else len(arg_names))
         arg_names = arg_names[:num_to_keep]
         unbound_arg_names = arg_binding_keys.get_unbound_arg_names(
             [arg_name for arg_name in _remove_self_if_exists(arg_names)],
@@ -230,7 +233,8 @@ def get_injectable_arg_binding_keys(fn):
         existing_arg_binding_keys = []
         arg_names, unused_varargs, unused_keywords, defaults = (
             inspect.getargspec(fn))
-        num_to_keep = (len(arg_names) - len(defaults)) if defaults else len(arg_names)
+        num_to_keep = ((len(arg_names) - len(defaults)) if defaults
+                       else len(arg_names))
         arg_names = arg_names[:num_to_keep]
         unbound_arg_names = _remove_self_if_exists(arg_names)
     all_arg_binding_keys = list(existing_arg_binding_keys)

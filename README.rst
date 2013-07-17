@@ -1078,6 +1078,8 @@ Since v0.9:
 * Added ``require`` arg to allow binding spec ``configure`` methods to declare but not define bindings.
 * Sped up tests (and probably general functionality) by 10x.
 * Documented more design decisions.
+* Added ``@copy_args_to_internal_fields`` and ``@copy_args_to_public_fields``.
+* Renamed ``InjectableDecoratorAppliedToNonInitError`` to ``DecoratorAppliedToNonInitError``.
 
 v0.9:
 
