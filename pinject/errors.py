@@ -37,9 +37,9 @@ class BadDependencyScopeError(Error):
     def __init__(self, injection_site_desc,
                  from_scope_id, to_scope_id, binding_key):
         Error.__init__(
-            self, 'when injecting {0}, in particular, {1}, scope {2} is not'
-            ' usable from scope {3}'.format(
-                injection_site_desc, binding_key, to_scope_id, from_scope_id))
+            self, 'when injecting {0} in {1}, scope {2} is not usable from'
+            ' scope {3}'.format(
+                binding_key, injection_site_desc, to_scope_id, from_scope_id))
 
 
 class ConfigureMethodMissingArgsError(Error):

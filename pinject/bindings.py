@@ -172,7 +172,7 @@ def get_explicit_class_bindings(
             for arg_name in get_arg_names_from_class_name(cls.__name__):
                 explicit_bindings.append(new_binding_to_class(
                     binding_keys.new(arg_name), cls, scoping.DEFAULT_SCOPE,
-                    lambda: locations.get_type_loc(cls)))
+                    lambda cls=cls: locations.get_type_loc(cls)))
     return explicit_bindings
 
 
@@ -204,7 +204,7 @@ def get_implicit_class_bindings(
         for arg_name in arg_names:
             implicit_bindings.append(new_binding_to_class(
                 binding_keys.new(arg_name), cls, scoping.DEFAULT_SCOPE,
-                lambda: locations.get_type_loc(cls)))
+                lambda cls=cls: locations.get_type_loc(cls)))
     return implicit_bindings
 
 
@@ -303,5 +303,5 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
                                  provider_decoration.annotated_with),
                 proviser_fn, GetBindingTargetDescFn,
                 provider_decoration.in_scope_id,
-                lambda: locations.get_type_loc(provider_fn))
+                lambda p_fn=provider_fn: locations.get_type_loc(p_fn))
         for provider_decoration in provider_decorations]
