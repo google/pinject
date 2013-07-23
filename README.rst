@@ -28,7 +28,7 @@ If you're wondering why to use Pinject instead of another python dependency
 injection library, a few of reasons are:
 
 * Pinject is much easier to get started with.  Forget having to decorate your code with ``@inject_this`` and ``@annotate_that`` just to get started.  With Pinject, you call ``new_object_graph()``, one line, and you're good to go.
-* Pinject is a *pythonic* dependency injection library.  Python ports of other libraries, like Spring or Guice, retain the feel (and verbosity) of being designed for a statically typed language.  Pinject was designed from the ground up for python.
+* Pinject is a *pythonic* dependency injection library.  Python ports of other libraries, like Spring or Guice, retain the feel (and verbosity) of being designed for a statically typed language.  Pinject is designed from the ground up for python.
 * The design choices in Pinject are informed by several dependency injection experts working at Google, based on many years of experience.  Several common confusing or misguided features are omitted altogether from Pinject.
 * Pinject has great error messages.  They tell you exactly what you did wrong, and exactly where.  This should be a welcome change from other dependency frameworks, with their voluminous and yet inscrutable stack traces.
 
@@ -958,6 +958,32 @@ The function passed as the ``get_arg_names_from_class_name`` arg to
 ``new_object_graph()`` can return as many or as few arg names as it wants.  If
 it always returns the empty list (i.e., if it is ``lambda _: []``), then that
 disables implicit class bindings.
+
+Customizing binding spec method names
+-------------------------------------
+
+The standard binding spec methods to configure bindings and declare
+dependencies are named ``configure`` and ``dependencies``, by default.  If you
+need to, you can change their names by passing ``configure_method_name``
+and/or ``dependencies_method_name`` as args to ``new_object_graph()``.
+
+.. code-block:: python
+
+    >>> class NonStandardBindingSpec(pinject.BindingSpec):
+    ...     def Configure(self, bind):
+    ...         bind('forty_two', to_instance=42)
+    ...
+    >>> class SomeClass(object):
+    ...     def __init__(self, forty_two):
+    ...         self.forty_two = forty_two
+    ...
+    >>> obj_graph = pinject.new_object_graph(
+    ...     binding_specs=[NonStandardBindingSpec()],
+    ...     configure_method_name='Configure')
+    >>> some_class = obj_graph.provide(SomeClass)
+    >>> print some_class.forty_two
+    42
+    >>>
 
 Customizing provider method names
 ---------------------------------

@@ -1,4 +1,7 @@
 TODO:
+- auto-require provider method args
+- allow passing args to provider methods
+- allow object_graph.provide('arg name')?
 - describe features specifically omitted, e.g.,
   - circular injection
   - scope annotations on classes

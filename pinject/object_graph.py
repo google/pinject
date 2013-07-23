@@ -35,6 +35,8 @@ from . import scoping
 def new_object_graph(
         modules=finding.ALL_IMPORTED_MODULES, classes=None, binding_specs=None,
         only_use_explicit_bindings=False, allow_injecting_none=False,
+        configure_method_name='configure',
+        dependencies_method_name='dependencies',
         get_arg_names_from_class_name=(
             bindings.default_get_arg_names_from_class_name),
         get_arg_names_from_provider_fn_name=(
@@ -54,6 +56,8 @@ def new_object_graph(
       only_use_explicit_bindings: whether to use only explicit bindings (i.e.,
           created by binding specs or @pinject.injectable, etc.)
       allow_injecting_none: whether to allow a provider method to provide None
+      configure_method_name: the name of binding specs' configure method
+      dependencies_method_name: the name of binding specs' dependencies method
       get_arg_names_from_class_name: a function mapping a class name to a
           sequence of the arg names to which those classes should be
           implicitly bound (if any)
@@ -118,23 +122,29 @@ def new_object_graph(
                 processed_binding_specs.add(binding_spec)
                 all_kwargs = {'bind': binder.bind,
                               'require': required_bindings.require}
+                configure_method = getattr(binding_spec, configure_method_name)
                 configure_kwargs = _pare_to_present_args(
-                    all_kwargs, binding_spec.configure)
+                    all_kwargs, configure_method)
                 if not configure_kwargs:
                     raise errors.ConfigureMethodMissingArgsError(
-                        binding_spec.configure, all_kwargs.keys())
+                        configure_method, all_kwargs.keys())
                 try:
-                    binding_spec.configure(**configure_kwargs)
+                    configure_method(**configure_kwargs)
                     has_configure = True
                 except NotImplementedError:
                     has_configure = False
-                dependencies = binding_spec.dependencies()
-                binding_specs.extend(dependencies)
+                if hasattr(binding_spec, dependencies_method_name):
+                    dependencies_method = (
+                        getattr(binding_spec, dependencies_method_name))
+                    dependencies = dependencies_method()
+                    binding_specs.extend(dependencies)
                 provider_bindings = bindings.get_provider_bindings(
                     binding_spec, known_scope_ids,
                     get_arg_names_from_provider_fn_name)
                 explicit_bindings.extend(provider_bindings)
-                if not has_configure and not dependencies and not provider_bindings:
+                if (not has_configure and
+                    not dependencies and
+                    not provider_bindings):
                     raise errors.EmptyBindingSpecError(binding_spec)
         binding_key_to_binding, collided_binding_key_to_bindings = (
             bindings.get_overall_binding_key_to_binding_maps(
