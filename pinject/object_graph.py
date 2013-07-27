@@ -235,7 +235,8 @@ class ObjectGraph(object):
             raise errors.NonExplicitlyBoundClassError(provide_loc, cls)
         try:
             return self._obj_provider.provide_class(
-                cls, self._injection_context_factory.new(cls.__init__))
+                cls, self._injection_context_factory.new(cls.__init__),
+                direct_init_pargs=[], direct_init_kwargs={})
         except errors.Error as e:
             if self._use_short_stack_traces:
                 raise e

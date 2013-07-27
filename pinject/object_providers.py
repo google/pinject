@@ -34,12 +34,13 @@ class ObjectProvider(object):
         binding = self._binding_mapping.get(
             binding_key, injection_context.get_injection_site_desc())
         scope = self._bindable_scopes.get_sub_scope(binding)
-        def Provide():
+        def Provide(*pargs, **kwargs):
             child_injection_context = injection_context.get_child(
                 injection_site_fn, binding)
             provided = scope.provide(
                 binding_key,
-                lambda: binding.proviser_fn(child_injection_context, self))
+                lambda: binding.proviser_fn(child_injection_context, self,
+                                            pargs, kwargs))
             if (provided is None) and not self._allow_injecting_none:
                 raise errors.InjectingNoneDisallowedError(
                     binding.get_binding_target_desc_fn())
@@ -48,20 +49,32 @@ class ObjectProvider(object):
         provided = provider_indirection.StripIndirectionIfNeeded(Provide)
         return provided
 
-    def provide_class(self, cls, injection_context):
+    def provide_class(self, cls, injection_context,
+                      direct_init_pargs, direct_init_kwargs):
         if type(cls.__init__) is types.MethodType:
-            init_kwargs = self.get_injection_kwargs(
-                cls.__init__, injection_context)
+            init_pargs, init_kwargs = self.get_injection_pargs_kwargs(
+                cls.__init__, injection_context,
+                direct_init_pargs, direct_init_kwargs)
         else:
-            init_kwargs = {}
-        return cls(**init_kwargs)
+            init_pargs = direct_init_pargs
+            init_kwargs = direct_init_kwargs
+        return cls(*init_pargs, **init_kwargs)
 
-    def call_with_injection(self, provider_fn, injection_context):
-        kwargs = self.get_injection_kwargs(provider_fn, injection_context)
-        return provider_fn(**kwargs)
+    def call_with_injection(self, provider_fn, injection_context,
+                            direct_pargs, direct_kwargs):
+        pargs, kwargs = self.get_injection_pargs_kwargs(
+            provider_fn, injection_context, direct_pargs, direct_kwargs)
+        return provider_fn(*pargs, **kwargs)
 
-    def get_injection_kwargs(self, fn, injection_context):
-        return arg_binding_keys.create_kwargs(
+    def get_injection_pargs_kwargs(self, fn, injection_context,
+                                   direct_pargs, direct_kwargs):
+        di_kwargs = arg_binding_keys.create_kwargs(
             decorators.get_injectable_arg_binding_keys(fn),
             lambda abk: self.provide_from_arg_binding_key(
                 fn, abk, injection_context))
+        duplicated_args = set(di_kwargs.keys()) & set(direct_kwargs)
+        if duplicated_args:
+            raise errors.DirectlyPassingInjectedArgsError(duplicated_args)
+        all_kwargs = dict(di_kwargs)
+        all_kwargs.update(direct_kwargs)
+        return direct_pargs, all_kwargs

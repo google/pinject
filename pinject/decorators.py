@@ -14,6 +14,7 @@ limitations under the License.
 """
 
 
+import collections
 import inspect
 
 from .third_party import decorator
@@ -27,6 +28,7 @@ from . import scoping
 
 _ARG_BINDING_KEYS_ATTR = '_pinject_arg_binding_keys'
 _IS_WRAPPER_ATTR = '_pinject_is_wrapper'
+_NON_INJECTABLE_ARG_NAMES_ATTR = '_pinject_non_injectables'
 _ORIG_FN_ATTR = '_pinject_orig_fn'
 _PROVIDER_DECORATIONS_ATTR = '_pinject_provider_decorations'
 
@@ -55,10 +57,52 @@ def annotate_arg(arg_name, with_annotation):
                                 arg_binding_key=arg_binding_key)
 
 
+def inject(arg_names=None, all_except=None):
+    """Marks an initializer explicitly as injectable.
+
+    An initializer marked with @inject will be usable even when setting
+    only_use_explicit_bindings=True when calling new_object_graph().
+
+    This decorator can be used on an initializer or provider method to
+    separate the injectable args from the args that will be passed directly.
+    If arg_names is specified, then it must be a sequence, and only those args
+    are injected (and the rest must be passed directly).  If all_except is
+    specified, then it must be a sequence, and only those args are passed
+    directly (and the rest must be specified).  If neither arg_names nor
+    all_except are specified, then all args are injected (and none may be
+    passed directly).
+
+    arg_names or all_except, when specified, must not be empty and must
+    contain a (possibly empty, possibly non-proper) subset of the named args
+    of the decorated function.  all_except may not be all args of the
+    decorated function (because then why call that provider method or
+    initialzer via Pinject?).  At most one of arg_names and all_except may be
+    specified.  A function may be decorated by @inject at most once.
+
+    """
+    back_frame_loc = locations.get_back_frame_loc()
+    if arg_names is not None and all_except is not None:
+        raise errors.TooManyArgsToInjectDecoratorError(back_frame_loc)
+    for arg, arg_value in [('arg_names', arg_names),
+                           ('all_except', all_except)]:
+        if arg_value is not None:
+            if not arg_value:
+                raise errors.EmptySequenceArgError(back_frame_loc, arg)
+            if (not isinstance(arg_value, collections.Sequence) or
+                isinstance(arg_value, basestring)):
+                raise errors.WrongArgTypeError(
+                    arg, 'sequence (of arg names)', type(arg_value).__name__)
+    if arg_names is None and all_except is None:
+        all_except = []
+    return _get_pinject_wrapper(
+        back_frame_loc, inject_arg_names=arg_names,
+        inject_all_except_arg_names=all_except)
+
+
 def injectable(fn):
     """Marks an initializer explicitly as injectable.
 
-    An initializer marked with @injectable will be usable even if setting
+    An initializer marked with @injectable will be usable even when setting
     only_use_explicit_bindings=True when calling new_object_graph().
 
     Args:
@@ -183,16 +227,18 @@ def _get_pinject_decorated_fn(fn):
     return pinject_decorated_fn
 
 
+# TODO(kurts): separate out the parts for different decorators.
 def _get_pinject_wrapper(
         decorator_loc, arg_binding_key=None, provider_arg_name=None,
-        provider_annotated_with=None, provider_in_scope_id=None):
+        provider_annotated_with=None, provider_in_scope_id=None,
+        inject_arg_names=None, inject_all_except_arg_names=None):
     def get_pinject_decorated_fn_with_additions(fn):
         pinject_decorated_fn = _get_pinject_decorated_fn(fn)
+        orig_arg_names, unused_varargs, unused_keywords, unused_defaults = (
+            inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
         if arg_binding_key is not None:
-            arg_names, unused_varargs, unused_keywords, unused_defaults = (
-                inspect.getargspec(
-                    getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
-            if not arg_binding_key.can_apply_to_one_of_arg_names(arg_names):
+            if not arg_binding_key.can_apply_to_one_of_arg_names(
+                    orig_arg_names):
                 raise errors.NoSuchArgToInjectError(
                     decorator_loc, arg_binding_key, fn)
             if arg_binding_key.conflicts_with_any_arg_binding_key(
@@ -209,6 +255,25 @@ def _get_pinject_wrapper(
             provider_decorations.append(ProviderDecoration(
                 provider_arg_name, provider_annotated_with,
                 provider_in_scope_id))
+        if (inject_arg_names is not None or
+            inject_all_except_arg_names is not None):
+            if hasattr(pinject_decorated_fn, _NON_INJECTABLE_ARG_NAMES_ATTR):
+                raise errors.DuplicateDecoratorError('inject', decorator_loc)
+            non_injectable_arg_names = []
+            setattr(pinject_decorated_fn, _NON_INJECTABLE_ARG_NAMES_ATTR,
+                    non_injectable_arg_names)
+            if inject_arg_names is not None:
+                non_injectable_arg_names[:] = [
+                    x for x in orig_arg_names if x not in inject_arg_names]
+                arg_names_to_verify = inject_arg_names
+            else:
+                non_injectable_arg_names[:] = inject_all_except_arg_names
+                arg_names_to_verify = inject_all_except_arg_names
+            for arg_name in arg_names_to_verify:
+                if arg_name not in orig_arg_names:
+                    raise errors.NoSuchArgError(decorator_loc, arg_name)
+            if len(non_injectable_arg_names) == len(orig_arg_names):
+                raise errors.NoRemainingArgsToInjectError(decorator_loc)
         return pinject_decorated_fn
     return get_pinject_decorated_fn_with_additions
 
@@ -226,8 +291,14 @@ def get_injectable_arg_binding_keys(fn):
         num_to_keep = ((len(arg_names) - len(defaults)) if defaults
                        else len(arg_names))
         arg_names = arg_names[:num_to_keep]
-        unbound_arg_names = arg_binding_keys.get_unbound_arg_names(
-            [arg_name for arg_name in _remove_self_if_exists(arg_names)],
+        if hasattr(fn, _NON_INJECTABLE_ARG_NAMES_ATTR):
+            non_injectable_arg_names = getattr(
+                fn, _NON_INJECTABLE_ARG_NAMES_ATTR)
+        else:
+            non_injectable_arg_names = []
+        unbound_injectable_arg_names = arg_binding_keys.get_unbound_arg_names(
+            [arg_name for arg_name in _remove_self_if_exists(arg_names)
+             if arg_name not in non_injectable_arg_names],
             existing_arg_binding_keys)
     else:
         existing_arg_binding_keys = []
@@ -236,10 +307,10 @@ def get_injectable_arg_binding_keys(fn):
         num_to_keep = ((len(arg_names) - len(defaults)) if defaults
                        else len(arg_names))
         arg_names = arg_names[:num_to_keep]
-        unbound_arg_names = _remove_self_if_exists(arg_names)
+        unbound_injectable_arg_names = _remove_self_if_exists(arg_names)
     all_arg_binding_keys = list(existing_arg_binding_keys)
     all_arg_binding_keys.extend([arg_binding_keys.new(arg_name)
-                                 for arg_name in unbound_arg_names])
+                                 for arg_name in unbound_injectable_arg_names])
     return all_arg_binding_keys
 
 

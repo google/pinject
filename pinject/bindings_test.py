@@ -219,10 +219,12 @@ class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
 
 class FakeObjectProvider(object):
 
-    def provide_class(self, cls, injection_context):
+    def provide_class(self, cls, injection_context,
+                      direct_init_pargs, direct_init_kwargs):
         return 'a-provided-{0}'.format(cls.__name__)
 
-    def call_with_injection(self, provider_fn, injection_context):
+    def call_with_injection(self, provider_fn, injection_context,
+                            direct_pargs, direct_kwargs):
         return provider_fn()
 
 
@@ -232,7 +234,7 @@ _UNUSED_INJECTION_CONTEXT = (
         _UNUSED_INJECTION_SITE_FN))
 def call_provisor_fn(a_binding):
     return a_binding.proviser_fn(
-        _UNUSED_INJECTION_CONTEXT, FakeObjectProvider())
+        _UNUSED_INJECTION_CONTEXT, FakeObjectProvider(), pargs=[], kwargs={})
 
 
 class GetExplicitClassBindingsTest(unittest.TestCase):

@@ -1,6 +1,9 @@
 TODO:
+- deprecate @injectable
+- allow provider methods & initializers to have & use *pargs, **kwargs
 - auto-require provider method args
 - allow passing args to provider methods
+- move obj_provider into injection_context, so that provisers only have one arg?
 - allow object_graph.provide('arg name')?
 - describe features specifically omitted, e.g.,
   - circular injection

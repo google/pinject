@@ -263,8 +263,9 @@ def new_binding_to_class(binding_key, to_class, in_scope, get_binding_loc_fn):
     if not inspect.isclass(to_class):
         raise errors.InvalidBindingTargetError(
             get_binding_loc_fn(), binding_key, to_class, 'class')
-    def Proviser(injection_context, obj_provider):
-        return obj_provider.provide_class(to_class, injection_context)
+    def Proviser(injection_context, obj_provider, pargs, kwargs):
+        return obj_provider.provide_class(
+            to_class, injection_context, pargs, kwargs)
     def GetBindingTargetDesc():
         return 'the class {0}'.format(
             locations.get_class_name_and_loc(to_class))
@@ -274,10 +275,14 @@ def new_binding_to_class(binding_key, to_class, in_scope, get_binding_loc_fn):
 
 def new_binding_to_instance(
         binding_key, to_instance, in_scope, get_binding_loc_fn):
-    proviser_fn = lambda injection_context, obj_provider: to_instance
+    def Proviser(injection_context, obj_provider, pargs, kwargs):
+        if pargs or kwargs:
+            raise TypeError('instance provider takes no arguments'
+                            ' ({0} given)'.format(len(pargs) + len(kwargs)))
+        return to_instance
     def GetBindingTargetDesc():
         return 'the instance {0!r}'.format(to_instance)
-    return Binding(binding_key, proviser_fn, GetBindingTargetDesc, in_scope,
+    return Binding(binding_key, Proviser, GetBindingTargetDesc, in_scope,
                    get_binding_loc_fn)
 
 
@@ -293,15 +298,16 @@ class BindingSpec(object):
 def get_provider_fn_bindings(provider_fn, default_arg_names):
     provider_decorations = decorators.get_provider_fn_decorations(
         provider_fn, default_arg_names)
-    proviser_fn = lambda injection_context, obj_provider: (
-        obj_provider.call_with_injection(provider_fn, injection_context))
+    def Proviser(injection_context, obj_provider, pargs, kwargs):
+        return obj_provider.call_with_injection(
+            provider_fn, injection_context, pargs, kwargs)
     def GetBindingTargetDescFn():
         return 'the provider {0}'.format(
             locations.get_class_name_and_loc(provider_fn))
     return [
         Binding(binding_keys.new(provider_decoration.arg_name,
                                  provider_decoration.annotated_with),
-                proviser_fn, GetBindingTargetDescFn,
+                Proviser, GetBindingTargetDescFn,
                 provider_decoration.in_scope_id,
                 lambda p_fn=provider_fn: locations.get_type_loc(p_fn))
         for provider_decoration in provider_decorations]

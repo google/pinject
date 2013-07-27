@@ -122,6 +122,14 @@ def print_decorator_applied_to_non_init_error():
                             apply_injectable_to_random_fn)
 
 
+def print_directly_passing_injected_args_error():
+    raise NotImplementedError()  # TODO(kurts)
+
+
+def print_duplicate_decorator_error():
+    raise NotImplementedError()  # TODO(kurts)
+
+
 def print_empty_binding_spec_error():
     class EmptyBindingSpec(bindings.BindingSpec):
         pass
@@ -138,6 +146,10 @@ def print_empty_provides_decorator_error():
                 pass
     _print_raised_exception(
         errors.EmptyProvidesDecoratorError, define_binding_spec)
+
+
+def print_empty_sequence_arg_error():
+    raise NotImplementedError()
 
 
 def print_injecting_none_disallowed_error():
@@ -203,6 +215,14 @@ def print_no_binding_target_args_error():
         modules=None, binding_specs=[SomeBindingSpec()])
 
 
+def print_no_remaining_args_to_inject_error():
+    raise NotImplementedError()
+
+
+def print_no_such_arg_error():
+    raise NotImplementedError()
+
+
 def print_no_such_arg_to_inject_error():
     def do_bad_annotate_arg():
         @decorators.annotate_arg('foo', 'an-annotation')
@@ -246,6 +266,10 @@ def print_pargs_disallowed_when_copying_args_error():
                 pass
     _print_raised_exception(
         errors.PargsDisallowedWhenCopyingArgsError, do_bad_initializer)
+
+
+def print_too_many_args_to_inject_decorator_error():
+    raise NotImplementedError()
 
 
 def print_unknown_scope_error():

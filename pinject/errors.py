@@ -86,6 +86,21 @@ class DecoratorAppliedToNonInitError(Error):
                 decorator_name, locations.get_class_name_and_loc(fn)))
 
 
+class DirectlyPassingInjectedArgsError(Error):
+
+    def __init__(self, duplicated_args):
+        Error.__init__(
+            self, 'injected args {0} passed directly'.format(duplicated_args))
+
+
+class DuplicateDecoratorError(Error):
+
+    def __init__(self, decorator_name, second_decorator_loc):
+        Error.__init__(
+            self, 'at {0}, @{1} cannot be applied twice'.format(
+                second_decorator_loc, decorator_name))
+
+
 class EmptyBindingSpecError(Error):
 
     def __init__(self, binding_spec):
@@ -102,6 +117,14 @@ class EmptyProvidesDecoratorError(Error):
         Error.__init__(
             self, '@provides() at {0} needs at least one non-default'
             ' arg'.format(at_provides_loc))
+
+
+class EmptySequenceArgError(Error):
+
+    def __init__(self, call_site_loc, arg_name):
+        Error.__init__(
+            self, 'expected non-empty sequence arg {0} at {1}'.format(
+                arg_name, call_site_loc))
 
 
 class InjectingNoneDisallowedError(Error):
@@ -156,6 +179,23 @@ class NoBindingTargetArgsError(Error):
                 binding_key, binding_loc))
 
 
+class NoRemainingArgsToInjectError(Error):
+
+    def __init__(self, decorator_loc):
+        Error.__init__(
+            self, 'at {0}, all args are declared passed directly and therefore'
+            ' no args will be injected; call the method directly'
+            ' instead?'.format(decorator_loc))
+
+
+class NoSuchArgError(Error):
+
+    def __init__(self, call_site_loc, arg_name):
+        Error.__init__(self, 'at {0}, no such arg named {1}'.format(
+            call_site_loc, arg_name))
+
+
+# TODO(kurts): replace NoSuchArgToInjectError with NoSuchArgError.
 class NoSuchArgToInjectError(Error):
 
     def __init__(self, decorator_loc, arg_binding_key, fn):
@@ -177,7 +217,7 @@ class NothingInjectableForArgError(Error):
 
     def __init__(self, binding_key, injection_site_desc):
         Error.__init__(
-            self, ' when injecting {0}, nothing injectable for {1}'.format(
+            self, 'when injecting {0}, nothing injectable for {1}'.format(
                 injection_site_desc, binding_key))
 
 
@@ -195,6 +235,14 @@ class PargsDisallowedWhenCopyingArgsError(Error):
             self, 'decorator @{0} cannot be applied to {1} with *{2}'.format(
                 decorator_name, locations.get_class_name_and_loc(fn),
                 pargs_arg_name))
+
+
+class TooManyArgsToInjectDecoratorError(Error):
+
+    def __init__(self, decorator_loc):
+        Error.__init__(
+            self, 'at {0}, cannot specify both inject_arg_names and'
+            ' inject_all_except_arg_names'.format(decorator_loc))
 
 
 class UnknownScopeError(Error):

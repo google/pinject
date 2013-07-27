@@ -29,7 +29,8 @@ from pinject import scoping
 # TODO(kurts): have only one FakeObjectProvider for tests.
 class FakeObjectProvider(object):
 
-    def provide_class(self, cls, injection_context):
+    def provide_class(self, cls, injection_context,
+                      direct_init_pargs, direct_init_kwargs):
         return 'a-provided-{0}'.format(cls.__name__)
 
     def provide_from_binding_key(self, binding_key, injection_context):
@@ -48,6 +49,98 @@ class AnnotateArgTest(unittest.TestCase):
         self.assertEqual([arg_binding_keys.new('foo', 'an-annotation')],
                          [binding_key for binding_key in getattr(
                              some_function, decorators._ARG_BINDING_KEYS_ATTR)])
+
+
+class InjectTest(unittest.TestCase):
+
+    def test_can_set_injectable_arg_names(self):
+        @decorators.inject(['foo', 'bar'])
+        def some_function(foo, bar):
+            pass
+        self.assertEqual(
+            [],
+            getattr(some_function, decorators._NON_INJECTABLE_ARG_NAMES_ATTR))
+
+    def test_can_set_non_injectable_arg_names(self):
+        @decorators.inject(all_except=['foo'])
+        def some_function(foo, bar):
+            pass
+        self.assertEqual(
+            ['foo'],
+            getattr(some_function, decorators._NON_INJECTABLE_ARG_NAMES_ATTR))
+
+    def test_cannot_set_injectable_and_non_injectable_arg_names(self):
+        def do_bad_inject():
+            @decorators.inject(['foo'], all_except=['bar'])
+            def some_function(foo, bar):
+                pass
+        self.assertRaises(errors.TooManyArgsToInjectDecoratorError,
+                          do_bad_inject)
+
+    def test_cannot_set_all_args_non_injectable(self):
+        def do_bad_inject():
+            @decorators.inject(all_except=['foo', 'bar'])
+            def some_function(foo, bar):
+                pass
+        self.assertRaises(errors.NoRemainingArgsToInjectError, do_bad_inject)
+
+    def test_no_args_means_all_args_are_injectable(self):
+        @decorators.inject()
+        def some_function(foo, bar):
+            pass
+        self.assertEqual(
+            [],
+            getattr(some_function, decorators._NON_INJECTABLE_ARG_NAMES_ATTR))
+
+    def test_arg_names_must_be_sequence(self):
+        def do_bad_inject():
+            @decorators.inject(arg_names='foo')
+            def some_function(foo, bar):
+                pass
+        self.assertRaises(errors.WrongArgTypeError, do_bad_inject)
+
+    def test_all_except_arg_names_must_be_sequence(self):
+        def do_bad_inject():
+            @decorators.inject(all_except='foo')
+            def some_function(foo, bar):
+                pass
+        self.assertRaises(errors.WrongArgTypeError, do_bad_inject)
+
+    def test_arg_names_must_be_non_empty_if_specified(self):
+        def do_bad_inject():
+            @decorators.inject(arg_names=[])
+            def some_function(foo, bar):
+                pass
+        self.assertRaises(errors.EmptySequenceArgError, do_bad_inject)
+
+    def test_all_except_arg_names_must_be_non_empty_if_specified(self):
+        def do_bad_inject():
+            @decorators.inject(all_except=[])
+            def some_function(foo, bar):
+                pass
+        self.assertRaises(errors.EmptySequenceArgError, do_bad_inject)
+
+    def test_arg_names_must_reference_existing_args(self):
+        def do_bad_inject():
+            @decorators.inject(arg_names=['bar'])
+            def some_function(foo):
+                pass
+        self.assertRaises(errors.NoSuchArgError, do_bad_inject)
+
+    def test_all_except_arg_names_must_reference_existing_args(self):
+        def do_bad_inject():
+            @decorators.inject(all_except=['bar'])
+            def some_function(foo):
+                pass
+        self.assertRaises(errors.NoSuchArgError, do_bad_inject)
+
+    def test_cannot_be_applied_twice_to_same_fn(self):
+        def do_bad_inject():
+            @decorators.inject(['foo'])
+            @decorators.inject(['foo'])
+            def some_function(foo, bar):
+                pass
+        self.assertRaises(errors.DuplicateDecoratorError, do_bad_inject)
 
 
 class InjectableTest(unittest.TestCase):

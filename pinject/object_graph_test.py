@@ -506,7 +506,7 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class_one = obj_graph.provide(ClassOne)
         self.assertEqual('a-foo with a-bar', class_one.foo)
 
-    def test_inject_decorated_class_can_be_directly_provided(self):
+    def test_injectable_decorated_class_can_be_directly_provided(self):
         class SomeClass(object):
             @decorators.injectable
             def __init__(self):
@@ -516,7 +516,17 @@ class ObjectGraphProvideTest(unittest.TestCase):
         class_one = obj_graph.provide(SomeClass)
         self.assertEqual('a-foo', class_one.foo)
 
-    def test_non_inject_decorated_class_cannot_be_directly_provided(self):
+    def test_inject_decorated_class_can_be_directly_provided(self):
+        class SomeClass(object):
+            @decorators.inject()
+            def __init__(self):
+                self.foo = 'a-foo'
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass], only_use_explicit_bindings=True)
+        class_one = obj_graph.provide(SomeClass)
+        self.assertEqual('a-foo', class_one.foo)
+
+    def test_non_explicitly_injectable_class_cannot_be_directly_provided(self):
         class SomeClass(object):
             def __init__(self):
                 self.foo = 'a-foo'
@@ -525,13 +535,28 @@ class ObjectGraphProvideTest(unittest.TestCase):
         self.assertRaises(
             errors.NonExplicitlyBoundClassError, obj_graph.provide, SomeClass)
 
-    def test_inject_decorated_class_is_explicitly_bound(self):
+    def test_injectable_decorated_class_is_explicitly_bound(self):
         class ClassOne(object):
             @decorators.injectable
             def __init__(self, class_two):
                 self.class_two = class_two
         class ClassTwo(object):
             @decorators.injectable
+            def __init__(self):
+                self.foo = 'a-foo'
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[ClassOne, ClassTwo],
+            only_use_explicit_bindings=True)
+        class_one = obj_graph.provide(ClassOne)
+        self.assertEqual('a-foo', class_one.class_two.foo)
+
+    def test_inject_decorated_class_is_explicitly_bound(self):
+        class ClassOne(object):
+            @decorators.inject()
+            def __init__(self, class_two):
+                self.class_two = class_two
+        class ClassTwo(object):
+            @decorators.inject()
             def __init__(self):
                 self.foo = 'a-foo'
         obj_graph = object_graph.new_object_graph(
@@ -581,6 +606,99 @@ class ObjectGraphProvideTest(unittest.TestCase):
             only_use_explicit_bindings=True)
         self.assertRaises(errors.NothingInjectableForArgError,
                           obj_graph.provide, ClassOne)
+
+    def test_can_pass_direct_args_to_provider_fn(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            @decorators.inject(['injected'])
+            def provide_foo(self, passed_directly_parg, passed_directly_kwarg,
+                            injected):
+                return passed_directly_parg + passed_directly_kwarg + injected
+            def configure(self, bind):
+                bind('injected', to_instance=2)
+        class SomeClass(object):
+            def __init__(self, provide_foo):
+                self.foo = provide_foo(30, passed_directly_kwarg=10)
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()])
+        some_class = obj_graph.provide(SomeClass)
+        self.assertEqual(42, some_class.foo)
+
+    def test_can_pass_kwargs_to_provider_fn(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            def provide_foo(self, injected, **kwargs):
+                return injected + kwargs['kwarg']
+            def configure(self, bind):
+                bind('injected', to_instance=2)
+        class SomeClass(object):
+            def __init__(self, provide_foo):
+                self.foo = provide_foo(kwarg=40)
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()])
+        some_class = obj_graph.provide(SomeClass)
+        self.assertEqual(42, some_class.foo)
+
+    def test_cannot_pass_injected_args_to_provider_fn(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            def provide_foo(self, injected):
+                return 'unused'
+            def configure(self, bind):
+                bind('injected', to_instance=2)
+        class SomeClass(object):
+            def __init__(self, provide_foo):
+                self.foo = provide_foo(injected=40)
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()])
+        self.assertRaises(errors.DirectlyPassingInjectedArgsError,
+                          obj_graph.provide, SomeClass)
+
+    def test_cannot_pass_non_existent_args_to_provider_fn(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            @decorators.inject(['injected'])
+            def provide_foo(self, injected):
+                pass
+            def configure(self, bind):
+                bind('injected', to_instance=2)
+        class SomeClass(object):
+            def __init__(self, provide_foo):
+                self.foo = provide_foo(non_existent=40)
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()])
+        self.assertRaises(TypeError, obj_graph.provide, SomeClass)
+
+    def test_inject_decorator_works_on_initializer(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            def configure(self, bind):
+                bind('injected', to_instance=2)
+        class Foo(object):
+            @decorators.inject(['injected'])
+            def __init__(self, passed_directly_parg, passed_directly_kwarg,
+                         injected):
+                self.forty_two = (passed_directly_parg +
+                                  passed_directly_kwarg + injected)
+        class SomeClass(object):
+            def __init__(self, provide_foo):
+                self.foo = provide_foo(30, passed_directly_kwarg=10)
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass, Foo],
+            binding_specs=[SomeBindingSpec()])
+        some_class = obj_graph.provide(SomeClass)
+        self.assertEqual(42, some_class.foo.forty_two)
+
+    def test_cannot_pass_non_existent_args_to_provider_fn_for_instance(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            def configure(self, bind):
+                bind('foo', to_instance='a-foo')
+        class SomeClass(object):
+            def __init__(self, provide_foo):
+                self.foo = provide_foo(non_existent=42)
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()])
+        self.assertRaises(TypeError, obj_graph.provide, SomeClass)
 
     def test_can_inject_none_when_allowing_injecting_none(self):
         class SomeClass(object):

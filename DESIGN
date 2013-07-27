@@ -80,3 +80,114 @@ Decision
 --------
 
 Don't support field injection.  Require initializer injection.
+
+Passing args directly to provider methods
+=========================================
+
+Choices:
+1. Allow passing args when calling provider methods.
+   a. Allow passing args that Pinject has bindings for.
+   b. Allow passing only args that Pinject does not have bindings for.
+   c. Allow passing args only designated as user-specifiable.
+2. Require provider method args to be injected by Pinject.
+
+Benefits of allowing directly passed args
+-----------------------------------------
+
+Sometimes, you need to be able to create lots of objects based on user data
+but with some automatically injected args as well.  You would normally create
+a manually defined factory.
+
+.. code-block:: python
+
+    >>> class SomethingFactory(object):
+    ...     def __init__(self, injected_arg):
+    ...         self._injected_arg = injected_arg
+    ...     def new(self, passed_arg):
+    ...         return Something(passed_arg, self._injected_arg)
+    ...
+    >>> class SomeBindingSpec(pinject.BindingSpec):
+    ...     def provide_somethings(self, user_data, something_factory):
+    ...         return [something_factory.new(datum) for datum in user_data]
+    ...
+    >>>
+
+The factory is mostly boilerplate.  The only interesting part is its ``new()``
+method.  The boilerplate is there to allow args both specified by user code
+and injected by Pinject.  You should be able to do away with the boilerplate
+by having user code call the provider method directly and having Pinject
+supply any args not supplied by user code.
+
+.. code-block:: python
+
+    >>> class SomeBindingSpec(pinject.BindingSpec):
+    ...     def provide_something(self, passed_arg, injected_arg):
+    ...         return Something(passed_arg, self._injected_arg)
+    ...     def provide_somethings(self, user_data, provide_something):
+    ...         return [provide_something(datum) for datum in user_data]
+    ...
+    >>>
+
+Benefits of forbidding directly passed args
+-------------------------------------------
+
+It's less clear to readers of the code which args are intended to be passed as
+part of calling the provider method, and which args are intended to be
+injected by Pinject.  (It doesn't seem useful to allow both possibilities in
+the same binding spec.)
+
+If Pinject can't tell the difference between args that will be passed in by
+user code and args that it is supposed to inject, then it cannot automatically
+require bindings for the args that it is supposed to inject.
+
+Maybe there could be some way to distinguish args that the user is supposed to
+provide.
+
+How to distinguish args passable directly
+-----------------------------------------
+
+Two options:
+
+* make such args have defaults; or
+* make such args have a default of ``pinject.PASSED_DIRECTLY``.
+
+The latter is probably better, because:
+
+* it doesn't require a default that may not make sense and that the code will check is not set; and
+* it is more explicit about what's going on than magically being able to set args if they have defaults.
+
+But this feels a little awkward, because if provider methods get the ability
+to designate args as ``PASSED_DIRECTLY``, then that should probably also apply
+to initializers.  But initializers are much more likely than provider methods
+to be used directly (i.e., not via Pinject).  Having an arg with a default
+means that the calling code doesn't know that it really needs to specify that
+arg.  The ``PASSED_DIRECTLY`` value will get assigned to a field and only
+discovered at a point distant from the initializer call.  It would be possible
+to make ``@copy_args_to_internal_fields`` check for ``PASSED_DIRECTLY``
+values, but that assumes the code is using ``@copy_args_to_internal_fields``.
+And it would require all directly passed args to be last, after injected args
+(which would have no defaults).
+
+Maybe a decorator would be better, something like:
+
+* ``@skip_injection``
+* ``@allow_skipping_injection``
+* ``@allow_direct_injection``
+* ``@allow_as_provider_arg``
+* ``@inject``
+
+A decorator would be explicit, which is good.  A decorator would allow Pinject
+to figure out what args it's responsible for injecting, which is good.
+
+It's not clear whether to allow injected provider args where either the user
+can specify them, or else Pinject provides them.  Probably not: users can
+always use two params to simulate specified-or-injected.  And if it turns out
+to be really useful later, adding it maintains backward compatibility.
+
+Decision
+--------
+
+Create a ``@inject`` decorator that says which of the function's args are
+passed directly vs. injected as dependencies.  Have ``@inject`` do double duty
+marking initializers as explicitly injectable.  Allow args to be passed
+directly or injected as dependencies but not both.

@@ -86,8 +86,18 @@ class ObjectProviderTest(unittest.TestCase):
                 self.bar = bar
         arg_binding_key = arg_binding_keys.new('bar')
         obj_provider = new_test_obj_provider(arg_binding_key, 'a-bar')
-        foo = obj_provider.provide_class(Foo, new_injection_context())
+        foo = obj_provider.provide_class(Foo, new_injection_context(), [], {})
         self.assertEqual('a-bar', foo.bar)
+
+    def test_provides_class_with_direct_pargs_and_kwargs(self):
+        class SomeClass(object):
+            @decorators.inject(['baz'])
+            def __init__(self, foo, bar, baz):
+                self.foobarbaz = foo + bar + baz
+        obj_provider = new_test_obj_provider(arg_binding_keys.new('baz'), 'baz')
+        some_class = obj_provider.provide_class(
+            SomeClass, new_injection_context(), ['foo'], {'bar': 'bar'})
+        self.assertEqual('foobarbaz', some_class.foobarbaz)
 
     def test_provides_class_with_init_as_method_wrapper_successfully(self):
         class Foo(object):
@@ -95,7 +105,8 @@ class ObjectProviderTest(unittest.TestCase):
         arg_binding_key = arg_binding_keys.new('unused')
         obj_provider = new_test_obj_provider(arg_binding_key, 'unused')
         self.assertIsInstance(
-            obj_provider.provide_class(Foo, new_injection_context()), Foo)
+            obj_provider.provide_class(Foo, new_injection_context(), [], {}),
+            Foo)
 
     def test_calls_with_injection_successfully(self):
         def foo(bar):
@@ -104,13 +115,14 @@ class ObjectProviderTest(unittest.TestCase):
         obj_provider = new_test_obj_provider(arg_binding_key, 'a-bar')
         self.assertEqual('a-foo-and-a-bar',
                          obj_provider.call_with_injection(
-                             foo, new_injection_context()))
+                             foo, new_injection_context(), [], {}))
 
     def test_gets_injection_kwargs_successfully(self):
         def foo(bar):
             pass
         arg_binding_key = arg_binding_keys.new('bar')
         obj_provider = new_test_obj_provider(arg_binding_key, 'a-bar')
-        self.assertEqual({'bar': 'a-bar'},
-                         obj_provider.get_injection_kwargs(
-                             foo, new_injection_context()))
+        pargs, kwargs = obj_provider.get_injection_pargs_kwargs(
+            foo, new_injection_context(), [], {})
+        self.assertEqual([], pargs)
+        self.assertEqual({'bar': 'a-bar'}, kwargs)
