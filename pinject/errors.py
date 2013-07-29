@@ -88,9 +88,12 @@ class DecoratorAppliedToNonInitError(Error):
 
 class DirectlyPassingInjectedArgsError(Error):
 
-    def __init__(self, duplicated_args):
+    def __init__(self, duplicated_args, injection_site_desc, provider_fn):
         Error.__init__(
-            self, 'injected args {0} passed directly'.format(duplicated_args))
+            self, 'somewhere in {0}, injected args {1} passed directly when'
+            ' calling {2}'.format(
+                injection_site_desc, list(duplicated_args),
+                locations.get_class_name_and_loc(provider_fn)))
 
 
 class DuplicateDecoratorError(Error):
@@ -241,8 +244,8 @@ class TooManyArgsToInjectDecoratorError(Error):
 
     def __init__(self, decorator_loc):
         Error.__init__(
-            self, 'at {0}, cannot specify both inject_arg_names and'
-            ' inject_all_except_arg_names'.format(decorator_loc))
+            self, 'at {0}, cannot specify both arg_names and'
+            ' all_except'.format(decorator_loc))
 
 
 class UnknownScopeError(Error):

@@ -123,11 +123,31 @@ def print_decorator_applied_to_non_init_error():
 
 
 def print_directly_passing_injected_args_error():
-    raise NotImplementedError()  # TODO(kurts)
+    class SomeBindingSpec(bindings.BindingSpec):
+        def provide_foo(self, injected):
+            return 'unused'
+        def configure(self, bind):
+            bind('injected', to_instance=2)
+    class SomeClass(object):
+        def __init__(self, provide_foo):
+            provide_foo(injected=40)
+    obj_graph = object_graph.new_object_graph(
+        modules=None, classes=[SomeClass],
+        binding_specs=[SomeBindingSpec()])
+    _print_raised_exception(errors.DirectlyPassingInjectedArgsError,
+                            obj_graph.provide, SomeClass)
+    # TODO(kurts): make the error display the line number where the provider
+    # was called, not the line number of the top of the function in which the
+    # provider is called.
 
 
 def print_duplicate_decorator_error():
-    raise NotImplementedError()  # TODO(kurts)
+    def do_bad_inject():
+        @decorators.inject(['foo'])
+        @decorators.inject(['foo'])
+        def some_function(foo, bar):
+            pass
+    _print_raised_exception(errors.DuplicateDecoratorError, do_bad_inject)
 
 
 def print_empty_binding_spec_error():
@@ -149,7 +169,11 @@ def print_empty_provides_decorator_error():
 
 
 def print_empty_sequence_arg_error():
-    raise NotImplementedError()
+    def do_bad_inject():
+        @decorators.inject(arg_names=[])
+        def some_function(foo, bar):
+            pass
+    _print_raised_exception(errors.EmptySequenceArgError, do_bad_inject)
 
 
 def print_injecting_none_disallowed_error():
@@ -216,11 +240,19 @@ def print_no_binding_target_args_error():
 
 
 def print_no_remaining_args_to_inject_error():
-    raise NotImplementedError()
+    def do_bad_inject():
+        @decorators.inject(all_except=['foo', 'bar'])
+        def some_function(foo, bar):
+            pass
+    _print_raised_exception(errors.NoRemainingArgsToInjectError, do_bad_inject)
 
 
 def print_no_such_arg_error():
-    raise NotImplementedError()
+    def do_bad_inject():
+        @decorators.inject(arg_names=['bar'])
+        def some_function(foo):
+            pass
+    _print_raised_exception(errors.NoSuchArgError, do_bad_inject)
 
 
 def print_no_such_arg_to_inject_error():
@@ -269,7 +301,12 @@ def print_pargs_disallowed_when_copying_args_error():
 
 
 def print_too_many_args_to_inject_decorator_error():
-    raise NotImplementedError()
+    def do_bad_inject():
+        @decorators.inject(['foo'], all_except=['bar'])
+        def some_function(foo, bar):
+            pass
+    _print_raised_exception(errors.TooManyArgsToInjectDecoratorError,
+                            do_bad_inject)
 
 
 def print_unknown_scope_error():

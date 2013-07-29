@@ -35,6 +35,8 @@ class ObjectProvider(object):
             binding_key, injection_context.get_injection_site_desc())
         scope = self._bindable_scopes.get_sub_scope(binding)
         def Provide(*pargs, **kwargs):
+            # TODO(kurts): probably capture back frame's file:line for
+            # DirectlyPassingInjectedArgsError.
             child_injection_context = injection_context.get_child(
                 injection_site_fn, binding)
             provided = scope.provide(
@@ -74,7 +76,9 @@ class ObjectProvider(object):
                 fn, abk, injection_context))
         duplicated_args = set(di_kwargs.keys()) & set(direct_kwargs)
         if duplicated_args:
-            raise errors.DirectlyPassingInjectedArgsError(duplicated_args)
+            raise errors.DirectlyPassingInjectedArgsError(
+                duplicated_args, injection_context.get_injection_site_desc(),
+                fn)
         all_kwargs = dict(di_kwargs)
         all_kwargs.update(direct_kwargs)
         return direct_pargs, all_kwargs
