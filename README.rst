@@ -751,6 +751,119 @@ Watch out: don't confuse
 * *provider bindings*, which let you inject args named ``provide_something`` with provider functions; and
 * *provider methods*, which are methods of binding specs that provide instances of some arg name.
 
+Partial injection
+=================
+
+Provider bindings are useful when you want to create instances of a class on
+demand.  But a zero arg provider function will always return an instance
+configured the same way (within a given scope).  Sometimes, you want the
+ability to parameterize the provided instances, e.g., based on run-time user
+configuration.  You want the ability to create instances where part of the
+initialization data is provided per-instance at run-time and part of the
+initialization data is injected as dependencies.
+
+To do this, other dependency injection libraries have you define factory
+classes.  You inject dependencies into the factory class's initializer
+function, and then you call the factory class's creation method with the
+per-instance data.
+
+.. code-block:: python
+
+    >>> class WidgetFactory(object):
+    ...     def __init__(self, widget_polisher):
+    ...         self._widget_polisher = widget_polisher
+    ...     def new(self, color):  # normally would contain some non-trivial code...
+    ...         return some_function_of(self._widget_polisher, color)
+    ...
+    >>> class SomeBindingSpec(pinject.BindingSpec):
+    ...     def provide_something_with_colored_widgets(self, colors, widget_factory):
+    ...         return SomethingWithColoredWidgets(
+    ...             [widget_factory.new(color) for color in colors])
+    ...
+    >>>
+
+You can follow this pattern in Pinject, but it involves boring boilerplate for
+the factory class, saving away the initializer-injected dependencies to be
+used in the creation method.  Plus, you have to create yet another
+``...Factory`` class, which makes you feel like you're programming in java,
+not python.
+
+As a less repetitive alternative, Pinject lets you use *partial injection* on
+the provider functions returned by provider bindings.  You use the
+``@inject()`` decorator to tell Pinject ahead of time which args you expect to
+pass directly (vs. automatic injection), and then you pass those args directly
+when calling the provider function.
+
+.. code-block:: python
+
+    >>> class SomeBindingSpec(pinject.BindingSpec):
+    ...     @pinject.inject(['widget_polisher'])
+    ...     def provide_widget(self, color, widget_polisher):
+    ...         return some_function_of(widget_polisher, color)
+    ...     def provide_something_needing_widgets(self, colors, provide_widget):
+    ...         return SomethingNeedingWidgets(
+    ...             [provide_widget(color) for color in colors])
+    ...
+    >>>
+
+The first arg to ``@inject()``, ``arg_names``, specifies which args of the
+decorated method should be injected as dependencies.  If specified, it must be
+a non-empty sequence of names of the decorated method's args.  The remaining
+decorated method args will be passed directly.
+
+In the example above, note that, although there is a method called
+``provide_widget()`` and an arg of ``provide_something_needing_widgets()``
+called ``provide_widget``, these are not exactly the same!  The latter is a
+dependency-injected wrapper around the former.  The wrapper ensures that the
+``color`` arg is passed directly and then injects the ``widget_polisher``
+dependency.
+
+The ``@inject()`` decorator works to specify args passed directly both for
+provider bindings to provider methods (as in the example above) and for
+provider bindings to classes (where you can pass args directly to the
+initializer, as in the example below).
+
+.. code-block:: python
+
+    >>> class Widget(object):
+    ...     @pinject.inject(['widget_polisher'])
+    ...     def __init__(self, color, widget_polisher):
+    ...         pass  # normally something involving color and widget_polisher
+    ...
+    >>> class SomeBindingSpec(pinject.BindingSpec):
+    ...     def provide_something_needing_widgets(self, colors, provide_widget):
+    ...         return SomethingNeedingWidgets(
+    ...             [provide_widget(color) for color in colors])
+    ...
+    >>>
+
+The ``@inject()`` decorator also takes an ``all_except`` arg.  You can use
+this, instead of the (first positional) ``arg_names`` arg, if it's clearer and
+more concise to say which args are *not* injected (i.e., which args are passed
+directly).
+
+.. code-block:: python
+
+    >>> class Widget(object):
+    ...     # equivalent to @pinject.inject(['widget_polisher']):
+    ...     @pinject.inject(all_except=['color'])
+    ...     def __init__(self, color, widget_polisher):
+    ...         pass  # normally something involving color and widget_polisher
+    ...
+    >>>
+
+If both ``arg_names`` and ``all_except`` are omitted, then all args are
+injected by Pinject, and none are passed directly.  (Both ``arg_names`` and
+``all_except`` may not be specified at the same time.)  Wildcard positional
+and keyword args (i.e., ``*pargs`` and ``**kwargs``) are always passed
+directly, not injected.
+
+If you use ``@inject()`` to mark at least one arg of a provider method (or
+initializer) as passed directly, then you may no longer directly inject that
+provider method's corresponding arg name.  You must instead use a provider
+binding to inject a provider function, and then pass the required direct
+arg(s), as in the examples above.
+
 Custom scopes
 =============
 
@@ -1101,6 +1214,7 @@ Changelog
 
 Since v0.9:
 
+* Added partial injection.
 * Added ``require`` arg to allow binding spec ``configure`` methods to declare but not define bindings.
 * Sped up tests (and probably general functionality) by 10x.
 * Documented more design decisions.

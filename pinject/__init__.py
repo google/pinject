@@ -20,8 +20,8 @@ import sys
 __all__ = []
 from .bindings import BindingSpec
 __all__.extend(['BindingSpec'])
-from .decorators import annotate_arg, injectable, provides
-__all__.extend(['annotate_arg', 'injectable', 'provides'])
+from .decorators import annotate_arg, inject, injectable, provides
+__all__.extend(['annotate_arg', 'inject', 'injectable', 'provides'])
 for thing_name in dir(errors):
     thing = getattr(errors, thing_name)
     if type(thing) == type(str):

@@ -284,6 +284,23 @@ def print_nothing_injectable_for_arg_error():
                             obj_graph.provide, UnknownParamClass)
 
 
+def print_only_instantiable_via_provider_function_error():
+    class SomeBindingSpec(bindings.BindingSpec):
+        @decorators.inject(['injected'])
+        def provide_foo(self, passed_directly, injected):
+            return passed_directly + injected
+        def configure(self, bind):
+            bind('injected', to_instance=2)
+    class SomeClass(object):
+        def __init__(self, foo):
+            self.foo = foo
+    obj_graph = object_graph.new_object_graph(
+        modules=None, classes=[SomeClass],
+        binding_specs=[SomeBindingSpec()])
+    _print_raised_exception(errors.OnlyInstantiableViaProviderFunctionError,
+                            obj_graph.provide, SomeClass)
+
+
 def print_overriding_default_scope_error():
     _print_raised_exception(
         errors.OverridingDefaultScopeError, object_graph.new_object_graph,

@@ -48,7 +48,15 @@ class ObjectProvider(object):
                     binding.get_binding_target_desc_fn())
             return provided
         provider_indirection = arg_binding_key.provider_indirection
-        provided = provider_indirection.StripIndirectionIfNeeded(Provide)
+        try:
+            provided = provider_indirection.StripIndirectionIfNeeded(Provide)
+        except TypeError:
+            # TODO(kurts): it feels like there may be other TypeErrors that
+            # occur.  Instead, decorators.get_injectable_arg_binding_keys()
+            # should probably do all appropriate validation?
+            raise errors.OnlyInstantiableViaProviderFunctionError(
+                injection_site_fn, arg_binding_key,
+                binding.get_binding_target_desc_fn())
         return provided
 
     def provide_class(self, cls, injection_context,
@@ -71,10 +79,11 @@ class ObjectProvider(object):
     def get_injection_pargs_kwargs(self, fn, injection_context,
                                    direct_pargs, direct_kwargs):
         di_kwargs = arg_binding_keys.create_kwargs(
-            decorators.get_injectable_arg_binding_keys(fn),
+            decorators.get_injectable_arg_binding_keys(
+                fn, direct_pargs, direct_kwargs),
             lambda abk: self.provide_from_arg_binding_key(
                 fn, abk, injection_context))
-        duplicated_args = set(di_kwargs.keys()) & set(direct_kwargs)
+        duplicated_args = set(di_kwargs.keys()) & set(direct_kwargs.keys())
         if duplicated_args:
             raise errors.DirectlyPassingInjectedArgsError(
                 duplicated_args, injection_context.get_injection_site_desc(),

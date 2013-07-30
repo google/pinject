@@ -700,6 +700,22 @@ class ObjectGraphProvideTest(unittest.TestCase):
             binding_specs=[SomeBindingSpec()])
         self.assertRaises(TypeError, obj_graph.provide, SomeClass)
 
+    def test_cannot_directly_inject_something_expecting_direct_args(self):
+        class SomeBindingSpec(bindings.BindingSpec):
+            @decorators.inject(['injected'])
+            def provide_foo(self, passed_directly, injected):
+                return passed_directly + injected
+            def configure(self, bind):
+                bind('injected', to_instance=2)
+        class SomeClass(object):
+            def __init__(self, foo):
+                self.foo = foo
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()])
+        self.assertRaises(errors.OnlyInstantiableViaProviderFunctionError,
+                          obj_graph.provide, SomeClass)
+
     def test_can_inject_none_when_allowing_injecting_none(self):
         class SomeClass(object):
             def __init__(self, foo):
@@ -708,8 +724,8 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_foo(self):
                 return None
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()],
-            allow_injecting_none=True)
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()], allow_injecting_none=True)
         some_class = obj_graph.provide(SomeClass)
         self.assertIsNone(some_class.foo)
 
@@ -721,8 +737,8 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_foo(self):
                 return None
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()],
-            allow_injecting_none=False)
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()], allow_injecting_none=False)
         self.assertRaises(errors.InjectingNoneDisallowedError,
                           obj_graph.provide, SomeClass)
 

@@ -332,7 +332,8 @@ class GetInjectableArgBindingKeysTest(unittest.TestCase):
 
     def assert_fn_has_injectable_arg_binding_keys(self, fn, arg_binding_keys):
         self.assertEqual(
-            arg_binding_keys, decorators.get_injectable_arg_binding_keys(fn))
+            arg_binding_keys,
+            decorators.get_injectable_arg_binding_keys(fn, [], {}))
 
     def test_fn_with_no_args_returns_nothing(self):
         self.assert_fn_has_injectable_arg_binding_keys(lambda: None, [])

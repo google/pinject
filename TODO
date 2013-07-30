@@ -1,15 +1,18 @@
 TODO:
 - deprecate @injectable
+- make @inject complain if not applied to initializer or binding spec method
 - improve DirectlyPassingInjectedArgsError
 - auto-require provider method args
+- remove ObjectGraph.wrap()
+- allow testing that bindings exist to allow object to be provided
 - move obj_provider into injection_context, so that provisers only have one arg?
-- allow object_graph.provide('arg name')?
 - describe features specifically omitted, e.g.,
   - circular injection
   - scope annotations on classes
 - figure out whether/how Pinject works with inheritance
 
 Maybe TODO:
+- allow object_graph.provide('arg name')?
 - standard tests for scopes (reentrant? thread-safe?), annotations (eq?
      hash?), etc.
 - change default scope back to prototype?
@@ -27,5 +30,4 @@ Questions:
     I'm not sure.  It makes some things awkward, like a special scope from
     which it's OK to inject objects from any scope.  Maybe the main
     ObjectGraph method should be wrap() instead of provide_class()??
-- Remove ObjectGraph.wrap()?
 - Why should @inject apply to __init__() rather than the class?

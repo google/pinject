@@ -302,7 +302,7 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
         return obj_provider.call_with_injection(
             provider_fn, injection_context, pargs, kwargs)
     def GetBindingTargetDescFn():
-        return 'the provider {0}'.format(
+        return 'the provider method {0}'.format(
             locations.get_class_name_and_loc(provider_fn))
     return [
         Binding(binding_keys.new(provider_decoration.arg_name,

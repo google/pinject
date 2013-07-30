@@ -26,17 +26,22 @@ def get_type_loc(typ):
         return 'unknown location'
 
 
-# TODO(kurts): rename to ... something that makes sense.
+# TODO(kurts): rename to ... get_name_and_loc()?
 def get_class_name_and_loc(cls):
     try:
         if hasattr(cls, 'im_class'):
             class_name = '{0}.{1}'.format(cls.im_class.__name__, cls.__name__)
         else:
-            class_name = cls.__name__
+            class_name = '{0}.{1}'.format(
+                inspect.getmodule(cls).__name__, cls.__name__)
+    except (TypeError, IOError):
+        class_name = '{0}.{1}'.format(
+            inspect.getmodule(cls).__name__, cls.__name__)
+    try:
         return '{0} at {1}:{2}'.format(
             class_name, inspect.getfile(cls), inspect.getsourcelines(cls)[1])
-    except (TypeError, IOError):
-        return '{0}.{1}'.format(inspect.getmodule(cls).__name__, cls.__name__)
+    except (TypeError, IOError) as e:
+        return class_name
 
 
 def get_back_frame_loc():

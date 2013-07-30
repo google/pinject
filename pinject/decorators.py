@@ -283,31 +283,28 @@ def is_explicitly_injectable(cls):
             hasattr(cls.__init__, _IS_WRAPPER_ATTR))
 
 
-def get_injectable_arg_binding_keys(fn):
+def get_injectable_arg_binding_keys(fn, direct_pargs, direct_kwargs):
+    non_injectable_arg_names = []
     if hasattr(fn, _IS_WRAPPER_ATTR):
         existing_arg_binding_keys = getattr(fn, _ARG_BINDING_KEYS_ATTR)
-        arg_names, unused_varargs, unused_keywords, defaults = (
-            inspect.getargspec(getattr(fn, _ORIG_FN_ATTR)))
-        num_to_keep = ((len(arg_names) - len(defaults)) if defaults
-                       else len(arg_names))
-        arg_names = arg_names[:num_to_keep]
+        orig_fn = getattr(fn, _ORIG_FN_ATTR)
         if hasattr(fn, _NON_INJECTABLE_ARG_NAMES_ATTR):
             non_injectable_arg_names = getattr(
                 fn, _NON_INJECTABLE_ARG_NAMES_ATTR)
-        else:
-            non_injectable_arg_names = []
-        unbound_injectable_arg_names = arg_binding_keys.get_unbound_arg_names(
-            [arg_name for arg_name in _remove_self_if_exists(arg_names)
-             if arg_name not in non_injectable_arg_names],
-            existing_arg_binding_keys)
     else:
         existing_arg_binding_keys = []
-        arg_names, unused_varargs, unused_keywords, defaults = (
-            inspect.getargspec(fn))
-        num_to_keep = ((len(arg_names) - len(defaults)) if defaults
-                       else len(arg_names))
-        arg_names = arg_names[:num_to_keep]
-        unbound_injectable_arg_names = _remove_self_if_exists(arg_names)
+        orig_fn = fn
+
+    arg_names, unused_varargs, unused_keywords, defaults = (
+        inspect.getargspec(orig_fn))
+    num_args_with_defaults = len(defaults) if defaults is not None else 0
+    if num_args_with_defaults:
+        arg_names = arg_names[:-num_args_with_defaults]
+    unbound_injectable_arg_names = arg_binding_keys.get_unbound_arg_names(
+        [arg_name for arg_name in _remove_self_if_exists(arg_names)
+         if arg_name not in non_injectable_arg_names],
+        existing_arg_binding_keys)
+
     all_arg_binding_keys = list(existing_arg_binding_keys)
     all_arg_binding_keys.extend([arg_binding_keys.new(arg_name)
                                  for arg_name in unbound_injectable_arg_names])

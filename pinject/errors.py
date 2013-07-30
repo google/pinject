@@ -224,6 +224,16 @@ class NothingInjectableForArgError(Error):
                 injection_site_desc, binding_key))
 
 
+class OnlyInstantiableViaProviderFunctionError(Error):
+
+    def __init__(self, injection_site_fn, arg_binding_key, binding_target_desc):
+        Error.__init__(
+            self, 'when injecting {0}, {1} cannot be injected, because its'
+            ' provider, {2}, needs at least one directly passed arg'.format(
+                locations.get_class_name_and_loc(injection_site_fn),
+                arg_binding_key, binding_target_desc))
+
+
 class OverridingDefaultScopeError(Error):
 
     def __init__(self, scope_id):
