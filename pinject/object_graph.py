@@ -242,28 +242,3 @@ class ObjectGraph(object):
                 raise e
             else:
                 raise
-
-    # TODO(kurts): what's the use case for this, really?  Provider functions
-    # are already injected by default.  Functional programming?
-    def wrap(self, fn):
-        # This has to return a function with a different signature (and can't
-        # use @decorator) since otherwise python would require the caller to
-        # pass in all positional args that have no defaults, instead of
-        # letting those be injected if they're not passed in.
-        arg_names, unused_varargs, unused_keywords, defaults = inspect.getargspec(fn)
-        if defaults is None:
-            defaults = []
-        injectable_arg_names = arg_names[:(len(arg_names) - len(defaults))]
-        @functools.wraps(fn)
-        def WrappedFn(*pargs, **kwargs):
-            injected_arg_names = [
-                arg_name for index, arg_name in enumerate(injectable_arg_names)
-                if index >= len(pargs) and arg_name not in kwargs]
-            if injected_arg_names:
-                kwargs = dict(kwargs)
-                for arg_name in injected_arg_names:
-                    kwargs[arg_name] = self._obj_provider.provide_from_arg_binding_key(
-                        fn,  arg_binding_keys.new(arg_name),
-                        self._injection_context_factory.new(fn))
-            return fn(*pargs, **kwargs)
-        return WrappedFn

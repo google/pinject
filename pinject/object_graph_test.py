@@ -38,7 +38,8 @@ class NewObjectGraphTest(unittest.TestCase):
     def test_creates_object_graph_using_given_classes(self):
         class SomeClass(object):
             pass
-        obj_graph = object_graph.new_object_graph(modules=None, classes=[SomeClass])
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass])
         self.assertIsInstance(obj_graph.provide(SomeClass), SomeClass)
 
     def test_creates_object_graph_using_given_binding_specs(self):
@@ -91,7 +92,8 @@ class NewObjectGraphTest(unittest.TestCase):
             def __init__(self, foo):
                 self.foo = foo
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[RootBindingSpec()])
+            modules=None, classes=[SomeClass],
+            binding_specs=[RootBindingSpec()])
         some_class = obj_graph.provide(SomeClass)
         self.assertEqual('a-foo', some_class.foo)
 
@@ -118,8 +120,8 @@ class NewObjectGraphTest(unittest.TestCase):
         class EmptyBindingSpec(bindings.BindingSpec):
             pass
         self.assertRaises(errors.EmptyBindingSpecError,
-                          object_graph.new_object_graph, modules=None, classes=None,
-                          binding_specs=[EmptyBindingSpec()])
+                          object_graph.new_object_graph, modules=None,
+                          classes=None, binding_specs=[EmptyBindingSpec()])
 
     def test_creates_object_graph_using_given_scopes(self):
         class SomeClass(object):
@@ -130,7 +132,8 @@ class NewObjectGraphTest(unittest.TestCase):
             def provide_foo(self):
                 return object()
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()],
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()],
             id_to_scope={'foo-scope': scoping.SingletonScope()})
         some_class_one = obj_graph.provide(SomeClass)
         some_class_two = obj_graph.provide(SomeClass)
@@ -187,9 +190,10 @@ class NewObjectGraphTest(unittest.TestCase):
             pass
         class _Foo(object):
             pass
-        self.assertRaises(
-            errors.ConflictingRequiredBindingError, object_graph.new_object_graph,
-            modules=None, classes=[Foo, _Foo], binding_specs=[SomeBindingSpec()])
+        self.assertRaises(errors.ConflictingRequiredBindingError,
+                          object_graph.new_object_graph,
+                          modules=None, classes=[Foo, _Foo],
+                          binding_specs=[SomeBindingSpec()])
 
 
 class VerifyTypeTest(unittest.TestCase):
@@ -262,7 +266,8 @@ class PareToPresentArgsTest(unittest.TestCase):
         self.assertEqual(
             {'present': 'a-present-value'},
             object_graph._pare_to_present_args(
-                {'present': 'a-present-value', 'missing': 'a-missing-value'}, fn))
+                {'present': 'a-present-value', 'missing': 'a-missing-value'},
+                fn))
 
 
 class ObjectGraphProvideTest(unittest.TestCase):
@@ -399,7 +404,8 @@ class ObjectGraphProvideTest(unittest.TestCase):
             def provide_bar(self):
                 return object()
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()])
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()])
         class_one = obj_graph.provide(SomeClass)
         class_two = obj_graph.provide(SomeClass)
         self.assertIs(class_one.foo, class_two.foo)
@@ -417,7 +423,8 @@ class ObjectGraphProvideTest(unittest.TestCase):
                 bind('foo', to_class=InjectedClass, in_scope=scoping.SINGLETON)
                 bind('bar', to_class=InjectedClass, in_scope=scoping.SINGLETON)
         obj_graph = object_graph.new_object_graph(
-            modules=None, classes=[SomeClass], binding_specs=[SomeBindingSpec()])
+            modules=None, classes=[SomeClass],
+            binding_specs=[SomeBindingSpec()])
         some_class = obj_graph.provide(SomeClass)
         self.assertIs(some_class.foo, some_class.bar)
 
@@ -428,7 +435,8 @@ class ObjectGraphProvideTest(unittest.TestCase):
                 self.foo = foo
         class SomeBindingSpec(bindings.BindingSpec):
             def configure(self, bind):
-                bind('foo', annotated_with='other-annotation', to_instance='a-foo')
+                bind('foo', annotated_with='other-annotation',
+                     to_instance='a-foo')
         obj_graph = object_graph.new_object_graph(
             modules=None, classes=[ClassOne], binding_specs=[SomeBindingSpec()])
         self.assertRaises(errors.NothingInjectableForArgError,
@@ -748,55 +756,3 @@ class ObjectGraphProvideTest(unittest.TestCase):
         obj_graph = object_graph.new_object_graph(
             modules=None, classes=[SomeClass])
         self.assertRaises(errors.WrongArgTypeError, obj_graph.provide, 42)
-
-
-class ObjectGraphWrapTest(unittest.TestCase):
-
-    def test_can_inject_nothing_into_fn_with_zero_params(self):
-        def return_something():
-            return 'something'
-        wrapped = object_graph.new_object_graph(modules=None, classes=[]).wrap(
-            return_something)
-        self.assertEqual('something', wrapped())
-
-    def test_can_inject_nothing_into_fn_with_positional_passed_params(self):
-        def add(a, b):
-            return a + b
-        wrapped = object_graph.new_object_graph(modules=None, classes=[]).wrap(add)
-        self.assertEqual(5, wrapped(2, 3))
-
-    def test_can_inject_nothing_into_fn_with_keyword_passed_params(self):
-        def add(a, b):
-            return a + b
-        wrapped = object_graph.new_object_graph(modules=None, classes=[]).wrap(add)
-        self.assertEqual(5, wrapped(a=2, b=3))
-
-    def test_can_inject_nothing_into_fn_with_defaults(self):
-        def add(a=2, b=3):
-            return a + b
-        wrapped = object_graph.new_object_graph(classes=[]).wrap(add)
-        self.assertEqual(5, wrapped())
-
-    def test_can_inject_nothing_into_fn_with_pargs_and_kwargs(self):
-        def add(*pargs, **kwargs):
-            return pargs[0] + kwargs['b']
-        wrapped = object_graph.new_object_graph(modules=None, classes=[]).wrap(add)
-        self.assertEqual(5, wrapped(2, b=3))
-
-    def test_can_inject_something_into_first_positional_param(self):
-        class Foo(object):
-            def __init__(self):
-                self.a = 2
-        def add(foo, b):
-            return foo.a + b
-        wrapped = object_graph.new_object_graph(modules=None, classes=[Foo]).wrap(add)
-        self.assertEqual(5, wrapped(b=3))
-
-    def test_can_inject_something_into_non_first_positional_param(self):
-        class Foo(object):
-            def __init__(self):
-                self.b = 3
-        def add(a, foo):
-            return a + foo.b
-        wrapped = object_graph.new_object_graph(modules=None, classes=[Foo]).wrap(add)
-        self.assertEqual(5, wrapped(2))

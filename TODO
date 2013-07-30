@@ -1,9 +1,9 @@
 TODO:
 - deprecate @injectable
+- make provider bindings inject a provider that has the correct signature
 - make @inject complain if not applied to initializer or binding spec method
 - improve DirectlyPassingInjectedArgsError
 - auto-require provider method args
-- remove ObjectGraph.wrap()
 - allow testing that bindings exist to allow object to be provided
 - move obj_provider into injection_context, so that provisers only have one arg?
 - describe features specifically omitted, e.g.,
