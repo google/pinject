@@ -1,6 +1,4 @@
 TODO:
-- make provider bindings inject a provider that has the correct signature
-- make @inject complain if not applied to initializer or binding spec method
 - improve DirectlyPassingInjectedArgsError
 - auto-require provider method args
 - allow testing that bindings exist to allow object to be provided
@@ -9,8 +7,12 @@ TODO:
   - circular injection
   - scope annotations on classes
 - figure out whether/how Pinject works with inheritance
+- make provider bindings inject a provider that has the correct signature (difficult!)
 
 Maybe TODO:
+- make @inject complain if not applied to initializer or binding spec method
+    (doesn't seem possible: method passed to decorator has type 'function' and
+    seemingly no info about the class in which it's defined)
 - allow object_graph.provide('arg name')?
 - standard tests for scopes (reentrant? thread-safe?), annotations (eq?
      hash?), etc.
