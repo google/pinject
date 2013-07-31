@@ -1,5 +1,4 @@
 TODO:
-- deprecate @injectable
 - make provider bindings inject a provider that has the correct signature
 - make @inject complain if not applied to initializer or binding spec method
 - improve DirectlyPassingInjectedArgsError

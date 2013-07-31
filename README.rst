@@ -471,15 +471,15 @@ bindings, by setting ``only_use_explicit_bindings=True``.  If you do so, then
 Pinject will only use explicit bindings.
 
 If you want to promote an implicit binding to be an explicit binding, you can
-annotate the corresponding class with ``@injectable``.  This decorator lets
-you create explicit bindings without needing to create binding specs, as long
-as you can live with the binding defaults (e.g., no annotations on args, see
-below).
+annotate the corresponding class with ``@inject()``.  The ``@inject()``
+decorator lets you create explicit bindings without needing to create binding
+specs, as long as you can live with the binding defaults (e.g., no annotations
+on args, see below).
 
 .. code-block:: python
 
     >>> class ExplicitlyBoundClass(object):
-    ...     @pinject.injectable
+    ...     @pinject.inject()
     ...     def __init__(self, foo):
     ...         self.foo = foo
     ...
@@ -500,7 +500,11 @@ below).
     >>>
 
 You can also promote an implicit binding to explicit by using
-``@annotated_arg()`` (see below), with or without ``@injectable`` as well.
+``@annotated_arg()`` (see below), with or without ``@inject()`` as well.
+
+(Previous versions of Pinject included an ``@injectable`` decorator.  That is
+deprecated in favor of ``@inject()``.  Note that ``@inject()`` needs parens,
+whereas ``@injectable`` didn't.)
 
 On the opposite side of permissiveness, Pinject by default will complain if a
 provider method returns ``None``.  If you really want to turn off this default
@@ -1199,7 +1203,7 @@ everything listed here.)
 * Pinject uses code and decorators to configure injection, not a separate config file.
 * Bindings are keyed by arg name, (not class type, since Python is dynamically typed).
 * Pinject automatically creates bindings to ``some_class`` arg names for ``SomeClass`` classes.
-* You can ask Pinject only to create bindings from binding specs and classes whose ``__init__()`` is marked with ``@injectable``.
+* You can ask Pinject only to create bindings from binding specs and classes whose ``__init__()`` is marked with ``@inject()``.
 * A binding spec is a class that creates explicit bindings.
 * A binding spec can bind arg names to classes or to instances.
 * A binding spec can bind arg names ``foo`` to provider methods ``provide_foo()``.
@@ -1214,6 +1218,7 @@ Changelog
 
 Since v0.9:
 
+* Deprecated ``@injectable`` in favor of ``@inject``.
 * Added partial injection.
 * Added ``require`` arg to allow binding spec ``configure`` methods to declare but not define bindings.
 * Sped up tests (and probably general functionality) by 10x.

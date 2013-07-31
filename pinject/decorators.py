@@ -100,21 +100,11 @@ def inject(arg_names=None, all_except=None):
 
 
 def injectable(fn):
-    """Marks an initializer explicitly as injectable.
+    """Deprecated.  Use @inject() instead.
 
-    An initializer marked with @injectable will be usable even when setting
-    only_use_explicit_bindings=True when calling new_object_graph().
-
-    Args:
-      fn: the function to decorate
-    Returns:
-      fn, decorated
+    TODO(kurts): remove after 2014/6/30.
     """
-    if not inspect.isfunction(fn):
-        raise errors.DecoratorAppliedToNonInitError('injectable', fn)
-    if fn.__name__ != '__init__':
-        raise errors.DecoratorAppliedToNonInitError('injectable', fn)
-    return _get_pinject_decorated_fn(fn)
+    return inject()(fn)
 
 
 def provides(arg_name=None, annotated_with=None, in_scope=None):

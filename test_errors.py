@@ -115,7 +115,7 @@ def print_cyclic_injection_error():
 
 def print_decorator_applied_to_non_init_error():
     def apply_injectable_to_random_fn():
-        @decorators.injectable
+        @initializers.copy_args_to_internal_fields
         def random_fn():
             pass
     _print_raised_exception(errors.DecoratorAppliedToNonInitError,
