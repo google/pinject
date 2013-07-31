@@ -17,29 +17,28 @@ limitations under the License.
 import inspect
 
 
-# TODO(kurts): rename to ... something that makes sense.
-def get_type_loc(typ):
+def get_loc(thing):
     try:
         return '{0}:{1}'.format(
-            inspect.getfile(typ), inspect.getsourcelines(typ)[1])
+            inspect.getfile(thing), inspect.getsourcelines(thing)[1])
     except (TypeError, IOError):
         return 'unknown location'
 
 
-# TODO(kurts): rename to ... get_name_and_loc()?
-def get_class_name_and_loc(cls):
+def get_name_and_loc(thing):
     try:
-        if hasattr(cls, 'im_class'):
-            class_name = '{0}.{1}'.format(cls.im_class.__name__, cls.__name__)
+        if hasattr(thing, 'im_class'):
+            class_name = '{0}.{1}'.format(
+                thing.im_class.__name__, thing.__name__)
         else:
             class_name = '{0}.{1}'.format(
-                inspect.getmodule(cls).__name__, cls.__name__)
+                inspect.getmodule(thing).__name__, thing.__name__)
     except (TypeError, IOError):
         class_name = '{0}.{1}'.format(
-            inspect.getmodule(cls).__name__, cls.__name__)
+            inspect.getmodule(thing).__name__, thing.__name__)
     try:
-        return '{0} at {1}:{2}'.format(
-            class_name, inspect.getfile(cls), inspect.getsourcelines(cls)[1])
+        return '{0} at {1}:{2}'.format(class_name, inspect.getfile(thing),
+                                       inspect.getsourcelines(thing)[1])
     except (TypeError, IOError) as e:
         return class_name
 

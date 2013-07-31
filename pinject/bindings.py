@@ -172,7 +172,7 @@ def get_explicit_class_bindings(
             for arg_name in get_arg_names_from_class_name(cls.__name__):
                 explicit_bindings.append(new_binding_to_class(
                     binding_keys.new(arg_name), cls, scoping.DEFAULT_SCOPE,
-                    lambda cls=cls: locations.get_type_loc(cls)))
+                    lambda cls=cls: locations.get_loc(cls)))
     return explicit_bindings
 
 
@@ -189,7 +189,7 @@ def get_provider_bindings(
         for binding in fn_bindings:
             if binding.scope_id not in known_scope_ids:
                 raise errors.UnknownScopeError(
-                    binding.scope_id, locations.get_class_name_and_loc(fn))
+                    binding.scope_id, locations.get_name_and_loc(fn))
         provider_bindings.extend(fn_bindings)
     return provider_bindings
 
@@ -204,7 +204,7 @@ def get_implicit_class_bindings(
         for arg_name in arg_names:
             implicit_bindings.append(new_binding_to_class(
                 binding_keys.new(arg_name), cls, scoping.DEFAULT_SCOPE,
-                lambda cls=cls: locations.get_type_loc(cls)))
+                lambda cls=cls: locations.get_loc(cls)))
     return implicit_bindings
 
 
@@ -267,8 +267,7 @@ def new_binding_to_class(binding_key, to_class, in_scope, get_binding_loc_fn):
         return obj_provider.provide_class(
             to_class, injection_context, pargs, kwargs)
     def GetBindingTargetDesc():
-        return 'the class {0}'.format(
-            locations.get_class_name_and_loc(to_class))
+        return 'the class {0}'.format(locations.get_name_and_loc(to_class))
     return Binding(binding_key, Proviser, GetBindingTargetDesc, in_scope,
                    get_binding_loc_fn)
 
@@ -303,11 +302,11 @@ def get_provider_fn_bindings(provider_fn, default_arg_names):
             provider_fn, injection_context, pargs, kwargs)
     def GetBindingTargetDescFn():
         return 'the provider method {0}'.format(
-            locations.get_class_name_and_loc(provider_fn))
+            locations.get_name_and_loc(provider_fn))
     return [
         Binding(binding_keys.new(provider_decoration.arg_name,
                                  provider_decoration.annotated_with),
                 Proviser, GetBindingTargetDescFn,
                 provider_decoration.in_scope_id,
-                lambda p_fn=provider_fn: locations.get_type_loc(p_fn))
+                lambda p_fn=provider_fn: locations.get_loc(p_fn))
         for provider_decoration in provider_decorations]

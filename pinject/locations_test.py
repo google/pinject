@@ -24,11 +24,11 @@ class GetTypeLocTest(unittest.TestCase):
     def test_known(self):
         class SomeObject(object):
             pass
-        self.assertIn('locations_test.py', locations.get_type_loc(SomeObject))
+        self.assertIn('locations_test.py', locations.get_loc(SomeObject))
 
     def test_unknown(self):
         self.assertEqual('unknown location',
-                         locations.get_type_loc(unittest.TestCase))
+                         locations.get_loc(unittest.TestCase))
 
 
 class GetClassNameAndLocTest(unittest.TestCase):
@@ -36,7 +36,7 @@ class GetClassNameAndLocTest(unittest.TestCase):
     def test_known(self):
         class OtherObject(object):
             pass
-        class_name_and_loc = locations.get_class_name_and_loc(OtherObject)
+        class_name_and_loc = locations.get_name_and_loc(OtherObject)
         self.assertIn('OtherObject', class_name_and_loc)
         self.assertIn('locations_test.py', class_name_and_loc)
 
@@ -44,14 +44,13 @@ class GetClassNameAndLocTest(unittest.TestCase):
         class OtherObject(object):
             def a_method(self):
                 pass
-        class_name_and_loc = locations.get_class_name_and_loc(
-            OtherObject.a_method)
+        class_name_and_loc = locations.get_name_and_loc(OtherObject.a_method)
         self.assertIn('OtherObject.a_method', class_name_and_loc)
         self.assertIn('locations_test.py', class_name_and_loc)
 
     def test_unknown(self):
         self.assertEqual('unittest.case.TestCase',
-                         locations.get_class_name_and_loc(unittest.TestCase))
+                         locations.get_name_and_loc(unittest.TestCase))
 
 
 class GetBackFrameLocTest(unittest.TestCase):

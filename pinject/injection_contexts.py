@@ -94,4 +94,4 @@ class _InjectionContext(object):
 
     def get_injection_site_desc(self):
         """Returns a description of the current injection site."""
-        return locations.get_class_name_and_loc(self._injection_site_fn)
+        return locations.get_name_and_loc(self._injection_site_fn)

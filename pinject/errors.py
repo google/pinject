@@ -48,7 +48,7 @@ class ConfigureMethodMissingArgsError(Error):
         Error.__init__(
             self, 'binding spec method {0} must have at least'
             ' one of the expected args {1}'.format(
-                locations.get_class_name_and_loc(configure_fn), possible_args))
+                locations.get_name_and_loc(configure_fn), possible_args))
 
 
 class ConflictingExplicitBindingsError(Error):
@@ -83,7 +83,7 @@ class DecoratorAppliedToNonInitError(Error):
     def __init__(self, decorator_name, fn):
         Error.__init__(
             self, '@{0} cannot be applied to non-initializer {1}'.format(
-                decorator_name, locations.get_class_name_and_loc(fn)))
+                decorator_name, locations.get_name_and_loc(fn)))
 
 
 class DirectlyPassingInjectedArgsError(Error):
@@ -93,7 +93,7 @@ class DirectlyPassingInjectedArgsError(Error):
             self, 'somewhere in {0}, injected args {1} passed directly when'
             ' calling {2}'.format(
                 injection_site_desc, list(duplicated_args),
-                locations.get_class_name_and_loc(provider_fn)))
+                locations.get_name_and_loc(provider_fn)))
 
 
 class DuplicateDecoratorError(Error):
@@ -111,7 +111,7 @@ class EmptyBindingSpecError(Error):
             self, 'binding spec {0} at {1} must have either a configure()'
             ' method or a provider method but has neither'.format(
                 binding_spec.__class__.__name__,
-                locations.get_type_loc(binding_spec.__class__)))
+                locations.get_loc(binding_spec.__class__)))
 
 
 class EmptyProvidesDecoratorError(Error):
@@ -230,7 +230,7 @@ class OnlyInstantiableViaProviderFunctionError(Error):
         Error.__init__(
             self, 'when injecting {0}, {1} cannot be injected, because its'
             ' provider, {2}, needs at least one directly passed arg'.format(
-                locations.get_class_name_and_loc(injection_site_fn),
+                locations.get_name_and_loc(injection_site_fn),
                 arg_binding_key, binding_target_desc))
 
 
@@ -246,8 +246,7 @@ class PargsDisallowedWhenCopyingArgsError(Error):
     def __init__(self, decorator_name, fn, pargs_arg_name):
         Error.__init__(
             self, 'decorator @{0} cannot be applied to {1} with *{2}'.format(
-                decorator_name, locations.get_class_name_and_loc(fn),
-                pargs_arg_name))
+                decorator_name, locations.get_name_and_loc(fn), pargs_arg_name))
 
 
 class TooManyArgsToInjectDecoratorError(Error):
