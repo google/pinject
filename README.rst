@@ -1216,8 +1216,9 @@ everything listed here.)
 Changelog
 =========
 
-Since v0.9:
+v0.10:
 
+* Allowed customizing ``configure()`` and ``dependencies()`` binding spec method names.
 * Deprecated ``@injectable`` in favor of ``@inject``.
 * Added partial injection.
 * Added ``require`` arg to allow binding spec ``configure`` methods to declare but not define bindings.

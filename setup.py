@@ -19,7 +19,7 @@ from distutils.core import setup
 
 
 setup(name='pinject',
-      version='0.9',
+      version='0.10',
       description='A pythonic dependency injection library',
       author='Kurt Steinkraus',
       author_email='kurt@steinkraus.us',
