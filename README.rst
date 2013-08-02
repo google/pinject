@@ -43,14 +43,14 @@ Installation
 The easiest way to install Pinject is to get the latest released version from
 PyPI:
 
-.. code-block::
+.. code-block:: shell
 
     sudo pip install pinject
 
 You can also check out all the source code, including tests, designs, and
 TODOs:
 
-.. code-block::
+.. code-block:: shell
 
    git clone https://github.com/google/pinject
 
