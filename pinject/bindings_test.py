@@ -408,6 +408,33 @@ class BinderTest(unittest.TestCase):
                           to_class='not-a-class')
 
 
+class BindingSpecTest(unittest.TestCase):
+
+    def test_equal_if_same_type(self):
+        class SomeBindingSpec(bindings_lib.BindingSpec):
+            pass
+        self.assertEqual(SomeBindingSpec(), SomeBindingSpec())
+
+    def test_not_equal_if_not_same_type(self):
+        class BindingSpecOne(bindings_lib.BindingSpec):
+            pass
+        class BindingSpecTwo(bindings_lib.BindingSpec):
+            pass
+        self.assertNotEqual(BindingSpecOne(), BindingSpecTwo())
+
+    def test_hash_equal_if_same_type(self):
+        class SomeBindingSpec(bindings_lib.BindingSpec):
+            pass
+        self.assertEqual(hash(SomeBindingSpec()), hash(SomeBindingSpec()))
+
+    def test_hash_not_equal_if_not_same_type(self):
+        class BindingSpecOne(bindings_lib.BindingSpec):
+            pass
+        class BindingSpecTwo(bindings_lib.BindingSpec):
+            pass
+        self.assertNotEqual(hash(BindingSpecOne()), hash(BindingSpecTwo()))
+
+
 class GetProviderFnBindingsTest(unittest.TestCase):
 
     def test_proviser_calls_provider_fn(self):

@@ -78,13 +78,12 @@ class NewObjectGraphTest(unittest.TestCase):
         class CommonBindingSpec(bindings.BindingSpec):
             def configure(self, bind):
                 bind('foo', to_instance='a-foo')
-        a_common_binding_spec = CommonBindingSpec()
         class BindingSpecOne(bindings.BindingSpec):
             def dependencies(self):
-                return [a_common_binding_spec]
+                return [CommonBindingSpec()]
         class BindingSpecTwo(bindings.BindingSpec):
             def dependencies(self):
-                return [a_common_binding_spec]
+                return [CommonBindingSpec()]
         class RootBindingSpec(bindings.BindingSpec):
             def dependencies(self):
                 return [BindingSpecOne(), BindingSpecTwo()]

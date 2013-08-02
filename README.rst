@@ -370,6 +370,30 @@ binding spec A can be a dependency of B and of C, and binding spec D can have
 dependencies on B and C.  Even though there are multiple dependency paths from
 D to A, the bindings in binding spec A will only be evaluated once.
 
+The binding spec instance of A that is a dependency of B is considered the
+same as the instance that is a dependency of C if the two instances are equal
+(via ``__eq__()``).  The default implementation of ``__eq__()`` in
+``BindingSpec`` says that two binding specs are equal if they are of exactly
+the same python type.  You will need to override ``__eq__()`` (as well as
+``__hash__()``) if your binding spec is parameterized, i.e., if it takes one
+or more initializer args so that two instances of the binding spec may behave
+differently.
+
+.. code-block:: python
+
+    >>> class SomeBindingSpec(pinject.BindingSpec):
+    ...     def __init__(self, the_instance):
+    ...         self._the_instance = the_instance
+    ...     def configure(self, bind):
+    ...         bind('foo', to_instance=self._the_instance)
+    ...     def __eq__(self, other):
+    ...         return (type(self) == type(other) and
+    ...                 self._the_instance == other._the_instance)
+    ...     def __hash__(self):
+    ...         return hash(type(self)) ^ hash(self._the_instance)
+    ...
+    >>>
+
 Provider methods
 ----------------
 
@@ -1218,6 +1242,7 @@ Changelog
 
 v0.10:
 
+* Added default ``__eq__()`` to ``BindingSpec``, so that DAG binding spec dependencies can have equal but not identical dependencies.
 * Allowed customizing ``configure()`` and ``dependencies()`` binding spec method names.
 * Deprecated ``@injectable`` in favor of ``@inject``.
 * Added partial injection.

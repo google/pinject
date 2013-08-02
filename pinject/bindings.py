@@ -293,6 +293,12 @@ class BindingSpec(object):
     def dependencies(self):
         return []
 
+    def __eq__(self, other):
+        return type(self) == type(other)
+
+    def __hash__(self):
+        return hash(type(self))
+
 
 def get_provider_fn_bindings(provider_fn, default_arg_names):
     provider_decorations = decorators.get_provider_fn_decorations(
