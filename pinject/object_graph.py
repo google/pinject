@@ -122,17 +122,18 @@ def new_object_graph(
                 processed_binding_specs.add(binding_spec)
                 all_kwargs = {'bind': binder.bind,
                               'require': required_bindings.require}
-                configure_method = getattr(binding_spec, configure_method_name)
-                configure_kwargs = _pare_to_present_args(
-                    all_kwargs, configure_method)
-                if not configure_kwargs:
-                    raise errors.ConfigureMethodMissingArgsError(
-                        configure_method, all_kwargs.keys())
-                try:
-                    configure_method(**configure_kwargs)
-                    has_configure = True
-                except NotImplementedError:
-                    has_configure = False
+                has_configure = hasattr(binding_spec, configure_method_name)
+                if has_configure:
+                    configure_method = getattr(binding_spec, configure_method_name)
+                    configure_kwargs = _pare_to_present_args(
+                        all_kwargs, configure_method)
+                    if not configure_kwargs:
+                        raise errors.ConfigureMethodMissingArgsError(
+                            configure_method, all_kwargs.keys())
+                    try:
+                        configure_method(**configure_kwargs)
+                    except NotImplementedError:
+                        has_configure = False
                 if hasattr(binding_spec, dependencies_method_name):
                     dependencies_method = (
                         getattr(binding_spec, dependencies_method_name))

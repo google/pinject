@@ -1,4 +1,5 @@
 TODO:
+- ensure that memoization works properly with partial injection
 - improve DirectlyPassingInjectedArgsError
 - auto-require provider method args
 - allow testing that bindings exist to allow object to be provided

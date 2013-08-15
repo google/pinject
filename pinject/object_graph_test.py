@@ -100,9 +100,30 @@ class NewObjectGraphTest(unittest.TestCase):
         class BindingSpecOne(bindings.BindingSpec):
             def Configure(self, bind):
                 bind('foo', to_instance='a-foo')
+            def Dependencies(self):
+                return []
         class BindingSpecTwo(bindings.BindingSpec):
             def Configure(self, bind):
                 pass
+            def Dependencies(self):
+                return [BindingSpecOne()]
+        class SomeClass(object):
+            def __init__(self, foo):
+                self.foo = foo
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[SomeClass], binding_specs=[BindingSpecTwo()],
+            configure_method_name='Configure',
+            dependencies_method_name='Dependencies')
+        some_class = obj_graph.provide(SomeClass)
+        self.assertEqual('a-foo', some_class.foo)
+
+    def test_customizing_binding_spec_method_names_allow_method_omission(self):
+        class BindingSpecOne(bindings.BindingSpec):
+            def Configure(self, bind):
+                bind('foo', to_instance='a-foo')
+            # Dependencies() omitted
+        class BindingSpecTwo(bindings.BindingSpec):
+            # Configure() omitted
             def Dependencies(self):
                 return [BindingSpecOne()]
         class SomeClass(object):
