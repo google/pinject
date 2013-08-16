@@ -136,6 +136,20 @@ class NewObjectGraphTest(unittest.TestCase):
         some_class = obj_graph.provide(SomeClass)
         self.assertEqual('a-foo', some_class.foo)
 
+    def test_allows_binding_spec_with_only_provider_methods(self):
+        class ClassWithFooInjected(object):
+            def __init__(self, foo):
+                self.foo = foo
+        class SomeBindingSpec(bindings.BindingSpec):
+            def provide_foo(self):
+                return 'a-foo'
+        obj_graph = object_graph.new_object_graph(
+            modules=None, classes=[ClassWithFooInjected],
+            binding_specs=[SomeBindingSpec()],
+            configure_method_name='Configure',
+            dependencies_method_name='Dependencies')
+        self.assertEqual('a-foo', obj_graph.provide(ClassWithFooInjected).foo)
+
     def test_raises_error_if_binding_spec_is_empty(self):
         class EmptyBindingSpec(bindings.BindingSpec):
             pass

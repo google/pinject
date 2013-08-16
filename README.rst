@@ -1240,6 +1240,14 @@ everything listed here.)
 Changelog
 =========
 
+v0.10.2:
+
+* Fixed bug: allows binding specs containing only provider methods.
+
+v0.10.1:
+
+* Fixed bug: allows omitting custom named ``configure()`` binding spec method.
+
 v0.10:
 
 * Added default ``__eq__()`` to ``BindingSpec``, so that DAG binding spec dependencies can have equal but not identical dependencies.

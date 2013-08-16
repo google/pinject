@@ -134,6 +134,7 @@ def new_object_graph(
                         configure_method(**configure_kwargs)
                     except NotImplementedError:
                         has_configure = False
+                dependencies = None
                 if hasattr(binding_spec, dependencies_method_name):
                     dependencies_method = (
                         getattr(binding_spec, dependencies_method_name))
