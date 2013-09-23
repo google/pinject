@@ -14,13 +14,13 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 from pinject import binding_keys
 from pinject import required_bindings
 
 
-class RequiredBindingsTest(unittest.TestCase):
+class RequiredBindingsTest(unittest2.TestCase):
 
     def setUp(self):
         self.required_bindings = required_bindings.RequiredBindings()

@@ -14,12 +14,12 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 from pinject import annotations
 
 
-class AnnotationTest(unittest.TestCase):
+class AnnotationTest(unittest2.TestCase):
 
     def test_as_correct_adjective(self):
         self.assertEqual('annotated with "foo"',
@@ -40,7 +40,7 @@ class AnnotationTest(unittest.TestCase):
                             hash(annotations.Annotation('bar')))
 
 
-class NoAnnotationTest(unittest.TestCase):
+class NoAnnotationTest(unittest2.TestCase):
 
     def test_as_correct_adjective(self):
         self.assertEqual('unannotated',

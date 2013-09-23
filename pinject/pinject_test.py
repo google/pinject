@@ -14,12 +14,12 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 import pinject
 
 
-class CopiedClassesTest(unittest.TestCase):
+class CopiedClassesTest(unittest2.TestCase):
 
     def test_new_object_graph_works(self):
         class SomeClass(object):

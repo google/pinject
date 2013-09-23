@@ -15,7 +15,7 @@ limitations under the License.
 
 
 import inspect
-import unittest
+import unittest2
 
 from pinject import arg_binding_keys
 from pinject import bindings
@@ -40,7 +40,7 @@ class FakeObjectProvider(object):
         return provider_fn()
 
 
-class AnnotateArgTest(unittest.TestCase):
+class AnnotateArgTest(unittest2.TestCase):
 
     def test_adds_binding_in_pinject_decorated_fn(self):
         @decorators.annotate_arg('foo', 'an-annotation')
@@ -51,7 +51,7 @@ class AnnotateArgTest(unittest.TestCase):
                              some_function, decorators._ARG_BINDING_KEYS_ATTR)])
 
 
-class InjectTest(unittest.TestCase):
+class InjectTest(unittest2.TestCase):
 
     def test_can_set_injectable_arg_names(self):
         @decorators.inject(['foo', 'bar'])
@@ -143,7 +143,7 @@ class InjectTest(unittest.TestCase):
         self.assertRaises(errors.DuplicateDecoratorError, do_bad_inject)
 
 
-class InjectableTest(unittest.TestCase):
+class InjectableTest(unittest2.TestCase):
 
     def test_adds_wrapper_to_init(self):
         class SomeClass(object):
@@ -154,7 +154,7 @@ class InjectableTest(unittest.TestCase):
             hasattr(SomeClass.__init__, decorators._IS_WRAPPER_ATTR))
 
 
-class ProvidesTest(unittest.TestCase):
+class ProvidesTest(unittest2.TestCase):
 
     def test_sets_arg_values(self):
         @decorators.provides('an-arg-name', annotated_with='an-annotation',
@@ -206,7 +206,7 @@ class ProvidesTest(unittest.TestCase):
                  for provider_fn_binding in provider_fn_bindings]))
 
 
-class GetProviderFnDecorationsTest(unittest.TestCase):
+class GetProviderFnDecorationsTest(unittest2.TestCase):
 
     def test_returns_defaults_for_undecorated_fn(self):
         def provide_foo():
@@ -242,7 +242,7 @@ class GetProviderFnDecorationsTest(unittest.TestCase):
             provider_decorations)
 
 
-class GetPinjectWrapperTest(unittest.TestCase):
+class GetPinjectWrapperTest(unittest2.TestCase):
 
     def test_sets_recognizable_wrapper_attribute(self):
         @decorators.annotate_arg('foo', 'an-annotation')
@@ -296,7 +296,7 @@ class GetPinjectWrapperTest(unittest.TestCase):
         self.assertEqual(('BAR',), defaults)
 
 
-class IsExplicitlyInjectableTest(unittest.TestCase):
+class IsExplicitlyInjectableTest(unittest2.TestCase):
 
     def test_non_injectable_class(self):
         class SomeClass(object):
@@ -311,7 +311,7 @@ class IsExplicitlyInjectableTest(unittest.TestCase):
         self.assertTrue(decorators.is_explicitly_injectable(SomeClass))
 
 
-class GetInjectableArgBindingKeysTest(unittest.TestCase):
+class GetInjectableArgBindingKeysTest(unittest2.TestCase):
 
     def assert_fn_has_injectable_arg_binding_keys(self, fn, arg_binding_keys):
         self.assertEqual(

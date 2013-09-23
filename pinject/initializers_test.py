@@ -15,13 +15,13 @@ limitations under the License.
 
 
 import inspect
-import unittest
+import unittest2
 
 from pinject import errors
 from pinject import initializers
 
 
-class CopyArgsToInternalFieldsTest(unittest.TestCase):
+class CopyArgsToInternalFieldsTest(unittest2.TestCase):
 
     def test_does_nothing_extra_for_zero_arg_initializer(self):
         class SomeClass(object):
@@ -86,7 +86,7 @@ class CopyArgsToInternalFieldsTest(unittest.TestCase):
                           do_bad_decorated_fn)
 
 
-class CopyArgsToPublicFieldsTest(unittest.TestCase):
+class CopyArgsToPublicFieldsTest(unittest2.TestCase):
 
     def test_uses_no_field_prefix(self):
         class SomeClass(object):

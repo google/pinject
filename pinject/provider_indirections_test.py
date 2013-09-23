@@ -14,12 +14,12 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 from pinject import provider_indirections
 
 
-class ProviderIndirectionTest(unittest.TestCase):
+class ProviderIndirectionTest(unittest2.TestCase):
 
     def test_returns_provider_fn(self):
         provide_fn = provider_indirections.INDIRECTION.StripIndirectionIfNeeded(
@@ -27,7 +27,7 @@ class ProviderIndirectionTest(unittest.TestCase):
         self.assertEqual('provided-thing', provide_fn())
 
 
-class NoProviderIndirectionTest(unittest.TestCase):
+class NoProviderIndirectionTest(unittest2.TestCase):
 
     def test_returns_provided_thing(self):
         self.assertEqual(

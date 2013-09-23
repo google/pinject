@@ -15,7 +15,7 @@ limitations under the License.
 
 
 import inspect
-import unittest
+import unittest2
 
 from pinject import arg_binding_keys
 from pinject import binding_keys
@@ -46,7 +46,7 @@ def new_injection_context():
 _UNUSED_INJECTION_SITE_FN = lambda: None
 
 
-class ObjectProviderTest(unittest.TestCase):
+class ObjectProviderTest(unittest2.TestCase):
 
     def test_provides_from_arg_binding_key_successfully(self):
         arg_binding_key = arg_binding_keys.new('an-arg-name')

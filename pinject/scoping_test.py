@@ -14,7 +14,7 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 from pinject import bindings
 from pinject import binding_keys
@@ -22,7 +22,7 @@ from pinject import errors
 from pinject import scoping
 
 
-class PrototypeScopeTest(unittest.TestCase):
+class PrototypeScopeTest(unittest2.TestCase):
 
     def test_always_calls_provider_fn(self):
         next_provided = [0]
@@ -37,7 +37,7 @@ class PrototypeScopeTest(unittest.TestCase):
             [scope.provide(binding_key, provider_fn) for _ in xrange(10)])
 
 
-class SingletonScopeTest(unittest.TestCase):
+class SingletonScopeTest(unittest2.TestCase):
 
     def setUp(self):
         self.scope = scoping.SingletonScope()
@@ -63,7 +63,7 @@ class SingletonScopeTest(unittest.TestCase):
                                             provide_from_singleton_scope))
 
 
-class GetIdToScopeWithDefaultsTest(unittest.TestCase):
+class GetIdToScopeWithDefaultsTest(unittest2.TestCase):
 
     def test_adds_default_scopes_to_given_scopes(self):
         orig_id_to_scope = {'a-scope-id': 'a-scope'}
@@ -88,7 +88,7 @@ class GetIdToScopeWithDefaultsTest(unittest.TestCase):
                           id_to_scope={scoping.SINGLETON: 'unused'})
 
 
-class BindableScopesTest(unittest.TestCase):
+class BindableScopesTest(unittest2.TestCase):
 
     def setUp(self):
         self.bindable_scopes = scoping.BindableScopes(

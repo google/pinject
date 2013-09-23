@@ -15,12 +15,12 @@ limitations under the License.
 
 
 import sys
-import unittest
+import unittest2
 
 from pinject import finding
 
 
-class FindClassesTest(unittest.TestCase):
+class FindClassesTest(unittest2.TestCase):
 
     def test_finds_passed_in_classes(self):
         class SomeClass(object):

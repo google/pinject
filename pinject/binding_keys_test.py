@@ -14,13 +14,13 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 from pinject import annotations
 from pinject import binding_keys
 
 
-class BindingKeyTest(unittest.TestCase):
+class BindingKeyTest(unittest2.TestCase):
 
     def test_repr(self):
         binding_key = binding_keys.BindingKey(
@@ -70,7 +70,7 @@ class BindingKeyTest(unittest.TestCase):
         self.assertNotEqual(str(binding_key_one), str(binding_key_two))
 
 
-class NewBindingKeyTest(unittest.TestCase):
+class NewBindingKeyTest(unittest2.TestCase):
 
     def test_without_annotation(self):
         binding_key = binding_keys.new('an-arg-name')
