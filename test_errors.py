@@ -16,6 +16,7 @@ limitations under the License.
 """
 
 
+import six
 import inspect
 import sys
 import traceback
@@ -354,6 +355,6 @@ all_print_method_pairs = inspect.getmembers(
 all_print_method_pairs.sort(key=lambda x: x[0])
 all_print_methods = [value for name, value in all_print_method_pairs]
 for print_method in all_print_methods:
-    print '#' * 78
+    six.print_('#' * 78)
     print_method()
-print '#' * 78
+six.print_('#' * 78)

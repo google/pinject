@@ -31,11 +31,12 @@
 Decorator module, see http://pypi.python.org/pypi/decorator
 for the documentation.
 """
-
 __version__ = '3.4.0'
 
 __all__ = ["decorator", "FunctionMaker", "contextmanager"]
 
+
+import six
 import sys, re, inspect
 if sys.version >= '3':
     from inspect import getfullargspec
@@ -153,10 +154,10 @@ class FunctionMaker(object):
         try:
             code = compile(src, '<string>', 'single')
             # print >> sys.stderr, 'Compiling %s' % src
-            exec code in evaldict
+            six.exec_(code, evaldict)
         except:
-            print >> sys.stderr, 'Error in generated code:'
-            print >> sys.stderr, src
+            six.print_('Error in generated code:', file=sys.stderr)
+            six.print_(src, file=sys.stderr)
             raise
         func = evaldict[name]
         if addsource:
@@ -192,7 +193,7 @@ def decorator(caller, func=None):
     decorator(caller, func) decorates a function using a caller.
     """
     if func is not None: # returns a decorated function
-        evaldict = func.func_globals.copy()
+        evaldict = six.get_function_globals(func).copy()
         evaldict['_call_'] = caller
         evaldict['_func_'] = func
         return FunctionMaker.create(
@@ -216,7 +217,7 @@ def decorator(caller, func=None):
             callerfunc = caller.__call__.im_func
             doc = caller.__call__.__doc__
             fun = getfullargspec(callerfunc).args[1] # second arg
-        evaldict = callerfunc.func_globals.copy()
+        evaldict = six.get_function_globals(callerfunc).copy()
         evaldict['_call_'] = caller
         evaldict['decorator'] = decorator
         return FunctionMaker.create(

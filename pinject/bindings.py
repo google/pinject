@@ -14,12 +14,9 @@ limitations under the License.
 """
 
 
-import inspect
 import re
+import inspect
 import threading
-import types
-
-from .third_party import decorator
 
 from . import binding_keys
 from . import decorators
@@ -27,6 +24,7 @@ from . import errors
 from . import locations
 from . import providing
 from . import scoping
+from . import support
 
 
 class Binding(object):
@@ -181,8 +179,7 @@ def get_provider_bindings(
         get_arg_names_from_provider_fn_name=(
             providing.default_get_arg_names_from_provider_fn_name)):
     provider_bindings = []
-    fns = inspect.getmembers(binding_spec,
-                             lambda x: type(x) == types.MethodType)
+    fns = inspect.getmembers(binding_spec, lambda x: inspect.ismethod(x))
     for _, fn in fns:
         default_arg_names = get_arg_names_from_provider_fn_name(fn.__name__)
         fn_bindings = get_provider_fn_bindings(fn, default_arg_names)

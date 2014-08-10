@@ -22,7 +22,6 @@ from pinject import bindings
 from pinject import binding_keys
 from pinject import decorators
 from pinject import errors
-from pinject import injection_contexts
 from pinject import scoping
 
 

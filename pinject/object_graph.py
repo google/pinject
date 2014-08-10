@@ -14,12 +14,8 @@ limitations under the License.
 """
 
 
-import collections
-import functools
 import inspect
-import types
 
-from . import arg_binding_keys
 from . import bindings
 from . import decorators
 from . import errors
@@ -30,6 +26,7 @@ from . import object_providers
 from . import providing
 from . import required_bindings as required_bindings_lib
 from . import scoping
+from . import support
 
 
 def new_object_graph(
@@ -81,21 +78,21 @@ def new_object_graph(
     """
     try:
         if modules is not None and modules is not finding.ALL_IMPORTED_MODULES:
-            _verify_types(modules, types.ModuleType, 'modules')
+            support.verify_module_types(modules, 'modules')
         if classes is not None:
-            _verify_types(classes, types.TypeType, 'classes')
+            support.verify_class_types(classes, 'classes')
         if binding_specs is not None:
-            _verify_subclasses(
+            support.verify_subclasses(
                 binding_specs, bindings.BindingSpec, 'binding_specs')
         if get_arg_names_from_class_name is not None:
-            _verify_callable(get_arg_names_from_class_name,
-                             'get_arg_names_from_class_name')
+            support.verify_callable(get_arg_names_from_class_name,
+                                    'get_arg_names_from_class_name')
         if get_arg_names_from_provider_fn_name is not None:
-            _verify_callable(get_arg_names_from_provider_fn_name,
-                             'get_arg_names_from_provider_fn_name')
+            support.verify_callable(get_arg_names_from_provider_fn_name,
+                                    'get_arg_names_from_provider_fn_name')
         if is_scope_usable_from_scope is not None:
-            _verify_callable(is_scope_usable_from_scope,
-                             'is_scope_usable_from_scope')
+            support.verify_callable(is_scope_usable_from_scope,
+                                    'is_scope_usable_from_scope')
         injection_context_factory = injection_contexts.InjectionContextFactory(
             is_scope_usable_from_scope)
         id_to_scope = scoping.get_id_to_scope_with_defaults(id_to_scope)
@@ -169,46 +166,10 @@ def new_object_graph(
         use_short_stack_traces)
 
 
-def _verify_type(elt, required_type, arg_name):
-    if type(elt) != required_type:
-        raise errors.WrongArgTypeError(
-            arg_name, required_type.__name__, type(elt).__name__)
-
-
-def _verify_types(seq, required_type, arg_name):
-    if not isinstance(seq, collections.Sequence):
-        raise errors.WrongArgTypeError(
-            arg_name, 'sequence (of {0})'.format(required_type.__name__),
-            type(seq).__name__)
-    for idx, elt in enumerate(seq):
-        if type(elt) != required_type:
-            raise errors.WrongArgElementTypeError(
-                arg_name, idx, required_type.__name__, type(elt).__name__)
-
-
-def _verify_subclasses(seq, required_superclass, arg_name):
-    if not isinstance(seq, collections.Sequence):
-        raise errors.WrongArgTypeError(
-            arg_name,
-            'sequence (of subclasses of {0})'.format(
-                required_superclass.__name__),
-            type(seq).__name__)
-    for idx, elt in enumerate(seq):
-        if not isinstance(elt, required_superclass):
-            raise errors.WrongArgElementTypeError(
-                arg_name, idx,
-                'subclass of {0}'.format(required_superclass.__name__),
-                type(elt).__name__)
-
-
-def _verify_callable(fn, arg_name):
-    if not callable(fn):
-        raise errors.WrongArgTypeError(arg_name, 'callable', type(fn).__name__)
-
-
 def _pare_to_present_args(kwargs, fn):
     arg_names, _, _, _ = inspect.getargspec(fn)
-    return {arg: value for arg, value in kwargs.iteritems() if arg in arg_names}
+    return {arg: value
+            for arg, value in support.items(kwargs) if arg in arg_names}
 
 
 class ObjectGraph(object):
@@ -231,7 +192,7 @@ class ObjectGraph(object):
         Raises:
           Error: an instance of cls is not providable
         """
-        _verify_type(cls, types.TypeType, 'cls')
+        support.verify_class_type(cls, 'cls')
         if not self._is_injectable_fn(cls):
             provide_loc = locations.get_back_frame_loc()
             raise errors.NonExplicitlyBoundClassError(provide_loc, cls)
