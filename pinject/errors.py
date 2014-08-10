@@ -14,7 +14,7 @@ limitations under the License.
 """
 
 
-import locations
+from . import locations
 
 
 class Error(Exception):

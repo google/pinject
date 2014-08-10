@@ -16,7 +16,6 @@ limitations under the License.
 
 import unittest
 
-from pinject import annotations
 from pinject import arg_binding_keys
 from pinject import binding_keys
 from pinject import provider_indirections

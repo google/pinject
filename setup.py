@@ -15,8 +15,7 @@
 # limitations under the License.
 
 
-from distutils.core import setup
-
+from setuptools import setup
 
 setup(name='pinject',
       version='0.11.0',
@@ -28,4 +27,4 @@ setup(name='pinject',
       long_description=open('README.rst').read(),
       platforms='all',
       packages=['pinject', 'pinject/third_party'],
-      install_requires=['decorator>=4.3.0'])
+      install_requires=['six>=1.7.3', 'decorator>=4.3.0'])

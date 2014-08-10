@@ -14,11 +14,11 @@ limitations under the License.
 """
 
 
-import inspect
 import unittest
 
 from pinject import errors
 from pinject import initializers
+from pinject import support
 
 
 class CopyArgsToInternalFieldsTest(unittest.TestCase):
@@ -65,7 +65,7 @@ class CopyArgsToInternalFieldsTest(unittest.TestCase):
                 pass
         self.assertEqual('__init__', SomeClass.__init__.__name__)
         arg_names, unused_varargs, unused_keywords, unused_defaults = (
-            inspect.getargspec(SomeClass.__init__))
+            support.get_method_args(SomeClass.__init__))
         self.assertEqual(['self', 'foo'], arg_names)
 
     def test_raises_exception_if_init_takes_pargs(self):
