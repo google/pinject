@@ -170,7 +170,7 @@ def new_object_graph(
 
 
 def _verify_type(elt, required_type, arg_name):
-    if type(elt) != required_type:
+    if not issubclass(type(elt), required_type):
         raise errors.WrongArgTypeError(
             arg_name, required_type.__name__, type(elt).__name__)
 
@@ -181,7 +181,7 @@ def _verify_types(seq, required_type, arg_name):
             arg_name, 'sequence (of {0})'.format(required_type.__name__),
             type(seq).__name__)
     for idx, elt in enumerate(seq):
-        if type(elt) != required_type:
+        if not issubclass(type(elt), required_type):
             raise errors.WrongArgElementTypeError(
                 arg_name, idx, required_type.__name__, type(elt).__name__)
 
