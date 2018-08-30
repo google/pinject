@@ -2,7 +2,8 @@
  Pinject
 =========
 
-[![Build Status](https://travis-ci.com/google/pinject.svg?branch=master)](https://travis-ci.com/google/pinject)
+.. image:: https://travis-ci.com/google/pinject.svg?branch=master
+    :target: https://travis-ci.com/google/pinject
 
 Pinject is a dependency injection library for python.
 
