@@ -2,6 +2,8 @@
  Pinject
 =========
 
+[![Build Status](https://travis-ci.com/google/pinject.svg?branch=master)](https://travis-ci.com/google/pinject)
+
 Pinject is a dependency injection library for python.
 
 The primary goal of Pinject is to help you assemble objects into graphs in an
