@@ -14,12 +14,12 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 from pinject import locations
 
 
-class GetTypeLocTest(unittest.TestCase):
+class GetTypeLocTest(unittest2.TestCase):
 
     def test_known(self):
         class SomeObject(object):
@@ -28,10 +28,10 @@ class GetTypeLocTest(unittest.TestCase):
 
     def test_unknown(self):
         self.assertEqual('unknown location',
-                         locations.get_loc(unittest.TestCase))
+                         locations.get_loc(unittest2.TestCase))
 
 
-class GetClassNameAndLocTest(unittest.TestCase):
+class GetClassNameAndLocTest(unittest2.TestCase):
 
     def test_known(self):
         class OtherObject(object):
@@ -49,11 +49,11 @@ class GetClassNameAndLocTest(unittest.TestCase):
         self.assertIn('locations_test.py', class_name_and_loc)
 
     def test_unknown(self):
-        self.assertEqual('unittest.case.TestCase',
-                         locations.get_name_and_loc(unittest.TestCase))
+        self.assertEqual('unittest2.case.TestCase',
+                         locations.get_name_and_loc(unittest2.TestCase))
 
 
-class GetBackFrameLocTest(unittest.TestCase):
+class GetBackFrameLocTest(unittest2.TestCase):
 
     def test_correct_file_and_line(self):
         def get_loc():

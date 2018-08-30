@@ -15,7 +15,7 @@ limitations under the License.
 
 
 import threading
-import unittest
+import unittest2
 
 from pinject import bindings as bindings_lib
 from pinject import binding_keys
@@ -41,7 +41,7 @@ def new_in_default_scope(binding_key):
         get_binding_loc_fn=lambda: 'unknown')
 
 
-class GetBindingKeyToBindingMapsTest(unittest.TestCase):
+class GetBindingKeyToBindingMapsTest(unittest2.TestCase):
 
     def setUp(self):
         class SomeClass(object):
@@ -97,7 +97,7 @@ class GetBindingKeyToBindingMapsTest(unittest.TestCase):
         self.assertTrue(was_called.is_set())
 
 
-class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
+class GetOverallBindingKeyToBindingMapsTest(unittest2.TestCase):
 
     def setUp(self):
         class SomeClass(object):
@@ -149,7 +149,7 @@ class GetOverallBindingKeyToBindingMapsTest(unittest.TestCase):
             error_type=errors.ConflictingExplicitBindingsError)
 
 
-class BindingMappingTest(unittest.TestCase):
+class BindingMappingTest(unittest2.TestCase):
 
     def test_success(self):
         binding_mapping = bindings_lib.BindingMapping(
@@ -196,7 +196,7 @@ class BindingMappingTest(unittest.TestCase):
                               'unknown-binding-key', 'a-require-loc')])
 
 
-class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
+class DefaultGetArgNamesFromClassNameTest(unittest2.TestCase):
 
     def test_single_word_lowercased(self):
         self.assertEqual(
@@ -237,7 +237,7 @@ def call_provisor_fn(a_binding):
         _UNUSED_INJECTION_CONTEXT, FakeObjectProvider(), pargs=[], kwargs={})
 
 
-class GetExplicitClassBindingsTest(unittest.TestCase):
+class GetExplicitClassBindingsTest(unittest2.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
         self.assertEqual([], bindings_lib.get_explicit_class_bindings([]))
@@ -265,7 +265,7 @@ class GetExplicitClassBindingsTest(unittest.TestCase):
                          explicit_binding.binding_key)
 
 
-class GetProviderBindingsTest(unittest.TestCase):
+class GetProviderBindingsTest(unittest2.TestCase):
 
     def test_returns_no_bindings_for_non_binding_spec(self):
         class SomeClass(object):
@@ -304,7 +304,7 @@ class GetProviderBindingsTest(unittest.TestCase):
                           SomeBindingSpec(), known_scope_ids=[])
 
 
-class GetImplicitClassBindingsTest(unittest.TestCase):
+class GetImplicitClassBindingsTest(unittest2.TestCase):
 
     def test_returns_no_bindings_for_no_input(self):
         self.assertEqual([], bindings_lib.get_implicit_class_bindings([]))
@@ -346,7 +346,7 @@ class GetImplicitClassBindingsTest(unittest.TestCase):
                          implicit_binding.binding_key)
 
 
-class BinderTest(unittest.TestCase):
+class BinderTest(unittest2.TestCase):
 
     def setUp(self):
         self.collected_bindings = []
@@ -408,7 +408,7 @@ class BinderTest(unittest.TestCase):
                           to_class='not-a-class')
 
 
-class BindingSpecTest(unittest.TestCase):
+class BindingSpecTest(unittest2.TestCase):
 
     def test_equal_if_same_type(self):
         class SomeBindingSpec(bindings_lib.BindingSpec):
@@ -435,7 +435,7 @@ class BindingSpecTest(unittest.TestCase):
         self.assertNotEqual(hash(BindingSpecOne()), hash(BindingSpecTwo()))
 
 
-class GetProviderFnBindingsTest(unittest.TestCase):
+class GetProviderFnBindingsTest(unittest2.TestCase):
 
     def test_proviser_calls_provider_fn(self):
         def provide_foo():

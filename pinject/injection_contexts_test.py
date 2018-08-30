@@ -14,7 +14,7 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 from pinject import binding_keys
 from pinject import bindings
@@ -25,7 +25,7 @@ from pinject import injection_contexts
 _UNUSED_INJECTION_SITE_FN = lambda: None
 
 
-class InjectionContextTest(unittest.TestCase):
+class InjectionContextTest(unittest2.TestCase):
 
     def setUp(self):
         self.binding_key = binding_keys.new('foo')

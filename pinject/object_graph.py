@@ -208,7 +208,8 @@ def _verify_callable(fn, arg_name):
 
 def _pare_to_present_args(kwargs, fn):
     arg_names, _, _, _ = inspect.getargspec(fn)
-    return {arg: value for arg, value in kwargs.iteritems() if arg in arg_names}
+    return dict([
+        (arg, value) for arg, value in kwargs.iteritems() if arg in arg_names])
 
 
 class ObjectGraph(object):

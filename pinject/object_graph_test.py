@@ -16,7 +16,7 @@ limitations under the License.
 
 import inspect
 import types
-import unittest
+import unittest2
 
 from pinject import bindings
 from pinject import decorators
@@ -25,7 +25,7 @@ from pinject import object_graph
 from pinject import scoping
 
 
-class NewObjectGraphTest(unittest.TestCase):
+class NewObjectGraphTest(unittest2.TestCase):
 
     def test_can_create_object_graph_with_all_defaults(self):
         _ = object_graph.new_object_graph()
@@ -230,7 +230,7 @@ class NewObjectGraphTest(unittest.TestCase):
                           binding_specs=[SomeBindingSpec()])
 
 
-class VerifyTypeTest(unittest.TestCase):
+class VerifyTypeTest(unittest2.TestCase):
 
     def test_verifies_correct_type_ok(self):
         object_graph._verify_type(types, types.ModuleType, 'unused')
@@ -240,7 +240,7 @@ class VerifyTypeTest(unittest.TestCase):
                           'not-a-module', types.ModuleType, 'an-arg-name')
 
 
-class VerifyTypesTest(unittest.TestCase):
+class VerifyTypesTest(unittest2.TestCase):
 
     def test_verifies_empty_sequence_ok(self):
         object_graph._verify_types([], types.ModuleType, 'unused')
@@ -258,7 +258,7 @@ class VerifyTypesTest(unittest.TestCase):
                           ['not-a-module'], types.ModuleType, 'an-arg-name')
 
 
-class VerifySubclassesTest(unittest.TestCase):
+class VerifySubclassesTest(unittest2.TestCase):
 
     def test_verifies_empty_sequence_ok(self):
         object_graph._verify_subclasses([], bindings.BindingSpec, 'unused')
@@ -282,7 +282,7 @@ class VerifySubclassesTest(unittest.TestCase):
             [NotBindingSpec()], bindings.BindingSpec, 'an-arg-name')
 
 
-class VerifyCallableTest(unittest.TestCase):
+class VerifyCallableTest(unittest2.TestCase):
 
     def test_verifies_callable_ok(self):
         object_graph._verify_callable(lambda: None, 'unused')
@@ -292,7 +292,7 @@ class VerifyCallableTest(unittest.TestCase):
                           object_graph._verify_callable, 42, 'an-arg-name')
 
 
-class PareToPresentArgsTest(unittest.TestCase):
+class PareToPresentArgsTest(unittest2.TestCase):
 
     def test_removes_only_args_not_present(self):
         def fn(self, present):
@@ -304,7 +304,7 @@ class PareToPresentArgsTest(unittest.TestCase):
                 fn))
 
 
-class ObjectGraphProvideTest(unittest.TestCase):
+class ObjectGraphProvideTest(unittest2.TestCase):
 
     def test_can_provide_trivial_class(self):
         class ExampleClassWithInit(object):

@@ -14,7 +14,7 @@ limitations under the License.
 """
 
 
-import unittest
+import unittest2
 
 from pinject import annotations
 from pinject import arg_binding_keys
@@ -22,7 +22,7 @@ from pinject import binding_keys
 from pinject import provider_indirections
 
 
-class ArgBindingKeyTest(unittest.TestCase):
+class ArgBindingKeyTest(unittest2.TestCase):
 
     def test_repr(self):
         arg_binding_key = arg_binding_keys.ArgBindingKey(
@@ -120,7 +120,7 @@ class ArgBindingKeyTest(unittest.TestCase):
             [non_conflicting_arg_binding_key]))
 
 
-class GetUnboundArgNamesTest(unittest.TestCase):
+class GetUnboundArgNamesTest(unittest2.TestCase):
 
     def test_all_arg_names_bound(self):
         self.assertEqual(
@@ -137,7 +137,7 @@ class GetUnboundArgNamesTest(unittest.TestCase):
                 ['bound', 'unbound'], [arg_binding_keys.new('bound')]))
 
 
-class CreateKwargsTest(unittest.TestCase):
+class CreateKwargsTest(unittest2.TestCase):
 
     def test_returns_nothing_for_no_input(self):
         self.assertEqual(
@@ -154,7 +154,7 @@ class CreateKwargsTest(unittest.TestCase):
                                            ProviderFn))
 
 
-class NewArgBindingKeyTest(unittest.TestCase):
+class NewArgBindingKeyTest(unittest2.TestCase):
 
     def test_with_no_bells_or_whistles(self):
         arg_binding_key = arg_binding_keys.new('an-arg-name')

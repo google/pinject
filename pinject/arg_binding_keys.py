@@ -104,8 +104,8 @@ def create_kwargs(arg_binding_keys, provider_fn):
     Returns:
       a (possibly empty) map from arg name to provided value
     """
-    return {arg_binding_key._arg_name: provider_fn(arg_binding_key)
-            for arg_binding_key in arg_binding_keys}
+    return dict([(arg_binding_key._arg_name, provider_fn(arg_binding_key))
+                for arg_binding_key in arg_binding_keys])
 
 
 _PROVIDE_PREFIX = 'provide_'
