@@ -2,6 +2,8 @@
  Pinject
 =========
 
+.. image:: https://badge.fury.io/py/pinject.svg
+    :target: https://pypi.org/project/pinject/
 .. image:: https://travis-ci.com/google/pinject.svg?branch=master
     :target: https://travis-ci.com/google/pinject
 
