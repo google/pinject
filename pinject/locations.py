@@ -39,7 +39,7 @@ def get_name_and_loc(thing):
     try:
         return '{0} at {1}:{2}'.format(class_name, inspect.getfile(thing),
                                        inspect.getsourcelines(thing)[1])
-    except (TypeError, IOError) as e:
+    except (TypeError, IOError):
         return class_name
 
 
