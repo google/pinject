@@ -25,8 +25,10 @@ from pinject import errors
 from pinject import injection_contexts
 from pinject import object_providers
 from pinject import scoping
+from nose.tools import nottest
 
 
+@nottest
 def new_test_obj_provider(arg_binding_key, instance, allow_injecting_none=True):
     binding_key = arg_binding_key.binding_key
     binding = bindings.new_binding_to_instance(
@@ -38,6 +40,7 @@ def new_test_obj_provider(arg_binding_key, instance, allow_injecting_none=True):
         binding_mapping, bindable_scopes, allow_injecting_none)
 
 
+@nottest
 def new_injection_context():
     return injection_contexts.InjectionContextFactory(lambda _1, _2: True).new(
         lambda: None)
