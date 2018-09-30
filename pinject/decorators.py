@@ -13,18 +13,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-
 import collections
 import inspect
 
-from .third_party import decorator
+import decorator
 
 from . import arg_binding_keys
-from . import binding_keys
 from . import errors
 from . import locations
 from . import scoping
-
 
 _ARG_BINDING_KEYS_ATTR = '_pinject_arg_binding_keys'
 _IS_WRAPPER_ATTR = '_pinject_is_wrapper'
@@ -83,8 +80,7 @@ def inject(arg_names=None, all_except=None):
     back_frame_loc = locations.get_back_frame_loc()
     if arg_names is not None and all_except is not None:
         raise errors.TooManyArgsToInjectDecoratorError(back_frame_loc)
-    for arg, arg_value in [('arg_names', arg_names),
-                           ('all_except', all_except)]:
+    for arg, arg_value in [('arg_names', arg_names), ('all_except', all_except)]:
         if arg_value is not None:
             if not arg_value:
                 raise errors.EmptySequenceArgError(back_frame_loc, arg)
@@ -207,6 +203,7 @@ def _get_pinject_decorated_fn(fn):
     else:
         def _pinject_decorated_fn(fn_to_wrap, *pargs, **kwargs):
             return fn_to_wrap(*pargs, **kwargs)
+
         pinject_decorated_fn = decorator.decorator(_pinject_decorated_fn, fn)
         # TODO(kurts): split this so that __init__() decorators don't get
         # the provider attribute.
@@ -227,12 +224,10 @@ def _get_pinject_wrapper(
         orig_arg_names, unused_varargs, unused_keywords, unused_defaults = (
             inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
         if arg_binding_key is not None:
-            if not arg_binding_key.can_apply_to_one_of_arg_names(
-                    orig_arg_names):
-                raise errors.NoSuchArgToInjectError(
-                    decorator_loc, arg_binding_key, fn)
+            if not arg_binding_key.can_apply_to_one_of_arg_names(orig_arg_names):
+                raise errors.NoSuchArgToInjectError(decorator_loc, arg_binding_key, fn)
             if arg_binding_key.conflicts_with_any_arg_binding_key(
-                    getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
+                getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
                 raise errors.MultipleAnnotationsForSameArgError(
                     arg_binding_key, decorator_loc)
             getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(
@@ -265,6 +260,7 @@ def _get_pinject_wrapper(
             if len(non_injectable_arg_names) == len(orig_arg_names):
                 raise errors.NoRemainingArgsToInjectError(decorator_loc)
         return pinject_decorated_fn
+
     return get_pinject_decorated_fn_with_additions
 
 

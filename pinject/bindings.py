@@ -19,8 +19,6 @@ import re
 import threading
 import types
 
-from .third_party import decorator
-
 from . import binding_keys
 from . import decorators
 from . import errors

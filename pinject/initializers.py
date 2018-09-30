@@ -13,10 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-
 import inspect
 
-from .third_party import decorator
+import decorator
 
 from . import errors
 
@@ -46,10 +45,12 @@ def _copy_args_to_fields(fn, decorator_name, field_prefix):
     if varargs is not None:
         raise errors.PargsDisallowedWhenCopyingArgsError(
             decorator_name, fn, varargs)
+
     def CopyThenCall(fn_to_wrap, self, *pargs, **kwargs):
         for index, parg in enumerate(pargs, start=1):
             setattr(self, field_prefix + arg_names[index], parg)
         for kwarg, kwvalue in kwargs.iteritems():
             setattr(self, field_prefix + kwarg, kwvalue)
         fn_to_wrap(self, *pargs, **kwargs)
+
     return decorator.decorator(CopyThenCall, fn)
