@@ -56,7 +56,12 @@ If you are interested in the developing version, you can install the next versio
 
 .. code-block:: shell
 
-    sudo pip install --no-deps --no-cache --index-url https://test.pypi.org/simple/ pinject
+    sudo pip install \
+        --no-deps \
+        --no-cache \
+        --upgrade \
+        --index-url https://test.pypi.org/simple/ \
+        pinject
 
 You can also check out all the source code, including tests, designs, and
 TODOs:

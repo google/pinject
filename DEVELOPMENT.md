@@ -11,7 +11,12 @@ twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 ## Install Developing Version
 
 ```shell
-pip install --no-deps --no-cache --index-url https://test.pypi.org/simple/ pinject
+sudo pip install \
+    --no-deps \
+    --no-cache \
+    --upgrade \
+    --index-url https://test.pypi.org/simple/ \
+    pinject
 ```
 
 ## SEE ALSO
