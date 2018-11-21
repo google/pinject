@@ -29,5 +29,5 @@ setup(name='pinject',
       license='Apache License 2.0',
       long_description=open('README.rst').read(),
       platforms='all',
-      packages=['pinject', 'pinject/third_party'],
+      packages=['pinject'],
       install_requires=['six>=1.7.3', 'decorator>=4.3.0'])
