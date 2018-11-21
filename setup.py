@@ -16,9 +16,12 @@
 
 
 from setuptools import setup
+from pinject import (
+    __version__,
+)
 
 setup(name='pinject',
-      version='0.11.0',
+      version=__version__,
       description='A pythonic dependency injection library',
       author='Kurt Steinkraus',
       author_email='kurt@steinkraus.us',
