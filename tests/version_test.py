@@ -22,8 +22,8 @@ class VersionTest(unittest.TestCase):
 
   def testVersion(self):
     self.assertEqual(type(pinject.__version__), str)
-    self.assertRegex(pinject.__version__,
-                     r'^\d+\.\d+\.\d+$')
+    self.assertRegexpMatches(pinject.__version__,
+                             r'^\d+\.\d+\.\d+$')
 
 
 if __name__ == '__main__':
