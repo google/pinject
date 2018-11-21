@@ -16,9 +16,12 @@
 
 
 from setuptools import setup
+from pinject import (
+    __version__,
+)
 
 setup(name='pinject',
-      version='0.11.0',
+      version=__version__,
       description='A pythonic dependency injection library',
       author='Kurt Steinkraus',
       author_email='kurt@steinkraus.us',
@@ -26,5 +29,5 @@ setup(name='pinject',
       license='Apache License 2.0',
       long_description=open('README.rst').read(),
       platforms='all',
-      packages=['pinject', 'pinject/third_party'],
+      packages=['pinject'],
       install_requires=['six>=1.7.3', 'decorator>=4.3.0'])

@@ -52,6 +52,17 @@ PyPI:
 
     sudo pip install pinject
 
+If you are interested in the developing version, you can install the next version from Test PyPI:
+
+.. code-block:: shell
+
+    sudo pip install \
+        --no-deps \
+        --no-cache \
+        --upgrade \
+        --index-url https://test.pypi.org/simple/ \
+        pinject
+
 You can also check out all the source code, including tests, designs, and
 TODOs:
 
@@ -1245,6 +1256,11 @@ everything listed here.)
 Changelog
 =========
 
+v0.11: master
+
+* Support Python 3
+* Add two maintainers: @trein and @huan
+
 v0.10.2:
 
 * Fixed bug: allows binding specs containing only provider methods.
@@ -1275,6 +1291,17 @@ v0.9:
 v0.8:
 
 * First released version.
+
+Maintainers
+===========
+
+* @kurt Kurt Steinkraus
+* @trein Guilherme Trein
+* @huan Huan LI
+
+License
+=======
+Apache-2.0
 
 Pinject and Google
 ==================

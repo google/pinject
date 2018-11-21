@@ -15,9 +15,16 @@ limitations under the License.
 
 
 import sys
+from .version import (
+    VERSION,
+)
 
+__version__ = VERSION
 
-__all__ = []
+__all__ = [
+    '__version__',
+]
+
 from .bindings import BindingSpec
 __all__.extend(['BindingSpec'])
 from .decorators import annotate_arg, inject, injectable, provides
