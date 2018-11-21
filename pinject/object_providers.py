@@ -14,8 +14,7 @@ limitations under the License.
 """
 
 
-import types
-
+from . import support
 from . import arg_binding_keys
 from . import decorators
 from . import errors
@@ -61,7 +60,7 @@ class ObjectProvider(object):
 
     def provide_class(self, cls, injection_context,
                       direct_init_pargs, direct_init_kwargs):
-        if type(cls.__init__) is types.MethodType:
+        if support.is_constructor_defined(cls):
             init_pargs, init_kwargs = self.get_injection_pargs_kwargs(
                 cls.__init__, injection_context,
                 direct_init_pargs, direct_init_kwargs)

@@ -14,8 +14,6 @@ limitations under the License.
 """
 
 
-import inspect
-import types
 import unittest
 
 from pinject import bindings
@@ -228,68 +226,6 @@ class NewObjectGraphTest(unittest.TestCase):
                           object_graph.new_object_graph,
                           modules=None, classes=[Foo, _Foo],
                           binding_specs=[SomeBindingSpec()])
-
-
-class VerifyTypeTest(unittest.TestCase):
-
-    def test_verifies_correct_type_ok(self):
-        object_graph._verify_type(types, types.ModuleType, 'unused')
-
-    def test_raises_exception_if_incorrect_type(self):
-        self.assertRaises(errors.WrongArgTypeError, object_graph._verify_type,
-                          'not-a-module', types.ModuleType, 'an-arg-name')
-
-
-class VerifyTypesTest(unittest.TestCase):
-
-    def test_verifies_empty_sequence_ok(self):
-        object_graph._verify_types([], types.ModuleType, 'unused')
-
-    def test_verifies_correct_type_ok(self):
-        object_graph._verify_types([types], types.ModuleType, 'unused')
-
-    def test_raises_exception_if_not_sequence(self):
-        self.assertRaises(errors.WrongArgTypeError, object_graph._verify_types,
-                          42, types.ModuleType, 'an-arg-name')
-
-    def test_raises_exception_if_element_is_incorrect_type(self):
-        self.assertRaises(errors.WrongArgElementTypeError,
-                          object_graph._verify_types,
-                          ['not-a-module'], types.ModuleType, 'an-arg-name')
-
-
-class VerifySubclassesTest(unittest.TestCase):
-
-    def test_verifies_empty_sequence_ok(self):
-        object_graph._verify_subclasses([], bindings.BindingSpec, 'unused')
-
-    def test_verifies_correct_type_ok(self):
-        class SomeBindingSpec(bindings.BindingSpec):
-            pass
-        object_graph._verify_subclasses(
-            [SomeBindingSpec()], bindings.BindingSpec, 'unused')
-
-    def test_raises_exception_if_not_sequence(self):
-        self.assertRaises(errors.WrongArgTypeError,
-                          object_graph._verify_subclasses,
-                          42, bindings.BindingSpec, 'an-arg-name')
-
-    def test_raises_exception_if_element_is_not_subclass(self):
-        class NotBindingSpec(object):
-            pass
-        self.assertRaises(
-            errors.WrongArgElementTypeError, object_graph._verify_subclasses,
-            [NotBindingSpec()], bindings.BindingSpec, 'an-arg-name')
-
-
-class VerifyCallableTest(unittest.TestCase):
-
-    def test_verifies_callable_ok(self):
-        object_graph._verify_callable(lambda: None, 'unused')
-
-    def test_raises_exception_if_not_callable(self):
-        self.assertRaises(errors.WrongArgTypeError,
-                          object_graph._verify_callable, 42, 'an-arg-name')
 
 
 class PareToPresentArgsTest(unittest.TestCase):

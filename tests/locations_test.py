@@ -19,6 +19,11 @@ import unittest
 from pinject import locations
 
 
+class ExternalObject(object):
+    def a_method(self):
+        pass
+
+
 class GetTypeLocTest(unittest.TestCase):
 
     def test_known(self):
@@ -40,7 +45,12 @@ class GetClassNameAndLocTest(unittest.TestCase):
         self.assertIn('OtherObject', class_name_and_loc)
         self.assertIn('locations_test.py', class_name_and_loc)
 
-    def test_known_as_part_of_class(self):
+    def test_known_external(self):
+        class_name_and_loc = locations.get_name_and_loc(ExternalObject)
+        self.assertIn('ExternalObject', class_name_and_loc)
+        self.assertIn('locations_test.py', class_name_and_loc)
+
+    def test_known_unbound_method_as_part_of_class(self):
         class OtherObject(object):
             def a_method(self):
                 pass
@@ -48,10 +58,54 @@ class GetClassNameAndLocTest(unittest.TestCase):
         self.assertIn('OtherObject.a_method', class_name_and_loc)
         self.assertIn('locations_test.py', class_name_and_loc)
 
+    def test_known_external_unbound_method_as_part_of_class(self):
+        class_name_and_loc = locations.get_name_and_loc(ExternalObject.a_method)
+        self.assertIn('ExternalObject.a_method', class_name_and_loc)
+        self.assertIn('locations_test.py', class_name_and_loc)
+
+    def test_known_bound_method_as_part_of_class(self):
+        class OtherObject(object):
+            def a_method(self):
+                pass
+        class_name_and_loc = locations.get_name_and_loc(OtherObject().a_method)
+        self.assertIn('OtherObject.a_method', class_name_and_loc)
+        self.assertIn('locations_test.py', class_name_and_loc)
+
+    def test_known_external_bound_method_as_part_of_class(self):
+        class_name_and_loc = locations.get_name_and_loc(ExternalObject().a_method)
+        self.assertIn('ExternalObject.a_method', class_name_and_loc)
+        self.assertIn('locations_test.py', class_name_and_loc)
+
     def test_unknown(self):
         unknown_class = type('UnknownClass', (object,), {})
         class_name_and_loc = locations.get_name_and_loc(unknown_class)
         self.assertEqual('tests.locations_test.UnknownClass', class_name_and_loc)
+
+
+class GetTypeName(unittest.TestCase):
+
+    def test_get_type_name_unbound_method(self):
+        class SomeObject(object):
+            def a_method(self):
+                pass
+        self.assertEqual('SomeObject', locations._get_type_name(SomeObject.a_method))
+
+    def test_get_type_name_external_unbound_method(self):
+        self.assertEqual('ExternalObject', locations._get_type_name(ExternalObject.a_method))
+
+    def test_get_type_name_bound_method(self):
+        class SomeObject(object):
+            def a_method(self):
+                pass
+        self.assertEqual('SomeObject', locations._get_type_name(SomeObject().a_method))
+
+    def test_get_type_name_external_bound_method(self):
+        self.assertEqual('ExternalObject', locations._get_type_name(ExternalObject().a_method))
+
+    def test_get_type_name_function(self):
+        def method():
+            pass
+        self.assertEqual('tests.locations_test', locations._get_type_name(method))
 
 
 class GetBackFrameLocTest(unittest.TestCase):

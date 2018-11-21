@@ -35,11 +35,10 @@ def find_classes(modules, classes):
 
 def _get_explicit_or_default_modules(modules):
     if modules is ALL_IMPORTED_MODULES:
-        return sys.modules.values()
+        return list(sys.modules.values())
     elif modules is None:
         return []
-    else:
-        return modules
+    return modules
 
 
 def _find_classes_in_module(module):

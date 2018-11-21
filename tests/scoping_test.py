@@ -33,8 +33,8 @@ class PrototypeScopeTest(unittest.TestCase):
         scope = scoping.PrototypeScope()
         binding_key = binding_keys.new('unused')
         self.assertEqual(
-            range(10),
-            [scope.provide(binding_key, provider_fn) for _ in xrange(10)])
+            list(range(10)),
+            [scope.provide(binding_key, provider_fn) for _ in range(10)])
 
 
 class SingletonScopeTest(unittest.TestCase):
@@ -74,7 +74,7 @@ class GetIdToScopeWithDefaultsTest(unittest.TestCase):
 
     def test_returns_default_scopes_if_none_given(self):
         id_to_scope = scoping.get_id_to_scope_with_defaults()
-        self.assertEqual(set([scoping.SINGLETON, scoping.PROTOTYPE]),
+        self.assertEqual({scoping.SINGLETON, scoping.PROTOTYPE},
                          set(id_to_scope.keys()))
 
     def test_does_not_allow_overriding_prototype_scope(self):

@@ -14,11 +14,10 @@ limitations under the License.
 """
 
 
-import inspect
-
-from .third_party import decorator
+import decorator
 
 from . import errors
+from . import support
 
 
 def copy_args_to_internal_fields(fn):
@@ -42,14 +41,16 @@ def _copy_args_to_fields(fn, decorator_name, field_prefix):
         raise errors.DecoratorAppliedToNonInitError(
             decorator_name, fn)
     arg_names, varargs, unused_keywords, unused_defaults = (
-        inspect.getargspec(fn))
+        support.get_method_args(fn))
     if varargs is not None:
         raise errors.PargsDisallowedWhenCopyingArgsError(
             decorator_name, fn, varargs)
+
     def CopyThenCall(fn_to_wrap, self, *pargs, **kwargs):
         for index, parg in enumerate(pargs, start=1):
             setattr(self, field_prefix + arg_names[index], parg)
-        for kwarg, kwvalue in kwargs.iteritems():
+        for kwarg, kwvalue in support.items(kwargs):
             setattr(self, field_prefix + kwarg, kwvalue)
         fn_to_wrap(self, *pargs, **kwargs)
+
     return decorator.decorator(CopyThenCall, fn)

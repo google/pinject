@@ -14,17 +14,13 @@ limitations under the License.
 """
 
 
-import collections
-import inspect
-
-from .third_party import decorator
+import decorator
 
 from . import arg_binding_keys
-from . import binding_keys
+from . import support
 from . import errors
 from . import locations
 from . import scoping
-
 
 _ARG_BINDING_KEYS_ATTR = '_pinject_arg_binding_keys'
 _IS_WRAPPER_ATTR = '_pinject_is_wrapper'
@@ -83,13 +79,12 @@ def inject(arg_names=None, all_except=None):
     back_frame_loc = locations.get_back_frame_loc()
     if arg_names is not None and all_except is not None:
         raise errors.TooManyArgsToInjectDecoratorError(back_frame_loc)
-    for arg, arg_value in [('arg_names', arg_names),
-                           ('all_except', all_except)]:
+    for arg, arg_value in [('arg_names', arg_names), ('all_except', all_except)]:
         if arg_value is not None:
             if not arg_value:
                 raise errors.EmptySequenceArgError(back_frame_loc, arg)
-            if (not isinstance(arg_value, collections.Sequence) or
-                isinstance(arg_value, basestring)):
+            if (not support.is_sequence(arg_value) or
+                    support.is_string(arg_value)):
                 raise errors.WrongArgTypeError(
                     arg, 'sequence (of arg names)', type(arg_value).__name__)
     if arg_names is None and all_except is None:
@@ -207,6 +202,7 @@ def _get_pinject_decorated_fn(fn):
     else:
         def _pinject_decorated_fn(fn_to_wrap, *pargs, **kwargs):
             return fn_to_wrap(*pargs, **kwargs)
+
         pinject_decorated_fn = decorator.decorator(_pinject_decorated_fn, fn)
         # TODO(kurts): split this so that __init__() decorators don't get
         # the provider attribute.
@@ -225,28 +221,26 @@ def _get_pinject_wrapper(
     def get_pinject_decorated_fn_with_additions(fn):
         pinject_decorated_fn = _get_pinject_decorated_fn(fn)
         orig_arg_names, unused_varargs, unused_keywords, unused_defaults = (
-            inspect.getargspec(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
+            support.get_method_args(getattr(pinject_decorated_fn, _ORIG_FN_ATTR)))
         if arg_binding_key is not None:
-            if not arg_binding_key.can_apply_to_one_of_arg_names(
-                    orig_arg_names):
-                raise errors.NoSuchArgToInjectError(
-                    decorator_loc, arg_binding_key, fn)
+            if not arg_binding_key.can_apply_to_one_of_arg_names(orig_arg_names):
+                raise errors.NoSuchArgToInjectError(decorator_loc, arg_binding_key, fn)
             if arg_binding_key.conflicts_with_any_arg_binding_key(
-                    getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
+                getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR)):
                 raise errors.MultipleAnnotationsForSameArgError(
                     arg_binding_key, decorator_loc)
             getattr(pinject_decorated_fn, _ARG_BINDING_KEYS_ATTR).append(
                 arg_binding_key)
         if (provider_arg_name is not None or
             provider_annotated_with is not None or
-            provider_in_scope_id is not None):
+                provider_in_scope_id is not None):
             provider_decorations = getattr(
                 pinject_decorated_fn, _PROVIDER_DECORATIONS_ATTR)
             provider_decorations.append(ProviderDecoration(
                 provider_arg_name, provider_annotated_with,
                 provider_in_scope_id))
         if (inject_arg_names is not None or
-            inject_all_except_arg_names is not None):
+                inject_all_except_arg_names is not None):
             if hasattr(pinject_decorated_fn, _NON_INJECTABLE_ARG_NAMES_ATTR):
                 raise errors.DuplicateDecoratorError('inject', decorator_loc)
             non_injectable_arg_names = []
@@ -265,6 +259,7 @@ def _get_pinject_wrapper(
             if len(non_injectable_arg_names) == len(orig_arg_names):
                 raise errors.NoRemainingArgsToInjectError(decorator_loc)
         return pinject_decorated_fn
+
     return get_pinject_decorated_fn_with_additions
 
 
@@ -285,8 +280,7 @@ def get_injectable_arg_binding_keys(fn, direct_pargs, direct_kwargs):
         existing_arg_binding_keys = []
         orig_fn = fn
 
-    arg_names, unused_varargs, unused_keywords, defaults = (
-        inspect.getargspec(orig_fn))
+    arg_names, unused_varargs, unused_keywords, defaults = support.get_method_args(orig_fn)
     num_args_with_defaults = len(defaults) if defaults is not None else 0
     if num_args_with_defaults:
         arg_names = arg_names[:-num_args_with_defaults]

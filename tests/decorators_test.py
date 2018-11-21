@@ -14,7 +14,6 @@ limitations under the License.
 """
 
 
-import inspect
 import unittest
 
 from pinject import arg_binding_keys
@@ -22,8 +21,8 @@ from pinject import bindings
 from pinject import binding_keys
 from pinject import decorators
 from pinject import errors
-from pinject import injection_contexts
 from pinject import scoping
+from pinject import support
 
 
 # TODO(kurts): have only one FakeObjectProvider for tests.
@@ -288,8 +287,7 @@ class GetPinjectWrapperTest(unittest.TestCase):
         @decorators.annotate_arg('foo', 'an-annotation')
         def some_function(foo, bar='BAR', *pargs, **kwargs):
             pass
-        arg_names, varargs, keywords, defaults = inspect.getargspec(
-            some_function)
+        arg_names, varargs, keywords, defaults = support.get_method_args(some_function)
         self.assertEqual(['foo', 'bar'], arg_names)
         self.assertEqual('pargs', varargs)
         self.assertEqual('kwargs', keywords)
