@@ -105,3 +105,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 t.*
+.*swp
