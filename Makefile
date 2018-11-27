@@ -53,8 +53,8 @@ publish-test:
 publish:
 	twine upload dist/*
 
-.PHONY: version-patch
-version-patch:
+.PHONY: version
+version:
 	@newVersion=$$(awk -F. '{print $$1"."$$2"."$$3+1}' < VERSION) \
 		&& echo $${newVersion} > VERSION \
 		&& git add VERSION \
