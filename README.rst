@@ -1256,7 +1256,9 @@ everything listed here.)
 Changelog
 =========
 
-v0.11: master
+v0.13: master
+
+v0.12: 28 Nov, 2018
 
 * Support Python 3
 * Add two maintainers: @trein and @huan
