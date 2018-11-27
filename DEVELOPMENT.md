@@ -3,9 +3,15 @@
 ## Publish Developing Version
 
 ```shell
-rm -f dist/*
-python3 setup.py sdist bdist_wheel
-twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+make clean
+make pack
+
+# publish to test.pypi.org
+make publish-test
+
+# publish to pypi.org
+# make publish
+
 ```
 
 ## Install Developing Version
