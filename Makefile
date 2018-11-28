@@ -57,7 +57,7 @@ publish:
 version:
 	@newVersion=$$(awk -F. '{print $$1"."$$2"."$$3+1}' < VERSION) \
 		&& echo $${newVersion} > VERSION \
-		&& echo VERSION = $${newVersion} > pinject/version.py \
+		&& echo VERSION = \"$${newVersion}\" > pinject/version.py \
 		&& git add VERSION \
 		&& git add pinject/version.py \
 		&& git commit -m "$${newVersion}" > /dev/null \
