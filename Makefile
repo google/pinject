@@ -56,7 +56,8 @@ publish:
 .PHONY: version
 version:
 	@newVersion=$$(awk -F. '{print $$1"."$$2"."$$3+1}' < VERSION) \
-		&& echo $${newVersion} | tee VERSION > pinject/version.py \
+		&& echo $${newVersion} > VERSION \
+		&& echo VERSION = \'$${newVersion}\' > pinject/version.py \
 		&& git add VERSION pinject/version.py \
 		&& git commit -m "$${newVersion}" > /dev/null \
 		&& git tag "v$${newVersion}" \
