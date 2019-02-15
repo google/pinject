@@ -6,6 +6,10 @@
     :target: https://pypi.org/project/pinject/
 .. image:: https://travis-ci.com/google/pinject.svg?branch=master
     :target: https://travis-ci.com/google/pinject
+.. image:: https://pepy.tech/badge/pinject
+    :target: https://pepy.tech/badge/pinject
+.. image:: https://pepy.tech/badge/pinject/month
+    :target: https://pepy.tech/badge/pinject
 
 Pinject is a dependency injection library for python.
 
