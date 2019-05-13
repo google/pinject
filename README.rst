@@ -1301,9 +1301,9 @@ v0.8:
 Maintainers
 ===========
 
-* @kurt Kurt Steinkraus
-* @trein Guilherme Trein
-* @huan Huan LI
+* Kurt Steinkraus @kurt
+* Guilherme Trein @trein
+* Huan LI @huan
 
 License
 =======
