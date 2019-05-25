@@ -14,11 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import os
 from setuptools import setup
-from pinject import (
-    __version__,
-)
+
+# Extra __version__ from VERSION instead of pinject.version so pip doen't
+# import __init__.py and bump into dependencies that haven't been installed
+# yet.
+with open(os.path.join(os.path.dirname(__file__), "VERSION")) as VERSION:
+    __version__ = VERSION.read().strip()
 
 setup(name='pinject',
       version=__version__,
