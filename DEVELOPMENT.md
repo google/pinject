@@ -4,6 +4,10 @@
 
 ```shell
 make clean
+
+# Bump the version
+make version
+
 make pack
 
 # publish to test.pypi.org
@@ -24,6 +28,11 @@ sudo pip install \
     --index-url https://test.pypi.org/simple/ \
     pinject
 ```
+
+## TODO
+
+- [ ] @huan Keep `version.py` clean by setting `VERSION = 0.0.0`
+- [ ] @huan Only update `version.py` before publish to PyPI
 
 ## SEE ALSO
 
