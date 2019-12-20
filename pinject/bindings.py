@@ -150,7 +150,7 @@ def default_get_arg_names_from_class_name(class_name):
     if rest.startswith('_'):
         rest = rest[1:]
     while True:
-        m = re.match(r'([A-Z][a-z]*)(.*)', rest)
+        m = re.match(r'([A-Z][a-z]*|[0-9][a-z0-9]*)(.*)', rest)
         if m is None:
             break
         parts.append(m.group(1))
