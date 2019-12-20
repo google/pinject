@@ -221,6 +221,21 @@ class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
             ['foo_a'],
             bindings_lib.default_get_arg_names_from_class_name('FooA'))
 
+    def test_class_name_with_numbers_at_the_end(self):
+        self.assertEqual(
+            ['foo_123'],
+            bindings_lib.default_get_arg_names_from_class_name('Foo123'))
+
+    def test_class_name_with_numbers_followed_by_lowercase_letters(self):
+        self.assertEqual(
+            ['foo_123xy'],
+            bindings_lib.default_get_arg_names_from_class_name('Foo123xy'))
+
+    def test_class_name_with_numbers_followed_by_a_new_word(self):
+        self.assertEqual(
+            ['foo_123_bar'],
+            bindings_lib.default_get_arg_names_from_class_name('Foo123Bar'))
+
 
 class FakeObjectProvider(object):
 
