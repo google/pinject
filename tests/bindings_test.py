@@ -216,6 +216,11 @@ class DefaultGetArgNamesFromClassNameTest(unittest.TestCase):
             [], bindings_lib.default_get_arg_names_from_class_name(
                 'notAllCamelCase'))
 
+    def test_single_letter_camel_case_words(self):
+        self.assertEqual(
+            ['foo_a'],
+            bindings_lib.default_get_arg_names_from_class_name('FooA'))
+
 
 class FakeObjectProvider(object):
 
