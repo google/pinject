@@ -1,5 +1,5 @@
 # dev deps
-mock>=4.0.2
+mock>=3.0.5
 pytest>=3.8.0
 
 # prod deps
