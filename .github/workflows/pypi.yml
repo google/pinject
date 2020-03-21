@@ -44,7 +44,7 @@ jobs:
           make install
       - name: Pack Testing
         run: |
-          make dist
+          make pack
           echo "To be add: pack testing"
 
   deploy:
