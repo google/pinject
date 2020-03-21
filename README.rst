@@ -1298,12 +1298,16 @@ v0.8:
 
 * First released version.
 
+Author
+===========
+
+Kurt Steinkraus `@kurt<https://github.com/kurt>`_
+
 Maintainers
 ===========
 
-* Kurt Steinkraus @kurt
-* Guilherme Trein @trein
-* Huan LI @huan
+* Guilherme Trein `@trein<https://github.com/trein>`_
+* Huan LI `@huan<https://github.com/huan>`_
 
 License
 =======
