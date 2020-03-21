@@ -1260,7 +1260,11 @@ everything listed here.)
 Changelog
 =========
 
-v0.13: master
+v0.15: master
+
+* Enable GitHub Actions
+* CI/CD DevOps for publishing to PyPI automatically
+* A version which the minor number is odd will be published as a `prerelease` and add `dev` to the patch version.
 
 v0.12: 28 Nov, 2018
 
