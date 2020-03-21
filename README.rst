@@ -1301,13 +1301,13 @@ v0.8:
 Author
 ===========
 
-Kurt Steinkraus `@kurt<https://github.com/kurt>`_
+Kurt Steinkraus `@kurt <https://github.com/kurt>`_
 
 Maintainers
 ===========
 
-* Guilherme Trein `@trein<https://github.com/trein>`_
-* Huan LI `@huan<https://github.com/huan>`_
+* Guilherme Trein `@trein <https://github.com/trein>`_
+* Huan LI `@huan <https://github.com/huan>`_
 
 License
 =======
