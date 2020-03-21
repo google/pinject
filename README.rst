@@ -1265,6 +1265,7 @@ v0.15: master
 * Enable GitHub Actions
 * CI/CD DevOps for publishing to PyPI automatically
 * A version which the minor number is odd will be published as a `prerelease` and add `dev` to the patch version.
+* Remove Python version 3.3 & 3.4 from CI/CD ([#50](https://github.com/google/pinject/issues/50))
 
 v0.12: 28 Nov, 2018
 
