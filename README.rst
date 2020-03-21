@@ -4,8 +4,8 @@
 
 .. image:: https://badge.fury.io/py/pinject.svg
     :target: https://pypi.org/project/pinject/
-.. image:: https://travis-ci.com/google/pinject.svg?branch=master
-    :target: https://travis-ci.com/google/pinject
+.. image:: https://github.com/google/pinject/workflows/PyPI/badge.svg
+    :target: https://github.com/google/pinject/actions?query=workflow%3APyPI
 .. image:: https://pepy.tech/badge/pinject
     :target: https://pepy.tech/badge/pinject
 .. image:: https://pepy.tech/badge/pinject/month
