@@ -1,5 +1,6 @@
 # dev deps
 pytest>=3.8.0
+semver
 
 # prod deps
 six>=1.7.3

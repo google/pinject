@@ -16,21 +16,68 @@
 
 import os
 from setuptools import setup
+import semver
+
+
+def versioning(version: str) -> str:
+    """
+    version to specification
+    Author: Huan <zixia@zixia.net> (https://github.com/huan)
+
+    X.Y.Z -> X.Y.devZ
+
+    """
+    sem_ver = semver.parse(version)
+
+    major = sem_ver['major']
+    minor = sem_ver['minor']
+    patch = str(sem_ver['patch'])
+
+    if minor % 2:
+        patch = 'dev' + patch
+
+    fin_ver = '%d.%d.%s' % (
+        major,
+        minor,
+        patch,
+    )
+
+    return fin_ver
+
 
 # Extra __version__ from VERSION instead of pinject.version so pip doen't
 # import __init__.py and bump into dependencies that haven't been installed
 # yet.
-with open(os.path.join(os.path.dirname(__file__), "VERSION")) as VERSION:
-    __version__ = VERSION.read().strip()
+def get_version() -> str:
+    """
+    read version from VERSION file
+    """
+    version = '0.0.0'
 
-setup(name='pinject',
-      version=__version__,
-      description='A pythonic dependency injection library',
-      author='Kurt Steinkraus',
-      author_email='kurt@steinkraus.us',
-      url='https://github.com/google/pinject',
-      license='Apache License 2.0',
-      long_description=open('README.rst').read(),
-      platforms='all',
-      packages=['pinject'],
-      install_requires=['six>=1.7.3', 'decorator>=4.3.0'])
+    with open(
+            os.path.join(
+                os.path.dirname(__file__),
+                'VERSION'
+            )
+    ) as handle:
+        # Get X.Y.Z
+        version = handle.read().strip()
+        # versioning from X.Y.Z to X.Y.devZ
+        version = versioning(version)
+
+    return version
+
+
+setup(
+    name='pinject',
+    version=get_version(),
+    description='A pythonic dependency injection library',
+    author='Kurt Steinkraus',
+    author_email='kurt@steinkraus.us',
+    url='https://github.com/google/pinject',
+    license='Apache License 2.0',
+    long_description=open('README.rst').read(),
+    platforms='all',
+    packages=['pinject'],
+    install_requires=['six>=1.7.3', 'decorator>=4.3.0'],
+)
