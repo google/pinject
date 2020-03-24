@@ -44,6 +44,14 @@ def _get_explicit_or_default_modules(modules):
 def _find_classes_in_module(module):
     classes = set()
     for member_name, member in inspect.getmembers(module):
-        if inspect.isclass(member) and not member_name == '__class__':
-            classes.add(member)
+        try:
+            if inspect.isclass(member) and not member_name == '__class__':
+                classes.add(member)
+        except NameError:
+            # In Python 3 calling isinstance() on SWIG's global cvar property
+            # raises:
+            #     "NameError: Unknown C global variable"
+            # In that case just continue, otherwise let the Error through.
+            if not member_name == 'cvar':
+                raise
     return classes

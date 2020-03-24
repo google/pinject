@@ -14,11 +14,16 @@ limitations under the License.
 """
 
 
+import inspect
+import mock
 import sys
 import unittest
 
 from pinject import finding
 
+
+cvar = "Mock SWIG cvar attribute."
+foo = "some other mock attribute"
 
 class FindClassesTest(unittest.TestCase):
 
@@ -45,3 +50,42 @@ class FindClassesTest(unittest.TestCase):
             FindClassesTest,
             finding.find_classes(modules=finding.ALL_IMPORTED_MODULES,
                                  classes=None))
+
+    def test_swig_cvar_nameerror(self):
+        this_module = sys.modules[FindClassesTest.__module__]
+        # This tests a special case exception that find_classes silences, which
+        # originates from calling isinstance on SWIG's global cvar raises a
+        # NameError in python 3. To avoid recursion from mocking the builtin,
+        # we mock inspect.isclass while holding onto a reference to the actual
+        # function.
+        isclass = inspect.isclass
+
+        # Tests that the right error is silenced.
+        def cvar_raises_nameerror(value):
+            if value == cvar:
+                raise NameError()
+            return isclass(value)
+        with mock.patch.object(inspect, 'isclass') as mock_isclass:
+            mock_isclass.side_effect = cvar_raises_nameerror
+            self.assertNotIn(cvar,
+                    finding.find_classes(modules=[this_module], classes=None))
+
+        # Tests that the wrong error type is let through.
+        def cvar_raises_valueerror(value):
+            if value == cvar:
+                raise ValueError()
+            return isclass(value)
+        with mock.patch.object(inspect, 'isclass') as mock_isclass:
+            mock_isclass.side_effect = cvar_raises_valueerror
+            with self.assertRaises(ValueError):
+                finding.find_classes(modules=[this_module], classes=None)
+
+        # Tests that an error relating to another attribute is let through.
+        def foo_raises_nameerror(value):
+            if value == foo:
+                raise NameError()
+            return isclass(value)
+        with mock.patch.object(inspect, 'isclass') as mock_isclass:
+            mock_isclass.side_effect = foo_raises_nameerror
+            with self.assertRaises(NameError):
+                finding.find_classes(modules=[this_module], classes=None)
