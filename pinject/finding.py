@@ -43,6 +43,15 @@ def _get_explicit_or_default_modules(modules):
 
 def _find_classes_in_module(module):
     classes = set()
+
+    try:
+        # Libraries such as tensorflow return __bases__ as an integer
+        # which the inspect.getmembers() function attemps to iterate through
+        if not isinstance(module.__bases__, tuple):
+            module.__bases__ = []
+    except AttributeError:
+        pass
+
     for member_name, member in inspect.getmembers(module):
         try:
             if inspect.isclass(member) and not member_name == '__class__':
