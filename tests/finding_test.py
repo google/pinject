@@ -89,3 +89,17 @@ class FindClassesTest(unittest.TestCase):
             mock_isclass.side_effect = foo_raises_nameerror
             with self.assertRaises(NameError):
                 finding.find_classes(modules=[this_module], classes=None)
+
+    def test__find_classes_in_module_when_module_bases_is_not_tuple(self):
+        # Test for the case when the __bases__ attributes of an imported
+        # module is not a tuple that is expected.
+        #
+        # tensorboard 2.2.2 have such an example
+        # from tensorboard.compat.tensorflow_stub import pywrap_tensorflow
+        #
+        # This mocks an imported module that has .__bases__ = 0
+
+        this_module = sys.modules[FindClassesTest.__module__]
+        this_module.__bases__ = 0
+        self.assertIn(FindClassesTest,
+                      finding.find_classes(modules=[this_module], classes=None))

@@ -45,10 +45,15 @@ def _find_classes_in_module(module):
     classes = set()
 
     try:
-        # Libraries such as tensorflow return __bases__ as an integer
-        # which the inspect.getmembers() function attemps to iterate through
+        # modules, such tensorboard.compat.tensorflow_stub (2.2.2) return the
+        # __bases__ attribute as an integer, instead of the expected tuple
+        #
+        # when the inspect.getmembers() function attemps to iterate through it
+        # an error is raised
+        #
+        # this pre-empts this error, by assigning an empty tuple to avoid TypeError
         if not isinstance(module.__bases__, tuple):
-            module.__bases__ = []
+            module.__bases__ = ()
     except AttributeError:
         pass
 
