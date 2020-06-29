@@ -45,6 +45,9 @@ def _find_classes_in_module(module):
     classes = set()
 
     try:
+        # Handle find_classes_in_module when module.__bases__ is not a tuple:
+        #   https://github.com/google/pinject/pull/54
+        #
         # modules, such tensorboard.compat.tensorflow_stub (2.2.2) return the
         # __bases__ attribute as an integer, instead of the expected tuple
         #
