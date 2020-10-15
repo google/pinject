@@ -348,7 +348,7 @@ specs from its ``dependencies()`` method.
     >>> class ClassOne(object):
     ...    def __init__(self, foo):
     ...        self.foo = foo
-    ....
+    ...
     >>> class BindingSpecOne(pinject.BindingSpec):
     ...     def configure(self, bind):
     ...         bind('foo', to_instance='foo-')
