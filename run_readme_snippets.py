@@ -30,4 +30,4 @@ for index, paragraph in enumerate(paragraphs):
     code_lines = [line[8:] for line in snippet.split('\n')
                   if line.startswith('    >>> ') or line.startswith('    ... ')]
     code = ''.join(line + '\n' for line in code_lines)
-    exec code
+    exec(code)
